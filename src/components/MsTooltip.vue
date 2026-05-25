@@ -12,10 +12,10 @@ import { computed } from 'vue'
 // fontSize         // cỡ chữ tooltip, ví dụ 13px
 // fontWeight       // độ đậm tooltip
 // lineHeight       // chiều cao dòng tooltip
-// fontFamily       // font chữ tooltip
 // disabled
 // showArrow
 
+//làm thêm custom arrow
 const props = defineProps({
   content: {
     type: String,
@@ -40,22 +40,6 @@ const props = defineProps({
     default: 36,
   },
   offset: {
-    type: [Number, String],
-    default: 8,
-  },
-  showDelay: {
-    type: [Number, String],
-    default: 300,
-  },
-  hideDelay: {
-    type: [Number, String],
-    default: 0,
-  },
-  arrowWidth: {
-    type: [Number, String],
-    default: 6,
-  },
-  arrowHeight: {
     type: [Number, String],
     default: 8,
   },
@@ -91,10 +75,6 @@ const props = defineProps({
     type: [Number, String],
     default: 400,
   },
-  fontFamily: {
-    type: String,
-    default: '',
-  },
 })
 
 const emit = defineEmits(['show', 'hide'])
@@ -106,23 +86,24 @@ const rootClass = computed(() => [
   `ms-tooltip-wrapper--align-${props.align}`,
   {
     'is-disabled': props.disabled,
-    'is-no-arrow': !props.showArrow,
   },
   props.hoverClass,
+])
+
+const bubbleClass = computed(() => [
+  {
+    'is-no-arrow': !props.showArrow,
+  },
+  props.tooltipClass,
 ])
 
 const rootStyle = computed(() => ({
   '--ms-tooltip-hover-bg': props.hoverBackground,
   '--ms-tooltip-hover-size': normalizeCssSize(props.hoverSize),
   '--ms-tooltip-offset': normalizeCssSize(props.offset),
-  '--ms-tooltip-show-delay': normalizeCssSize(props.showDelay),
-  '--ms-tooltip-hide-delay': normalizeCssSize(props.hideDelay),
-  '--ms-tooltip-arrow-width': normalizeCssSize(props.arrowWidth),
-  '--ms-tooltip-arrow-height': normalizeCssSize(props.arrowHeight),
   '--ms-tooltip-arrow-position': props.arrowPosition,
   '--ms-tooltip-font-size': normalizeCssSize(props.fontSize),
   '--ms-tooltip-font-weight': props.fontWeight,
-  '--ms-tooltip-font-family': props.fontFamily || 'inherit',
   "--ms-tooltip-line-height": normalizeCssSize(props.lineHeight),
 }))
 
@@ -140,11 +121,8 @@ const handleHide = () => {
     class="ms-tooltip-wrapper"
     :class="rootClass"
     :style="rootStyle"
-    tabindex="0"
     @mouseenter="handleShow"
     @mouseleave="handleHide"
-    @focusin="handleShow"
-    @focusout="handleHide"
   >
     <span class="ms-tooltip-wrapper__trigger">
       <slot />
@@ -153,7 +131,7 @@ const handleHide = () => {
     <span
       v-if="!disabled && (content || $slots.tooltip)"
       class="ms-tooltip-wrapper__bubble"
-      :class="tooltipClass"
+      :class="bubbleClass"
       role="tooltip"
     >
       <slot name="tooltip">{{ content }}</slot>
@@ -164,9 +142,9 @@ const handleHide = () => {
 <style scoped>
 .ms-tooltip-wrapper {
   position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
+  /* justify-content: center; */
   line-height: 1;
   outline: none;
 }
@@ -187,9 +165,7 @@ const handleHide = () => {
   pointer-events: none;
 }
 
-.ms-tooltip-wrapper:not(.is-disabled):hover::before,
-.ms-tooltip-wrapper:not(.is-disabled):focus-visible::before,
-.ms-tooltip-wrapper:not(.is-disabled):focus-within::before {
+.ms-tooltip-wrapper:not(.is-disabled):hover::before {
   opacity: 1;
 }
 
@@ -211,7 +187,7 @@ const handleHide = () => {
   color: var(--color-text-inverse);
   font-size: var(--ms-tooltip-font-size);
   font-weight: var(--ms-tooltip-font-weight);
-  font-family: var(--ms-tooltip-font-family);
+  font-family: inherit;
   line-height: var(--ms-tooltip-line-height);
   white-space: nowrap;
   background: #414651;
@@ -223,7 +199,6 @@ const handleHide = () => {
     opacity 0.12s ease,
     visibility 0.12s ease,
     transform 0.12s ease;
-  transition-delay: var(--ms-tooltip-hide-delay);
 }
 
 .ms-tooltip-wrapper__bubble::before {
@@ -236,15 +211,13 @@ const handleHide = () => {
   background: transparent;
 }
 
-.ms-tooltip-wrapper.is-no-arrow .ms-tooltip-wrapper__bubble::before {
+.ms-tooltip-wrapper__bubble.is-no-arrow::before {
   display: none;
 }
 
-.ms-tooltip-wrapper:not(.is-disabled):hover .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper:not(.is-disabled):focus-within .ms-tooltip-wrapper__bubble {
+.ms-tooltip-wrapper:not(.is-disabled):hover .ms-tooltip-wrapper__bubble {
   opacity: 1;
   visibility: visible;
-  transition-delay: var(--ms-tooltip-show-delay);
 }
 
 .ms-tooltip-wrapper--bottom .ms-tooltip-wrapper__bubble {
@@ -253,16 +226,14 @@ const handleHide = () => {
   transform: translate(-50%, -4px);
 }
 
-.ms-tooltip-wrapper--bottom:hover .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper--bottom:focus-within .ms-tooltip-wrapper__bubble {
+.ms-tooltip-wrapper--bottom:hover .ms-tooltip-wrapper__bubble {
   transform: translate(-50%, 0);
 }
 
 .ms-tooltip-wrapper--bottom .ms-tooltip-wrapper__bubble::before {
-  top: calc(var(--ms-tooltip-arrow-height) * -1);
+  top: -8px;
   left: var(--ms-tooltip-arrow-position);
-  border-width: 0 var(--ms-tooltip-arrow-width) var(--ms-tooltip-arrow-height)
-    var(--ms-tooltip-arrow-width);
+  border-width: 0 6px 8px 6px;
   border-color: transparent transparent #414651 transparent;
   transform: translateX(-50%);
 }
@@ -273,16 +244,14 @@ const handleHide = () => {
   transform: translate(-50%, 4px);
 }
 
-.ms-tooltip-wrapper--top:hover .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper--top:focus-within .ms-tooltip-wrapper__bubble {
+.ms-tooltip-wrapper--top:hover .ms-tooltip-wrapper__bubble {
   transform: translate(-50%, 0);
 }
 
 .ms-tooltip-wrapper--top .ms-tooltip-wrapper__bubble::before {
-  bottom: calc(var(--ms-tooltip-arrow-height) * -1);
+  bottom: -8px;
   left: var(--ms-tooltip-arrow-position);
-  border-width: var(--ms-tooltip-arrow-height) var(--ms-tooltip-arrow-width) 0
-    var(--ms-tooltip-arrow-width);
+  border-width: 8px 6px 0 6px;
   border-color: #414651 transparent transparent transparent;
   transform: translateX(-50%);
 }
@@ -293,16 +262,14 @@ const handleHide = () => {
   transform: translate(-4px, -50%);
 }
 
-.ms-tooltip-wrapper--right:hover .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper--right:focus-within .ms-tooltip-wrapper__bubble {
+.ms-tooltip-wrapper--right:hover .ms-tooltip-wrapper__bubble {
   transform: translate(0, -50%);
 }
 
 .ms-tooltip-wrapper--right .ms-tooltip-wrapper__bubble::before {
-  left: calc(var(--ms-tooltip-arrow-height) * -1);
+  left: -8px;
   top: var(--ms-tooltip-arrow-position);
-  border-width: var(--ms-tooltip-arrow-width) var(--ms-tooltip-arrow-height)
-    var(--ms-tooltip-arrow-width) 0;
+  border-width: 6px 8px 6px 0;
   border-color: transparent #414651 transparent transparent;
   transform: translateY(-50%);
 }
@@ -313,16 +280,14 @@ const handleHide = () => {
   transform: translate(4px, -50%);
 }
 
-.ms-tooltip-wrapper--left:hover .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper--left:focus-within .ms-tooltip-wrapper__bubble {
+.ms-tooltip-wrapper--left:hover .ms-tooltip-wrapper__bubble {
   transform: translate(0, -50%);
 }
 
 .ms-tooltip-wrapper--left .ms-tooltip-wrapper__bubble::before {
-  right: calc(var(--ms-tooltip-arrow-height) * -1);
+  right: -8px;
   top: var(--ms-tooltip-arrow-position);
-  border-width: var(--ms-tooltip-arrow-width) 0 var(--ms-tooltip-arrow-width)
-    var(--ms-tooltip-arrow-height);
+  border-width: 6px 0 6px 8px;
   border-color: transparent transparent transparent #414651;
   transform: translateY(-50%);
 }
@@ -338,10 +303,7 @@ const handleHide = () => {
 }
 
 .ms-tooltip-wrapper--align-start.ms-tooltip-wrapper--top:hover .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper--align-start.ms-tooltip-wrapper--top:focus-within .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper--align-start.ms-tooltip-wrapper--bottom:hover .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper--align-start.ms-tooltip-wrapper--bottom:focus-within
-  .ms-tooltip-wrapper__bubble {
+.ms-tooltip-wrapper--align-start.ms-tooltip-wrapper--bottom:hover .ms-tooltip-wrapper__bubble {
   transform: translate(0, 0);
 }
 
@@ -362,9 +324,7 @@ const handleHide = () => {
 }
 
 .ms-tooltip-wrapper--align-end.ms-tooltip-wrapper--top:hover .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper--align-end.ms-tooltip-wrapper--top:focus-within .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper--align-end.ms-tooltip-wrapper--bottom:hover .ms-tooltip-wrapper__bubble,
-.ms-tooltip-wrapper--align-end.ms-tooltip-wrapper--bottom:focus-within .ms-tooltip-wrapper__bubble {
+.ms-tooltip-wrapper--align-end.ms-tooltip-wrapper--bottom:hover .ms-tooltip-wrapper__bubble {
   transform: translate(0, 0);
 }
 
