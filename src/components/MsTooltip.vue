@@ -1,3 +1,26 @@
+<template>
+  <span
+    class="ms-tooltip-wrapper"
+    :class="rootClass"
+    :style="rootStyle"
+    @mouseenter="handleShow"
+    @mouseleave="handleHide"
+  >
+    <span class="ms-tooltip-wrapper__trigger">
+      <slot />
+    </span>
+
+    <span
+      v-if="!disabled && (content || $slots.tooltip)"
+      class="ms-tooltip-wrapper__bubble"
+      :class="bubbleClass"
+      role="tooltip"
+    >
+      <slot name="tooltip">{{ content }}</slot>
+    </span>
+  </span>
+</template>
+
 <script setup>
 import { computed } from 'vue'
 
@@ -104,7 +127,7 @@ const rootStyle = computed(() => ({
   '--ms-tooltip-arrow-position': props.arrowPosition,
   '--ms-tooltip-font-size': normalizeCssSize(props.fontSize),
   '--ms-tooltip-font-weight': props.fontWeight,
-  "--ms-tooltip-line-height": normalizeCssSize(props.lineHeight),
+  '--ms-tooltip-line-height': normalizeCssSize(props.lineHeight),
 }))
 
 const handleShow = () => {
@@ -115,29 +138,6 @@ const handleHide = () => {
   if (!props.disabled) emit('hide')
 }
 </script>
-
-<template>
-  <span
-    class="ms-tooltip-wrapper"
-    :class="rootClass"
-    :style="rootStyle"
-    @mouseenter="handleShow"
-    @mouseleave="handleHide"
-  >
-    <span class="ms-tooltip-wrapper__trigger">
-      <slot />
-    </span>
-
-    <span
-      v-if="!disabled && (content || $slots.tooltip)"
-      class="ms-tooltip-wrapper__bubble"
-      :class="bubbleClass"
-      role="tooltip"
-    >
-      <slot name="tooltip">{{ content }}</slot>
-    </span>
-  </span>
-</template>
 
 <style scoped>
 .ms-tooltip-wrapper {

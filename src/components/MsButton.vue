@@ -1,3 +1,14 @@
+<template>
+  <button
+    class="ms-button"
+    :class="buttonClass"
+    :type="type"
+    :disabled="disabled"
+    :style="buttonStyle"
+  >
+    <slot />
+  </button>
+</template>
 <script setup>
 import { computed } from 'vue'
 
@@ -52,12 +63,12 @@ const props = defineProps({
     default: '#0B5A3D',
   },
   width: {
-    type: String,
+    type: [Number, String],
     default: 'auto',
   },
   height: {
-    type: String,
-    default: '32px',
+    type: [Number, String],
+    default: 32,
   },
   justifyContent: {
     type: String,
@@ -65,6 +76,22 @@ const props = defineProps({
   },
   buttonClass: {
     type: [String, Array, Object],
+    default: '',
+  },
+  padding: {
+    type: [Number, String],
+    default: '',
+  },
+  margin: {
+    type: [Number, String],
+    default: '',
+  },
+  gap: {
+    type: [Number, String],
+    default: '',
+  },
+  minWidth: {
+    type: [Number, String],
     default: '',
   },
 })
@@ -89,22 +116,13 @@ const buttonStyle = computed(() => {
   if (props.justifyContent) {
     style.justifyContent = props.justifyContent
   }
-
+  if (props.padding) style.padding = normalizeCssSize(props.padding)
+  if (props.margin) style.margin = normalizeCssSize(props.margin)
+  if (props.gap) style.gap = normalizeCssSize(props.gap)
+  if (props.minWidth) style.minWidth = normalizeCssSize(props.minWidth)
   return style
 })
 </script>
-
-<template>
-  <button
-    class="ms-button"
-    :class="buttonClass"
-    :type="type"
-    :disabled="disabled"
-    :style="buttonStyle"
-  >
-    <slot />
-  </button>
-</template>
 
 <style scoped>
 .ms-button {

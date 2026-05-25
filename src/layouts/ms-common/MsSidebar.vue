@@ -1,95 +1,84 @@
-<script setup lang="ts">
-import { ref } from 'vue'
-import MsButton from '@/components/MsButton.vue'
-import MsTooltip from '@/components/MsTooltip.vue'
-
-const activeKey = ref('salary-composition')
-const isCollapsed = ref(false)
-
-const setActive = (key: string) => {
-  activeKey.value = key
-}
-
-const toggleSidebar = () => {
-  isCollapsed.value = !isCollapsed.value
-}
-</script>
-
 <template>
   <div class="sidebar_container" :class="{ 'is-collapsed': isCollapsed }">
     <div class="sidebar_menu">
-      <MsTooltip
-        content="Tổng quan"
-        placement="right"
-        align="center"
-        :offset="8"
-        :hover-size="0"
-        font-size="12px"
-        line-height="16px"
-      >
-        <MsButton
-          width="100%"
-          active-background-color="#D5D7DA"
-          hover-background-color="#E9EAEB"
-          :background-color="activeKey === 'overview' ? '#E6F5EF' : 'transparent'"
-          :color="activeKey === 'overview' ? '#0e9a62' : '#101828'"
-          border-color="none"
-          justify-content="left"
-          :button-class="['sidebar_menu_button', { active: activeKey === 'overview' }]"
-          @click="setActive('overview')"
+      <RouterLink :to="path.dashboard" class="text-decoration-none">
+        <MsTooltip
+          content="Tổng quan"
+          placement="right"
+          align="center"
+          :offset="8"
+          :hover-size="0"
+          font-size="12px"
+          line-height="16px"
         >
-          <div class="mi-sidebar-home"></div>
-          <div class="sidebar_menu_item_text">Tổng quan</div>
-        </MsButton>
-      </MsTooltip>
-      <MsTooltip
-        content="Thành phần lương"
-        placement="right"
-        align="center"
-        :offset="8"
-        :hover-size="0"
-        font-size="12px"
-        line-height="16px"
-      >
-        <MsButton
-          width="100%"
-          active-background-color="#E6F5EF"
-          hover-background-color="#E6F5EF"
-          :background-color="activeKey === 'salary-composition' ? '#E6F5EF' : 'transparent'"
-          :color="activeKey === 'salary-composition' ? '#0e9a62' : '#101828'"
-          border-color="none"
-          justify-content="left"
-          :button-class="['sidebar_menu_button', { active: activeKey === 'salary-composition' }]"
-          @click="setActive('salary-composition')"
+          <MsButton
+            width="100%"
+            active-background-color="#D5D7DA"
+            hover-background-color="#E9EAEB"
+            :background-color="activeKey === 'overview' ? '#E6F5EF' : 'transparent'"
+            :color="activeKey === 'overview' ? '#0e9a62' : '#101828'"
+            border-color="none"
+            justify-content="left"
+            :button-class="['sidebar_menu_button', { active: activeKey === 'overview' }]"
+            @click="setActive('overview')"
+          >
+            <div class="mi-sidebar-home"></div>
+            <div class="sidebar_menu_item_text">Tổng quan</div>
+          </MsButton>
+        </MsTooltip>
+      </RouterLink>
+      <RouterLink :to="path.salarycomposition" class="text-decoration-none">
+        <MsTooltip
+          content="Thành phần lương"
+          placement="right"
+          align="center"
+          :offset="8"
+          :hover-size="0"
+          font-size="12px"
+          line-height="16px"
         >
-          <div class="mi-sidebar-salary-composition"></div>
-          <div class="sidebar_menu_item_text">Thành phần lương</div>
-        </MsButton>
-      </MsTooltip>
-      <MsTooltip
-        content="Mẫu bảng lương"
-        placement="right"
-        align="center"
-        :offset="8"
-        :hover-size="0"
-        font-size="12px"
-        line-height="16px"
-      >
-        <MsButton
-          width="100%"
-          active-background-color="#D5D7DA"
-          hover-background-color="#E9EAEB"
-          :background-color="activeKey === 'salary-template' ? '#E6F5EF' : 'transparent'"
-          :color="activeKey === 'salary-template' ? '#0e9a62' : '#101828'"
-          border-color="none"
-          justify-content="left"
-          :button-class="['sidebar_menu_button', { active: activeKey === 'salary-template' }]"
-          @click="setActive('salary-template')"
+          <MsButton
+            width="100%"
+            active-background-color="#E6F5EF"
+            hover-background-color="#E6F5EF"
+            :background-color="activeKey === 'salary-composition' ? '#E6F5EF' : 'transparent'"
+            :color="activeKey === 'salary-composition' ? '#0e9a62' : '#101828'"
+            border-color="none"
+            justify-content="left"
+            :button-class="['sidebar_menu_button', { active: activeKey === 'salary-composition' }]"
+            @click="setActive('salary-composition')"
+          >
+            <div class="mi-sidebar-salary-composition"></div>
+            <div class="sidebar_menu_item_text">Thành phần lương</div>
+          </MsButton>
+        </MsTooltip>
+      </RouterLink>
+      <RouterLink :to="path.salaryTemplate" class="text-decoration-none">
+        <MsTooltip
+          content="Mẫu bảng lương"
+          placement="right"
+          align="center"
+          :offset="8"
+          :hover-size="0"
+          font-size="12px"
+          line-height="16px"
         >
-          <div class="mi-sidebar-salary-template"></div>
-          <div class="sidebar_menu_item_text">Mẫu bảng lương</div>
-        </MsButton>
-      </MsTooltip>
+          <MsButton
+            width="100%"
+            active-background-color="#D5D7DA"
+            hover-background-color="#E9EAEB"
+            :background-color="activeKey === 'salary-template' ? '#E6F5EF' : 'transparent'"
+            :color="activeKey === 'salary-template' ? '#0e9a62' : '#101828'"
+            border-color="none"
+            justify-content="left"
+            :button-class="['sidebar_menu_button', { active: activeKey === 'salary-template' }]"
+            @click="setActive('salary-template')"
+          >
+            <div class="mi-sidebar-salary-template"></div>
+            <div class="sidebar_menu_item_text">Mẫu bảng lương</div>
+          </MsButton>
+        </MsTooltip>
+      </RouterLink>
       <MsTooltip
         content="Dữ liệu tính lương"
         placement="right"
@@ -207,6 +196,24 @@ const toggleSidebar = () => {
   </div>
 </template>
 
+<script setup lang="ts">
+import { ref } from 'vue'
+import MsButton from '@/components/MsButton.vue'
+import MsTooltip from '@/components/MsTooltip.vue'
+import { path } from '@/utils/path'
+
+const activeKey = ref('salary-composition')
+const isCollapsed = ref(false)
+
+const setActive = (key: string) => {
+  activeKey.value = key
+}
+
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value
+}
+</script>
+
 <style scoped>
 .sidebar_container {
   position: relative;
@@ -228,6 +235,10 @@ const toggleSidebar = () => {
   gap: 4px;
   width: 100%;
   padding-bottom: 40px;
+}
+
+.text-decoration-none {
+  text-decoration: none;
 }
 
 .sidebar_menu :deep(.ms-tooltip-wrapper),
@@ -316,7 +327,7 @@ const toggleSidebar = () => {
   flex-shrink: 0;
   border-radius: 8px 0 0;
   border-top: 1px solid #e9eaeb;
-  border-left: 1px solid #e9eaeb;;
+  border-left: 1px solid #e9eaeb;
   border-right: none;
   border-bottom: none;
   pointer-events: auto;
@@ -330,7 +341,7 @@ const toggleSidebar = () => {
 }
 
 .sidebar_toggle:hover {
-  background: #E9EAEB;
+  background: #e9eaeb;
 }
 
 .sidebar_container.is-collapsed .mi-sidebar-toggle-icon {

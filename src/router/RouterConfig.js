@@ -3,6 +3,8 @@ import MainLayout from '@/layouts/MainLayout.vue'
 import SalaryComposition from '@/views/salaryComposition/SalaryComposition.vue'
 import { path } from '@/utils/path'
 import SalarycompositionSystem from '@/views/salaryCompositionSystem/SalarycompositionSystem.vue'
+import DashBoard from '@/views/dashboard/DashBoard.vue'
+import SalaryTemplate from '@/views/salaryTemplate/SalaryTemplate.vue'
 
 const routes = [
   {
@@ -17,6 +19,14 @@ const routes = [
       {
         path: path.systemCategory,
         component: SalarycompositionSystem,
+      },
+      {
+        path: path.dashboard,
+        component: DashBoard,
+      },
+      {
+        path: path.salaryTemplate,
+        component: SalaryTemplate,
       },
       // {
       //   path: '/:pathMatch(.*)*',

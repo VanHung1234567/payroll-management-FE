@@ -1,1 +1,111 @@
-<template>SalaryComposition</template>
+<script setup lang="ts">
+import GridOptions from '@/components/GridOptions.vue'
+import MsButton from '@/components/MsButton.vue'
+</script>
+
+<template>
+  <div class="content-header">
+    <h2 class="content-header__title">Thành phần lương</h2>
+    <div class="content-header__actions">
+      <MsButton
+        background-color="#FFFFFF"
+        border-color="#D5D7DA"
+        color="#101828"
+        gap="4px"
+        hover-background-color="#E9EAEB"
+        hover-border-color="#D5D7DA"
+        active-background-color="#D5D7DA"
+        active-border-color="#D5D7DA"
+      >
+        <div class="mi-rule"></div>
+        <div class="system-category-text">Danh mục của hệ thống</div>
+      </MsButton>
+      <div class="container-action-add">
+        <MsButton border-radius="8px 0 0 8px" gap="4px">
+          <div class="mi-plus-white"></div>
+          Thêm
+        </MsButton>
+        <div class="div-division"><div class="div-division-child"></div></div>
+        <MsButton border-radius="0 8px 8px 0">
+          <div class="mi-chevron-down-white"></div>
+        </MsButton>
+      </div>
+    </div>
+  </div>
+
+  <GridOptions />
+</template>
+
+<style scoped>
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.content-header__title {
+  letter-spacing: 0.6px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.content-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.system-category-text {
+  font-size: 13px;
+  line-height: 18px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.container-action-add {
+  display: flex;
+  align-items: center;
+}
+
+.div-division {
+  display: flex;
+  align-items: center;
+  width: 1px;
+  height: 32px;
+  background-color: #0e9a62;
+}
+
+.div-division-child {
+  width: 1px;
+  height: 20px;
+  background-color: #fff;
+}
+
+.mi-rule {
+  width: 17px;
+  height: 17px;
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
+  -webkit-mask-position: -82px -101px;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #6e737a;
+}
+
+.mi-plus-white {
+  width: 16px;
+  height: 18px;
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
+  -webkit-mask-position: -240px -1px;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #fff;
+}
+
+.mi-chevron-down-white {
+  width: 12px;
+  height: 8px;
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
+  -webkit-mask-position: -124px -6px;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #fff;
+}
+</style>
