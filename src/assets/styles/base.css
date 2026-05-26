@@ -58,7 +58,7 @@
 
   /* Size and spacing */
   --font-family-base: Inter, Arial, sans-serif;
-  --font-size-base: 14px;
+  --font-size-base: 13px;
   --control-height: 36px;
   --button-min-width: 80px;
   --button-padding-x: 16px;
@@ -184,7 +184,7 @@ select:disabled {
 }
 
 /* Textbox */
-.ms-input {
+/* .ms-input {
   width: 100%;
   height: var(--control-height);
   padding: 0 12px;
@@ -193,9 +193,9 @@ select:disabled {
   color: var(--color-text-primary);
   outline: none;
   background: var(--color-surface);
-}
+} */
 
-.ms-input:hover,
+/* .ms-input:hover,
 .ms-input:focus {
   border-color: var(--color-primary);
 }
@@ -215,7 +215,7 @@ select:disabled {
   margin-top: 8px;
   color: var(--color-error);
   font-size: 12px;
-}
+} */
 
 /* Dropdown and menu */
 .ms-dropdown {
@@ -513,5 +513,13 @@ select:disabled {
 
 .py-12 {
   padding: 12px 0px;
+}
+
+.gap-8 {
+  gap: 8px;
+}
+
+.w-300 {
+  width: 300px;
 }
 

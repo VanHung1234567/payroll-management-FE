@@ -1,20 +1,23 @@
-import axios from 'axios';
+import axios from 'axios'
 
-const baseURL = "https://localhost:7291/api";
+const baseURL = 'https://localhost:7291/api/'
 
 let api = axios.create({
-    baseURL: baseURL,
-    headers: {
-        'Content-Type': 'application/json'
-    }
+  baseURL: baseURL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 })
 
 // Xử lý call API gặp lỗi 401 hoặc 403
-api.interceptors.response.use((response) => response, (error) => {
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
     if (error && error.response && [401, 403].includes(error.response.status)) {
-        // handle error
+      // handle error
     }
-    return Promise.reject(error);
-});
+    return Promise.reject(error)
+  },
+)
 
-export default api;
+export default api

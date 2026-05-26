@@ -23,10 +23,16 @@ import MsButton from '@/components/MsButton.vue'
       <div class="container-action-add">
         <MsButton border-radius="8px 0 0 8px" gap="4px">
           <div class="mi-plus-white"></div>
-          Thêm
+          <div class="action-add-text">Thêm</div>
         </MsButton>
         <div class="div-division"><div class="div-division-child"></div></div>
-        <MsButton border-radius="0 8px 8px 0">
+        <MsButton
+          width="32px"
+          height="32px"
+          min-width="32px"
+          padding="0"
+          border-radius="0 8px 8px 0"
+        >
           <div class="mi-chevron-down-white"></div>
         </MsButton>
       </div>
@@ -67,6 +73,12 @@ import MsButton from '@/components/MsButton.vue'
   display: flex;
   align-items: center;
 }
+.action-add-text {
+  font-size: 13px;
+  line-height: 18px;
+  white-space: nowrap;
+  font-weight: 500;
+}
 
 .div-division {
   display: flex;
@@ -84,6 +96,8 @@ import MsButton from '@/components/MsButton.vue'
 
 .mi-rule {
   width: 17px;
+  display: inline-block;
+  flex-shrink: 0;
   height: 17px;
   -webkit-mask-image: url('../../assets/images/ICON.svg');
   -webkit-mask-position: -82px -101px;
@@ -93,6 +107,8 @@ import MsButton from '@/components/MsButton.vue'
 
 .mi-plus-white {
   width: 16px;
+  display: inline-block;
+  flex-shrink: 0;
   height: 18px;
   -webkit-mask-image: url('../../assets/images/ICON.svg');
   -webkit-mask-position: -240px -1px;
@@ -102,6 +118,8 @@ import MsButton from '@/components/MsButton.vue'
 
 .mi-chevron-down-white {
   width: 12px;
+  display: inline-block;
+  flex-shrink: 0;
   height: 8px;
   -webkit-mask-image: url('../../assets/images/ICON.svg');
   -webkit-mask-position: -124px -6px;

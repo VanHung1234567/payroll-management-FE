@@ -349,6 +349,8 @@ const toggleSidebar = () => {
 }
 
 .mi-sidebar-home {
+  display: inline-block;
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
   -webkit-mask-image: url('../../assets/images/ICON_2.svg');
@@ -358,6 +360,8 @@ const toggleSidebar = () => {
 }
 
 .mi-sidebar-salary-composition {
+  display: inline-block;
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
   -webkit-mask-image: url('../../assets/images/ICON_2.svg');
@@ -367,6 +371,8 @@ const toggleSidebar = () => {
 }
 
 .mi-sidebar-salary-template {
+  display: inline-block;
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
   -webkit-mask-image: url('../../assets/images/ICON_2.svg');
@@ -376,6 +382,8 @@ const toggleSidebar = () => {
 }
 
 .mi-sidebar-salary-data {
+  display: inline-block;
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
   -webkit-mask-image: url('../../assets/images/ICON_2.svg');
@@ -385,6 +393,8 @@ const toggleSidebar = () => {
 }
 
 .mi-sidebar-salary-table {
+  display: inline-block;
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
   -webkit-mask-image: url('../../assets/images/ICON_2.svg');
@@ -394,6 +404,8 @@ const toggleSidebar = () => {
 }
 
 .mi-sidebar-payment {
+  display: inline-block;
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
   -webkit-mask-image: url('../../assets/images/ICON_2.svg');
@@ -403,6 +415,8 @@ const toggleSidebar = () => {
 }
 
 .mi-sidebar-report {
+  display: inline-block;
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
   -webkit-mask-image: url('../../assets/images/ICON_2.svg');
@@ -412,6 +426,8 @@ const toggleSidebar = () => {
 }
 
 .mi-icon-chevron-right {
+  display: inline-block;
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
   -webkit-mask-image: url('../../assets/images/ICON_3.svg');
@@ -421,6 +437,8 @@ const toggleSidebar = () => {
   background-color: #717680;
 }
 .mi-sidebar-toggle-icon {
+  display: inline-block;
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
   -webkit-mask-image: url('../../assets/images/ICON_Collapse.svg');

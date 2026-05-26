@@ -243,6 +243,8 @@ const headerActions = [
 }
 
 .mi-icon-ninedot {
+  display: inline-block;
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
   -webkit-mask-image: url('../../assets/images/ICON.svg');
@@ -252,6 +254,8 @@ const headerActions = [
 }
 
 .mi-icon-search-white {
+  display: inline-block;
+  flex-shrink: 0;
   width: 20px;
   height: 20px;
   -webkit-mask-image: url('../../assets/images/ICON.svg');
@@ -261,6 +265,8 @@ const headerActions = [
 }
 
 .mi-setting-white {
+  display: inline-block;
+  flex-shrink: 0;
   width: 20px;
   height: 20px;
   -webkit-mask-image: url('../../assets/images/ICON_2.svg');
