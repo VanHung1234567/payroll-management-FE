@@ -6,7 +6,7 @@
     </label>
 
     <div class="ms-input__control">
-      <span v-if="$slots.prefix" class="ms-input__icon ms-input__prefix">
+      <span title="Tìm kiếm" v-if="$slots.prefix" class="ms-input__icon ms-input__prefix">
         <slot name="prefix" />
       </span>
 

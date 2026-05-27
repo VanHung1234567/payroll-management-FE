@@ -66,6 +66,8 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --shadow-dropdown: 0 4px 16px rgb(0 0 0 / 16%);
+
+  --ms-color-neutral-300: #e9eaeb;
 }
 
 * {
@@ -73,6 +75,8 @@
   padding: 0;
   box-sizing: border-box;
   font-family: var(--font-family-base);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ms-color-neutral-300, #b0b0b0) transparent;
 }
 
 #app {
@@ -91,6 +95,7 @@ input,
 textarea,
 select {
   font: inherit;
+  border-radius: 4px;
 }
 
 button {
@@ -522,4 +527,3 @@ select:disabled {
 .w-300 {
   width: 300px;
 }
-

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import GridOptions from '@/components/GridOptions.vue'
+import GridTable from '@/components/GridTable.vue'
 import MsButton from '@/components/MsButton.vue'
 </script>
 
@@ -40,6 +41,7 @@ import MsButton from '@/components/MsButton.vue'
   </div>
 
   <GridOptions />
+  <GridTable />
 </template>
 
 <style scoped>

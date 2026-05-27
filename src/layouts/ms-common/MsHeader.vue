@@ -17,7 +17,7 @@
     </div>
     <div class="navbar__right">
       <div class="navbar__right__search">
-        <div class="mi-icon-search-white"></div>
+        <div title="Tìm kiếm" class="mi-icon-search-white"></div>
         <input type="text" placeholder="Tìm kiếm" class="search-input" />
       </div>
 
