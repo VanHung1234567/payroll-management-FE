@@ -378,12 +378,6 @@ select:disabled {
   background: var(--color-icon-pressed-bg);
 }
 
-/* Scrollbar */
-* {
-  scrollbar-color: var(--color-scrollbar) transparent;
-  scrollbar-width: thin;
-}
-
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

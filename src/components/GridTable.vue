@@ -22,7 +22,6 @@
     >
       <DxScrolling mode="standard" show-scrollbar="always" :use-native="true" />
       <DxPaging :enabled="false" />
-      <DxLoadPanel :enabled="isLoading" />
 
       <DxColumn
         :width="50"
@@ -200,6 +199,10 @@
       <div class="ms-table__empty-text">Không có dữ liệu</div>
     </div>
 
+    <div v-if="isLoading" class="ms-table__loading-overlay">
+      <div class="ms-loading"></div>
+    </div>
+
     <div
       v-if="hoveredRow"
       class="ms-table__floating-actions"
@@ -300,7 +303,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import { DxColumn, DxDataGrid, DxLoadPanel, DxPaging, DxScrolling } from 'devextreme-vue/data-grid'
+import { DxColumn, DxDataGrid, DxPaging, DxScrolling } from 'devextreme-vue/data-grid'
 import 'devextreme/dist/css/dx.light.css'
 import GridConfigAPI from '@/apis/components/gridConfig/GridConfig.js'
 import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI.js'
@@ -314,7 +317,7 @@ const props = defineProps({
     default: 'salary_composition',
   },
   dataApi: {
-    type: Object,
+    type: [Object, String],
     default: () => SalaryCompositionAPI,
   },
   keyExpr: {
@@ -336,6 +339,10 @@ const props = defineProps({
   searchFields: {
     type: String,
     default: '',
+  },
+  filters: {
+    type: Object,
+    default: () => ({}),
   },
 })
 
@@ -383,13 +390,35 @@ const resolvedDataApi = computed(() => {
   return DATA_API_MAP[props.dataApi] || SalaryCompositionAPI
 })
 
+const normalizedFilters = computed(() => {
+  const entries = Object.entries(props.filters || {}).filter(([, value]) => {
+    if (Array.isArray(value)) return value.length > 0
+    return value !== null && value !== undefined && value !== ''
+  })
+
+  return Object.fromEntries(entries)
+})
+
+const hasActiveFilters = computed(() => Object.keys(normalizedFilters.value).length > 0)
+
+function getPagingPayload() {
+  return {
+    pageIndex: pageIndex.value,
+    pageSize: pageSize.value,
+    search: props.search,
+    sort: sort.value,
+    searchFields: props.searchFields,
+    ...normalizedFilters.value,
+  }
+}
+
 // Chỉ các field thật có trong bảng/database mới được gửi lên backend để sort.
 // Các field hiển thị như NatureName, TaxTypeName... chỉ là field ảo ở frontend.
 const DB_SORT_FIELDS = new Set([
   'SalaryCompositionID',
   'SalaryCompositionCode',
   'SalaryCompositionName',
-  'OrganizationID',
+  'OrganizationIDs',
   'SalaryCompositionTypeID',
   'Nature',
   'TaxType',
@@ -441,6 +470,7 @@ const pagingQueryKey = computed(() => [
   props.search,
   props.searchFields,
   sort.value,
+  normalizedFilters.value,
 ])
 
 const { data: gridConfigResponse, isFetching: isConfigFetching } = useQuery({
@@ -450,14 +480,14 @@ const { data: gridConfigResponse, isFetching: isConfigFetching } = useQuery({
 
 const { data: pagingResponse, isFetching: isRowsFetching } = useQuery({
   queryKey: pagingQueryKey,
-  queryFn: () =>
-    resolvedDataApi.value.paging({
-      pageIndex: pageIndex.value,
-      pageSize: pageSize.value,
-      search: props.search,
-      sort: sort.value,
-      searchFields: props.searchFields,
-    }),
+  queryFn: () => {
+    const payload = getPagingPayload()
+    if (hasActiveFilters.value && typeof resolvedDataApi.value.filter === 'function') {
+      return resolvedDataApi.value.filter(payload)
+    }
+
+    return resolvedDataApi.value.paging(payload)
+  },
 })
 
 const isLoading = computed(() => isConfigFetching.value || isRowsFetching.value)
@@ -486,6 +516,14 @@ watch(
   () => {
     gridTableStore.setSearch(props.gridKey, props.search, props.searchFields)
   },
+)
+
+watch(
+  normalizedFilters,
+  () => {
+    pageIndex.value = 1
+  },
+  { deep: true },
 )
 
 const pagingData = computed(() => normalizeResponseData(pagingResponse.value))
@@ -1136,12 +1174,6 @@ onBeforeUnmount(() => {
 .ms-table .dx-datagrid-rowsview .dx-scrollable-wrapper,
 .ms-table .dx-datagrid-rowsview .dx-scrollable-container {
   height: calc(100% - 8px) !important;
-}
-
-/* Nếu DevExtreme render native scrollbar trong vài browser thì giữ mỏng 8px */
-.ms-table .dx-scrollable-container {
-  scrollbar-width: thin;
-  scrollbar-color: #9e9e9e transparent;
 }
 
 .ms-table .dx-scrollable-container::-webkit-scrollbar {
@@ -1902,5 +1934,30 @@ onBeforeUnmount(() => {
   width: 195px;
   height: 133px;
   background-position: -152px -3046px;
+}
+
+.ms-table__loading-overlay {
+  position: absolute;
+  inset: 36px 0 48px;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+.ms-loading {
+  width: 26px;
+  height: 26px;
+  animation: spin 1s linear infinite;
+  background-image: url('../assets/images/Loading.svg');
+  background-size: contain;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

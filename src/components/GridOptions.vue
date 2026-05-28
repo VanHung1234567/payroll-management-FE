@@ -3,7 +3,14 @@ import MsButton from './MsButton.vue'
 import MsInput from './MsInput.vue'
 import MsTooltip from './MsTooltip.vue'
 
+defineProps({
+  search: {
+    type: String,
+    default: '',
+  },
+})
 
+const emit = defineEmits(['update:search'])
 </script>
 
 <template>
@@ -11,7 +18,11 @@ import MsTooltip from './MsTooltip.vue'
     <div class="flex items-center justify-between w-full h-full">
       <div class="flex items-center gap-8">
         <div class="w-300">
-          <MsInput placeholder="Tìm kiếm">
+          <MsInput
+            :model-value="search"
+            placeholder="Tìm kiếm"
+            @update:model-value="emit('update:search', $event)"
+          >
             <template #prefix>
               <div class="mi-search"></div>
             </template>

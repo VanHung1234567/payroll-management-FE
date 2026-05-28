@@ -5,6 +5,8 @@ import { path } from '@/utils/path'
 import SalarycompositionSystem from '@/views/salaryCompositionSystem/SalarycompositionSystem.vue'
 import DashBoard from '@/views/dashboard/DashBoard.vue'
 import SalaryTemplate from '@/views/salaryTemplate/SalaryTemplate.vue'
+import FormSalaryComposition from '@/views/salaryComposition/FormSalaryComposition.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
 
 const routes = [
   {
@@ -28,11 +30,15 @@ const routes = [
         path: path.salaryTemplate,
         component: SalaryTemplate,
       },
-      // {
-      //   path: '/:pathMatch(.*)*',
-      //   component: NotFoundView,
-      // },
+      {
+        path: path.add,
+        component: FormSalaryComposition,
+      },
     ],
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    component: NotFoundView,
   },
 ]
 

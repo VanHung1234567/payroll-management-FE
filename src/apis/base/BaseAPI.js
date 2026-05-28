@@ -17,6 +17,11 @@ export default class BaseAPI {
   paging(payload) {
     return api.post(`${this.controller}/paging`, payload)
   }
+
+  filter(payload) {
+    return api.post(`${this.controller}/filter`, payload)
+  }
+
   /**
    * Hàm cập nhật dữ liệu
    * @param {*} id

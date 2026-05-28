@@ -18,10 +18,12 @@
         </MsButton>
       </RouterLink>
       <div class="container-action-add">
-        <MsButton border-radius="8px 0 0 8px" gap="4px">
-          <div class="mi-plus-white"></div>
-          <div class="action-add-text">Thêm</div>
-        </MsButton>
+        <RouterLink :to="path.add" style="text-decoration: none">
+          <MsButton border-radius="8px 0 0 8px" gap="4px">
+            <div class="mi-plus-white"></div>
+            <div class="action-add-text">Thêm</div>
+          </MsButton>
+        </RouterLink>
         <div class="div-division"><div class="div-division-child"></div></div>
         <MsButton
           width="32px"
@@ -36,7 +38,7 @@
     </div>
   </div>
 
-  <GridOptions>
+  <GridOptions v-model:search="searchKeyword">
     <template #options>
       <MsSelect v-model="selectedStatus" label="Trạng thái" :options="statusOptions" />
 
@@ -50,7 +52,11 @@
       />
     </template>
   </GridOptions>
-  <GridTable />
+  <GridTable
+    :search="debouncedSearchKeyword"
+    search-fields="SalaryCompositionCode,SalaryCompositionName"
+    :filters="salaryCompositionFilters"
+  />
 </template>
 
 <script setup lang="ts">
@@ -59,18 +65,21 @@ import GridTable from '@/components/GridTable.vue'
 import MsButton from '@/components/MsButton.vue'
 import { path } from '@/utils/path'
 import { useQuery } from '@tanstack/vue-query'
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import OrganizationAPI from '@/apis/components/organization/Organization.js'
 import MsSelect from '@/components/MsSelect.vue'
 import MsTreeSelect from '@/components/MsTreeSelect.vue'
 
 const selectedStatus = ref<number | string>('')
 const selectedOrganizationIds = ref<string[]>([])
+const searchKeyword = ref('')
+const debouncedSearchKeyword = ref('')
+let searchDebounceTimer: ReturnType<typeof window.setTimeout> | null = null
 
 const statusOptions = [
   { label: 'Tất cả', value: null },
   { label: 'Đang theo dõi', value: 1 },
-  { label: 'Ngừng theo dõi', value: 2 },
+  { label: 'Ngừng theo dõi', value: 0 },
 ]
 
 const { data: organizationResponse } = useQuery({
@@ -79,6 +88,36 @@ const { data: organizationResponse } = useQuery({
 })
 
 const organizations = computed(() => organizationResponse.value?.data?.data ?? [])
+
+watch(searchKeyword, (value) => {
+  if (searchDebounceTimer) {
+    window.clearTimeout(searchDebounceTimer)
+  }
+
+  searchDebounceTimer = window.setTimeout(() => {
+    debouncedSearchKeyword.value = value
+  }, 300)
+})
+
+onBeforeUnmount(() => {
+  if (searchDebounceTimer) {
+    window.clearTimeout(searchDebounceTimer)
+  }
+})
+
+const salaryCompositionFilters = computed(() => {
+  const filters: Record<string, string | number> = {}
+
+  if (selectedStatus.value !== null && selectedStatus.value !== '') {
+    filters.status = Number(selectedStatus.value)
+  }
+
+  if (selectedOrganizationIds.value.length) {
+    filters.organizationIDs = selectedOrganizationIds.value.join(';')
+  }
+
+  return filters
+})
 </script>
 
 <style scoped>

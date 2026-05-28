@@ -1,5 +1,10 @@
 <template>
-  <div ref="selectRef" class="ms-select" :style="selectStyle">
+  <div
+    ref="selectRef"
+    class="ms-select"
+    :class="[`ms-select--${variant}`, { 'is-error': isInvalid, 'is-full-width': fullWidth }]"
+    :style="selectStyle"
+  >
     <button
       type="button"
       class="ms-select__trigger"
@@ -7,14 +12,26 @@
       :disabled="disabled"
       @click="toggleDropdown"
     >
-      <span v-if="label" class="ms-select__label">{{ label }}:</span>
-      <span class="ms-select__value">{{ selectedLabel }}</span>
-      <span class="mi-chevron-down"></span>
+      <template v-if="searchable && isOpen">
+        <input
+          ref="searchInputRef"
+          v-model="searchText"
+          class="ms-select__search-input"
+          :placeholder="searchPlaceholder || placeholder"
+          @click.stop
+          @keydown.stop
+        />
+      </template>
+      <template v-else>
+        <span v-if="label" class="ms-select__label">{{ label }}:</span>
+        <span class="ms-select__value">{{ selectedLabel }}</span>
+      </template>
+      <span :class="variant === 'form' ? 'chevron-down-form' : 'mi-chevron-down'"></span>
     </button>
 
-    <div v-if="isOpen" class="ms-select__menu" :style="menuStyle">
+    <div v-if="isOpen" class="ms-select__menu" :class="menuClass" :style="menuStyle">
       <button
-        v-for="option in options"
+        v-for="option in filteredOptions"
         :key="getOptionValue(option) ?? 'all'"
         type="button"
         class="ms-select__item"
@@ -22,14 +39,18 @@
         @click="selectOption(option)"
       >
         <span class="ms-select__item-label">{{ getOptionLabel(option) }}</span>
-        <span v-if="isSelected(option)" class="mi-check"></span>
+        <span v-if="isSelected(option) && variant !== 'form'" class="mi-check"></span>
       </button>
+
+      <div v-if="!filteredOptions.length" class="ms-select__empty">Không có dữ liệu</div>
     </div>
+
+    <div v-if="isInvalid && errorMessage" class="ms-select__error">{{ errorMessage }}</div>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -68,12 +89,44 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  searchable: {
+    type: Boolean,
+    default: false,
+  },
+  searchPlaceholder: {
+    type: String,
+    default: '',
+  },
+  placement: {
+    type: String,
+    default: 'bottom',
+    validator: (value) => ['bottom', 'top'].includes(value),
+  },
+  fullWidth: {
+    type: Boolean,
+    default: false,
+  },
+  variant: {
+    type: String,
+    default: 'filter',
+    validator: (value) => ['filter', 'form'].includes(value),
+  },
+  errorMessage: {
+    type: String,
+    default: '',
+  },
+  meta: {
+    type: Object,
+    default: null,
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
 
 const selectRef = ref(null)
+const searchInputRef = ref(null)
 const isOpen = ref(false)
+const searchText = ref('')
 
 const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : value)
 
@@ -83,6 +136,10 @@ const selectStyle = computed(() => ({
 
 const menuStyle = computed(() => ({
   width: normalizeCssSize(props.menuWidth),
+}))
+
+const menuClass = computed(() => ({
+  'ms-select__menu--top': props.placement === 'top',
 }))
 
 const getOptionLabel = (option) => option?.[props.labelKey] ?? ''
@@ -96,6 +153,15 @@ const selectedLabel = computed(() =>
   selectedOption.value ? getOptionLabel(selectedOption.value) : props.placeholder,
 )
 
+const filteredOptions = computed(() => {
+  const keyword = searchText.value.trim().toLowerCase()
+  if (!props.searchable || !keyword) return props.options
+
+  return props.options.filter((option) => getOptionLabel(option).toLowerCase().includes(keyword))
+})
+
+const isInvalid = computed(() => Boolean(props.errorMessage && (!props.meta || props.meta.touched)))
+
 const isSelected = (option) => getOptionValue(option) === props.modelValue
 
 const toggleDropdown = () => {
@@ -107,6 +173,7 @@ const selectOption = (option) => {
   emit('update:modelValue', value)
   emit('change', option)
   isOpen.value = false
+  searchText.value = ''
 }
 
 const handleClickOutside = (event) => {
@@ -122,15 +189,33 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleClickOutside)
 })
+
+watch(isOpen, async (value) => {
+  if (!value) {
+    searchText.value = ''
+    return
+  }
+
+  if (props.searchable) {
+    await nextTick()
+    searchInputRef.value?.focus?.()
+  }
+})
 </script>
 
 <style scoped>
 .ms-select {
   position: relative;
   display: inline-flex;
+  flex-direction: column;
+}
+
+.ms-select.is-full-width {
+  width: 100%;
 }
 
 .ms-select__trigger {
+  width: 100%;
   height: 32px;
   padding: 0 12px;
   display: inline-flex;
@@ -148,10 +233,21 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
 }
 
+.ms-select--form .ms-select__trigger {
+  gap: 20px;
+  letter-spacing: 1px;
+}
+
 .ms-select__trigger:hover,
 .ms-select__trigger.is-open {
   background-color: #e9eaeb;
   border-color: #d5d7da;
+}
+
+.ms-select--form .ms-select__trigger:hover,
+.ms-select--form .ms-select__trigger.is-open {
+  background-color: #fff;
+  border-color: #0e9a62;
 }
 
 .ms-select__trigger:disabled {
@@ -164,8 +260,30 @@ onBeforeUnmount(() => {
 }
 
 .ms-select__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: #101828;
   font-weight: 500;
+}
+
+.ms-select--form .ms-select__value {
+  font-weight: 400;
+}
+
+.ms-select__search-input {
+  min-width: 0;
+  width: 100%;
+  height: 30px;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #101828;
+  caret-color: #0e9a62;
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .ms-select__menu {
@@ -178,6 +296,17 @@ onBeforeUnmount(() => {
   background: #fff;
   box-shadow: 0 4px 16px #0000001f;
   box-sizing: border-box;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.ms-select--form .ms-select__menu {
+  padding: 4px 0;
+}
+
+.ms-select__menu--top {
+  top: auto;
+  bottom: calc(100% + 4px);
 }
 
 .ms-select__item {
@@ -200,6 +329,12 @@ onBeforeUnmount(() => {
   border-radius: 4px;
 }
 
+.ms-select--form .ms-select__item {
+  min-height: 34px;
+  height: auto;
+  padding: 8px 12px;
+}
+
 .ms-select__item:hover {
   background: #e9eaeb;
 }
@@ -215,6 +350,24 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ms-select__empty {
+  padding: 8px 12px;
+  color: #717680;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.ms-select.is-error .ms-select__trigger {
+  border-color: #f04438;
+}
+
+.ms-select__error {
+  margin-top: 4px;
+  color: #f04438;
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .mi-check {
@@ -238,5 +391,25 @@ onBeforeUnmount(() => {
   -webkit-mask-repeat: no-repeat;
   background-color: #6e737a;
   margin-left: 4px;
+  transition: transform 0.12s ease;
+}
+
+.chevron-down-form {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  -webkit-mask-image: url('../assets/images/ICON_3.svg');
+  -webkit-mask-position: -32px -224px;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 752px 400px;
+  flex-shrink: 0;
+  background-image: none;
+  background-color: #717680;
+  transition: transform 0.12s ease;
+}
+
+.ms-select__trigger.is-open .mi-chevron-down,
+.ms-select__trigger.is-open .chevron-down-form {
+  transform: rotate(180deg);
 }
 </style>
