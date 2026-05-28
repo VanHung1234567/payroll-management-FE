@@ -195,6 +195,11 @@
       </template>
     </DxDataGrid>
 
+    <div v-if="showEmptyState" class="ms-table__empty-state">
+      <div class="ms-empty"></div>
+      <div class="ms-table__empty-text">Không có dữ liệu</div>
+    </div>
+
     <div
       v-if="hoveredRow"
       class="ms-table__floating-actions"
@@ -202,7 +207,11 @@
       @mouseenter="clearActionHideTimer"
       @mouseleave="scheduleHideRowActions"
     >
-      <button type="button" class="button-command-wrap" @click.stop="$emit('row-active', hoveredRow)">
+      <button
+        type="button"
+        class="button-command-wrap"
+        @click.stop="$emit('row-active', hoveredRow)"
+      >
         <span
           :class="isActiveStatus(hoveredRow) ? 'ms-circle-orange' : 'ms-circle-check-green'"
           :title="isActiveStatus(hoveredRow) ? 'Ngừng theo dõi' : 'Đang theo dõi'"
@@ -214,7 +223,11 @@
       <button type="button" class="button-command-wrap" @click.stop="$emit('row-edit', hoveredRow)">
         <span class="ms-pencil" title="Sửa"></span>
       </button>
-      <button type="button" class="button-command-wrap" @click.stop="$emit('row-delete', hoveredRow)">
+      <button
+        type="button"
+        class="button-command-wrap"
+        @click.stop="$emit('row-delete', hoveredRow)"
+      >
         <span class="ms-trash-red" title="Xóa"></span>
       </button>
     </div>
@@ -291,6 +304,7 @@ import { DxColumn, DxDataGrid, DxLoadPanel, DxPaging, DxScrolling } from 'devext
 import 'devextreme/dist/css/dx.light.css'
 import GridConfigAPI from '@/apis/components/gridConfig/GridConfig.js'
 import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI.js'
+import SalaryCompositionSystemAPI from '@/apis/components/salaryCompositionSystem/SalaryCompositionSystem.js'
 import MsPagination from '@/components/MsPagination.vue'
 import { useGridTableStore } from '@/stores/gridTable.js'
 
@@ -357,6 +371,17 @@ const isGridReady = ref(false)
 const suppressOrderPersist = ref(false)
 let suppressOrderPersistTimer = null
 let persistQueue = Promise.resolve()
+
+const DATA_API_MAP = {
+  SalaryCompositionAPI,
+  SalaryCompositionSystemAPI,
+}
+
+const resolvedDataApi = computed(() => {
+  if (typeof props.dataApi !== 'string') return props.dataApi
+
+  return DATA_API_MAP[props.dataApi] || SalaryCompositionAPI
+})
 
 // Chỉ các field thật có trong bảng/database mới được gửi lên backend để sort.
 // Các field hiển thị như NatureName, TaxTypeName... chỉ là field ảo ở frontend.
@@ -426,7 +451,7 @@ const { data: gridConfigResponse, isFetching: isConfigFetching } = useQuery({
 const { data: pagingResponse, isFetching: isRowsFetching } = useQuery({
   queryKey: pagingQueryKey,
   queryFn: () =>
-    props.dataApi.paging({
+    resolvedDataApi.value.paging({
       pageIndex: pageIndex.value,
       pageSize: pageSize.value,
       search: props.search,
@@ -466,13 +491,23 @@ watch(
 const pagingData = computed(() => normalizeResponseData(pagingResponse.value))
 const rows = computed(() => pagingData.value.data || [])
 const total = computed(() => pagingData.value.total || rows.value.length)
+const showEmptyState = computed(() => !isLoading.value && rows.value.length === 0)
 
-const tableRows = computed(() =>
-  rows.value.map((row) => ({
+const tableRows = computed(() => {
+  if (showEmptyState.value) {
+    return [
+      {
+        [props.keyExpr]: '__ms_empty_row__',
+        __msEmptyRow: true,
+      },
+    ]
+  }
+
+  return rows.value.map((row) => ({
     ...row,
     __msSelected: selectedKeys.value.has(getRowKey(row)),
-  })),
-)
+  }))
+})
 
 const displayColumns = computed(() =>
   configColumns.value
@@ -642,6 +677,11 @@ function handleRowPrepared(event) {
   if (event.rowType !== 'data') return
   const rowElement = event.rowElement?.classList ? event.rowElement : event.rowElement?.[0]
   if (!rowElement) return
+
+  if (event.data.__msEmptyRow) {
+    rowElement.classList.add('is-empty-placeholder')
+    return
+  }
 
   rowElement.classList.toggle('is-selected', Boolean(event.data.__msSelected))
   rowElement.style.position = 'relative'
@@ -1623,6 +1663,31 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 
+.ms-table__empty-state {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  bottom: 48px;
+  left: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.ms-table__empty-text {
+  margin-top: 16px;
+  color: #101828;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.ms-table .dx-datagrid-nodata {
+  display: none !important;
+}
+
 .ms-table-dialog__overlay {
   position: fixed;
   inset: 0;
@@ -1828,5 +1893,14 @@ onBeforeUnmount(() => {
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   background-color: #ff6161;
+}
+
+.ms-empty {
+  display: inline-block;
+  background-image: url('../assets/images/Empty.svg');
+  background-repeat: no-repeat;
+  width: 195px;
+  height: 133px;
+  background-position: -152px -3046px;
 }
 </style>

@@ -1,30 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import OrganizationAPI from '@/apis/components/organization/Organization.js'
 import MsButton from './MsButton.vue'
 import MsInput from './MsInput.vue'
-import MsSelect from './MsSelect.vue'
 import MsTooltip from './MsTooltip.vue'
-import MsTreeSelect from './MsTreeSelect.vue'
 
-const selectedStatus = ref<number | null>(null)
-const selectedOrganizationIds = ref<string[]>([])
 
-const statusOptions = [
-  { label: 'Tất cả', value: null },
-  { label: 'Đang theo dõi', value: 1 },
-  { label: 'Ngừng theo dõi', value: 2 },
-]
-
-const { data: organizationResponse } = useQuery({
-  queryKey: ['organizations'],
-  queryFn: () => OrganizationAPI.getAll(),
-})
-
-console.log(organizationResponse)
-
-const organizations = computed(() => organizationResponse.value?.data?.data ?? [])
 </script>
 
 <template>
@@ -39,16 +18,9 @@ const organizations = computed(() => organizationResponse.value?.data?.data ?? [
           </MsInput>
         </div>
 
-        <MsSelect v-model="selectedStatus" label="Trạng thái" :options="statusOptions" />
+        <slot name="options" />
 
-        <MsTreeSelect
-          v-model="selectedOrganizationIds"
-          :options="organizations"
-          id-key="organizationID"
-          parent-key="parentID"
-          label-key="organizationName"
-          placeholder="Tất cả đơn vị"
-        />
+
       </div>
 
       <div class="flex items-center gap-8">

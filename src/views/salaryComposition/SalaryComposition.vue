@@ -1,26 +1,22 @@
-<script setup lang="ts">
-import GridOptions from '@/components/GridOptions.vue'
-import GridTable from '@/components/GridTable.vue'
-import MsButton from '@/components/MsButton.vue'
-</script>
-
 <template>
   <div class="content-header">
     <h2 class="content-header__title">Thành phần lương</h2>
     <div class="content-header__actions">
-      <MsButton
-        background-color="#FFFFFF"
-        border-color="#D5D7DA"
-        color="#101828"
-        gap="4px"
-        hover-background-color="#E9EAEB"
-        hover-border-color="#D5D7DA"
-        active-background-color="#D5D7DA"
-        active-border-color="#D5D7DA"
-      >
-        <div class="mi-rule"></div>
-        <div class="system-category-text">Danh mục của hệ thống</div>
-      </MsButton>
+      <RouterLink :to="path.systemCategory" style="text-decoration: none">
+        <MsButton
+          background-color="#FFFFFF"
+          border-color="#D5D7DA"
+          color="#101828"
+          gap="4px"
+          hover-background-color="#E9EAEB"
+          hover-border-color="#D5D7DA"
+          active-background-color="#D5D7DA"
+          active-border-color="#D5D7DA"
+        >
+          <div class="mi-rule"></div>
+          <div class="system-category-text">Danh mục của hệ thống</div>
+        </MsButton>
+      </RouterLink>
       <div class="container-action-add">
         <MsButton border-radius="8px 0 0 8px" gap="4px">
           <div class="mi-plus-white"></div>
@@ -40,9 +36,50 @@ import MsButton from '@/components/MsButton.vue'
     </div>
   </div>
 
-  <GridOptions />
+  <GridOptions>
+    <template #options>
+      <MsSelect v-model="selectedStatus" label="Trạng thái" :options="statusOptions" />
+
+      <MsTreeSelect
+        v-model="selectedOrganizationIds"
+        :options="organizations"
+        id-key="organizationID"
+        parent-key="parentID"
+        label-key="organizationName"
+        placeholder="Tất cả đơn vị"
+      />
+    </template>
+  </GridOptions>
   <GridTable />
 </template>
+
+<script setup lang="ts">
+import GridOptions from '@/components/GridOptions.vue'
+import GridTable from '@/components/GridTable.vue'
+import MsButton from '@/components/MsButton.vue'
+import { path } from '@/utils/path'
+import { useQuery } from '@tanstack/vue-query'
+import { computed, ref } from 'vue'
+import OrganizationAPI from '@/apis/components/organization/Organization.js'
+import MsSelect from '@/components/MsSelect.vue'
+import MsTreeSelect from '@/components/MsTreeSelect.vue'
+
+const selectedStatus = ref<number | string>('')
+const selectedOrganizationIds = ref<string[]>([])
+
+const statusOptions = [
+  { label: 'Tất cả', value: null },
+  { label: 'Đang theo dõi', value: 1 },
+  { label: 'Ngừng theo dõi', value: 2 },
+]
+
+const { data: organizationResponse } = useQuery({
+  queryKey: ['organizations'],
+  queryFn: () => OrganizationAPI.getAll(),
+})
+
+const organizations = computed(() => organizationResponse.value?.data?.data ?? [])
+</script>
 
 <style scoped>
 .content-header {
@@ -56,6 +93,7 @@ import MsButton from '@/components/MsButton.vue'
   letter-spacing: 0.6px;
   font-size: 20px;
   font-weight: 700;
+  line-height: 30px;
 }
 
 .content-header__actions {

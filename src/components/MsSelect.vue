@@ -46,7 +46,7 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: 'Chọn',
+    default: 'Tất cả',
   },
   labelKey: {
     type: String,
