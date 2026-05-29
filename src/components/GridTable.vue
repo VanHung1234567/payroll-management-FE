@@ -52,9 +52,10 @@
       />
 
       <DxColumn
+        v-if="hasVisibleActions"
         name="__action-space"
-        :width="200"
-        :min-width="200"
+        :width="actionColumnWidth"
+        :min-width="actionColumnWidth"
         :allow-sorting="false"
         :allow-resizing="false"
         :allow-reordering="false"
@@ -119,8 +120,9 @@
             />
           </svg>
         </button>
-        <div class="ms-table__action-cell">
+        <div v-if="hasVisibleActions" class="ms-table__action-cell" :style="actionCellStyle">
           <button
+            v-if="showActiveAction"
             type="button"
             class="button-command-wrap"
             @click.stop="$emit('row-active', data.data)"
@@ -131,6 +133,7 @@
             ></span>
           </button>
           <button
+            v-if="showCopyAction"
             type="button"
             class="button-command-wrap"
             @click.stop="$emit('row-copy', data.data)"
@@ -138,6 +141,7 @@
             <span class="ms-copy" title="Nhân bản"></span>
           </button>
           <button
+            v-if="showEditAction"
             type="button"
             class="button-command-wrap"
             @click.stop="$emit('row-edit', data.data)"
@@ -145,6 +149,7 @@
             <span class="ms-pencil" title="Sửa"></span>
           </button>
           <button
+            v-if="showDeleteAction"
             type="button"
             class="button-command-wrap"
             @click.stop="$emit('row-delete', data.data)"
@@ -169,7 +174,6 @@
             class="ms-table__header-button"
             @click.stop="openHeaderMenu(data, $event)"
           >
-            <span v-if="isPinnedIconColumn(data.column.dataField)" class="ms-icon-pinned"></span>
             <span class="ms-table__cell-truncate">{{ data.column.caption }}</span>
             <span
               v-if="getHeaderSortDirection(data.column.dataField)"
@@ -179,6 +183,7 @@
                   : 'ms-icon-sort-desc'
               "
             ></span>
+            <span v-if="isPinnedIconColumn(data.column.dataField)" class="ms-icon-pinned"></span>
           </button>
         </div>
       </template>
@@ -204,13 +209,14 @@
     </div>
 
     <div
-      v-if="hoveredRow"
+      v-if="hoveredRow && hasVisibleActions"
       class="ms-table__floating-actions"
-      :style="{ top: `${floatingActionTop}px` }"
+      :style="{ ...actionCellStyle, top: `${floatingActionTop}px` }"
       @mouseenter="clearActionHideTimer"
       @mouseleave="scheduleHideRowActions"
     >
       <button
+        v-if="showActiveAction"
         type="button"
         class="button-command-wrap"
         @click.stop="$emit('row-active', hoveredRow)"
@@ -220,13 +226,24 @@
           :title="isActiveStatus(hoveredRow) ? 'Ngừng theo dõi' : 'Đang theo dõi'"
         ></span>
       </button>
-      <button type="button" class="button-command-wrap" @click.stop="$emit('row-copy', hoveredRow)">
+      <button
+        v-if="showCopyAction"
+        type="button"
+        class="button-command-wrap"
+        @click.stop="$emit('row-copy', hoveredRow)"
+      >
         <span class="ms-copy" title="Nhân bản"></span>
       </button>
-      <button type="button" class="button-command-wrap" @click.stop="$emit('row-edit', hoveredRow)">
+      <button
+        v-if="showEditAction"
+        type="button"
+        class="button-command-wrap"
+        @click.stop="$emit('row-edit', hoveredRow)"
+      >
         <span class="ms-pencil" title="Sửa"></span>
       </button>
       <button
+        v-if="showDeleteAction"
         type="button"
         class="button-command-wrap"
         @click.stop="$emit('row-delete', hoveredRow)"
@@ -344,6 +361,22 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  showActiveAction: {
+    type: Boolean,
+    default: true,
+  },
+  showCopyAction: {
+    type: Boolean,
+    default: true,
+  },
+  showEditAction: {
+    type: Boolean,
+    default: true,
+  },
+  showDeleteAction: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 defineEmits(['row-active', 'row-copy', 'row-edit', 'row-delete'])
@@ -373,6 +406,8 @@ const floatingActionTop = ref(0)
 const actionHideTimer = ref(null)
 const activeActionRowElement = ref(null)
 const reorderTimer = ref(null)
+const resizePersistTimer = ref(null)
+const pendingResizePersist = ref(null)
 const pinnedIconFields = ref(new Set())
 const isGridReady = ref(false)
 const suppressOrderPersist = ref(false)
@@ -432,10 +467,12 @@ const DB_SORT_FIELDS = new Set([
   'CreatedSource',
   'Status',
   'CreatedDate',
+  'OrganizationNames',
 ])
 
 const SORT_FIELD_MAP = {
-  OrganizationName: 'OrganizationID',
+  OrganizationName: 'OrganizationNames',
+  OrganizationNames: 'OrganizationNames',
   TypeName: 'SalaryCompositionTypeID',
   NatureName: 'Nature',
   TaxTypeName: 'TaxType',
@@ -521,6 +558,7 @@ watch(
 watch(
   normalizedFilters,
   () => {
+    hideRowActions()
     pageIndex.value = 1
   },
   { deep: true },
@@ -530,22 +568,37 @@ const pagingData = computed(() => normalizeResponseData(pagingResponse.value))
 const rows = computed(() => pagingData.value.data || [])
 const total = computed(() => pagingData.value.total || rows.value.length)
 const showEmptyState = computed(() => !isLoading.value && rows.value.length === 0)
+const visibleActionCount = computed(
+  () =>
+    Number(props.showActiveAction) +
+    Number(props.showCopyAction) +
+    Number(props.showEditAction) +
+    Number(props.showDeleteAction),
+)
+const hasVisibleActions = computed(() => visibleActionCount.value > 0)
+const actionColumnWidth = computed(() => Math.max(48, visibleActionCount.value * 40 + 40))
+const actionCellStyle = computed(() => ({
+  width: `${actionColumnWidth.value - 40}px`,
+}))
+const showActiveAction = computed(() => props.showActiveAction)
+const showCopyAction = computed(() => props.showCopyAction)
+const showEditAction = computed(() => props.showEditAction)
+const showDeleteAction = computed(() => props.showDeleteAction)
 
 const tableRows = computed(() => {
-  if (showEmptyState.value) {
-    return [
-      {
-        [props.keyExpr]: '__ms_empty_row__',
-        __msEmptyRow: true,
-      },
-    ]
-  }
-
   return rows.value.map((row) => ({
     ...row,
     __msSelected: selectedKeys.value.has(getRowKey(row)),
   }))
 })
+
+watch(
+  [isLoading, rows],
+  () => {
+    hideRowActions()
+  },
+  { flush: 'post' },
+)
 
 const displayColumns = computed(() =>
   configColumns.value
@@ -622,8 +675,14 @@ function getDisplayValue(row, fieldName) {
   const lowerField = String(fieldName || '').toLowerCase()
   const value = getRawCellValue(row, fieldName)
 
-  if (lowerField === 'organizationid') {
-    return row.organizationName ?? row.OrganizationName ?? value
+  if (lowerField === 'organizationid' || lowerField === 'organizationids') {
+    return (
+      row.organizationNames ??
+      row.OrganizationNames ??
+      row.organizationName ??
+      row.OrganizationName ??
+      value
+    )
   }
 
   if (lowerField === 'salarycompositiontypeid') {
@@ -798,7 +857,24 @@ function handleColumnWidthChanged(event) {
   if (nextWidth === column.width) return
 
   column.width = nextWidth
-  enqueuePersistColumn(column, { Width: nextWidth })
+  queueColumnWidthPersist(column, nextWidth)
+}
+
+function queueColumnWidthPersist(column, width) {
+  pendingResizePersist.value = { column, width }
+
+  if (resizePersistTimer.value) {
+    window.clearTimeout(resizePersistTimer.value)
+  }
+
+  resizePersistTimer.value = window.setTimeout(() => {
+    if (!pendingResizePersist.value) return
+
+    const { column: pendingColumn, width: pendingWidth } = pendingResizePersist.value
+    pendingResizePersist.value = null
+    resizePersistTimer.value = null
+    enqueuePersistColumn(pendingColumn, { Width: pendingWidth })
+  }, 350)
 }
 
 function queueColumnOrderPersist(event) {
@@ -1040,6 +1116,9 @@ onBeforeUnmount(() => {
   if (reorderTimer.value) {
     window.clearTimeout(reorderTimer.value)
   }
+  if (resizePersistTimer.value) {
+    window.clearTimeout(resizePersistTimer.value)
+  }
   if (suppressOrderPersistTimer) {
     window.clearTimeout(suppressOrderPersistTimer)
   }
@@ -1055,6 +1134,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border-radius: 0 0 8px 8px;
   background: #fff;
 }
 
@@ -1268,8 +1348,9 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-.ms-table .dx-header-row > td:last-child::after {
-  display: none;
+.ms-table .dx-header-row > td:last-child::after,
+.ms-table .dx-header-row > td:first-child::after {
+  display: none !important;
 }
 
 .ms-table .dx-header-row > td:first-child {
@@ -1322,6 +1403,10 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid #d5d7da !important;
   background: inherit !important;
   overflow: visible !important;
+}
+
+.ms-table .dx-datagrid-headers .dx-header-row > td:first-child {
+  border-bottom: none !important;
 }
 
 .ms-table .dx-data-row:hover > td,
@@ -1411,17 +1496,6 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.ms-table__header-content::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 12px;
-  height: 36px;
-  cursor: col-resize;
-  pointer-events: none;
-}
-
 .ms-table__header-button:focus,
 .ms-table__header-button:active {
   outline: none;
@@ -1501,6 +1575,14 @@ onBeforeUnmount(() => {
   color: #fff;
   cursor: pointer;
   box-sizing: border-box;
+  outline: none;
+}
+
+.ms-table__checkbox:focus,
+.ms-table__checkbox:focus-visible,
+.ms-table__checkbox:active {
+  outline: none;
+  box-shadow: none;
 }
 
 .ms-table__checkbox.is-checked,
@@ -1521,6 +1603,15 @@ onBeforeUnmount(() => {
 .ms-table .dx-data-row > td:first-child .ms-table__checkbox {
   position: relative;
   z-index: 1;
+}
+
+.ms-table .dx-state-focused,
+.ms-table .dx-cell-focus-disabled,
+.ms-table .dx-focused,
+.ms-table .dx-focused > td,
+.ms-table .dx-focused > td:first-child {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Toàn bộ text data/header căn trái, riêng checkbox vẫn center */
@@ -1599,6 +1690,61 @@ onBeforeUnmount(() => {
   .dx-header-row
   > td:first-child.dx-datagrid-sticky-column-border-right {
   background: #f5f5f5 !important;
+}
+
+.ms-table .dx-datagrid-headers .dx-header-row > td:first-child,
+.ms-table .dx-datagrid-headers .dx-header-row > td:first-child.dx-datagrid-sticky-column-left,
+.ms-table
+  .dx-datagrid-headers
+  .dx-header-row
+  > td:first-child.dx-datagrid-sticky-column-border-right {
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+.ms-table .dx-datagrid-content-fixed .dx-header-row > td,
+.ms-table .dx-datagrid-content-fixed .dx-data-row > td,
+.ms-table .dx-datagrid-content-fixed .dx-row > td {
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid #d5d7da !important;
+  box-shadow: none !important;
+}
+
+.ms-table .dx-datagrid-content-fixed .dx-header-row > td {
+  height: 36px !important;
+  padding: 0 8px !important;
+  background: #f5f5f5 !important;
+  color: #101828 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 18px !important;
+}
+
+.ms-table .dx-datagrid-content-fixed .dx-data-row > td {
+  height: 36px !important;
+  padding: 0 12px !important;
+  background: #fff !important;
+  color: #001b3d !important;
+  vertical-align: middle !important;
+}
+
+.ms-table .dx-datagrid-content-fixed .dx-data-row:hover > td,
+.ms-table .dx-datagrid-content-fixed .dx-data-row.is-selected > td,
+.ms-table .dx-datagrid-content-fixed .dx-data-row.is-action-hover > td {
+  background: #cdeadf !important;
+}
+
+.ms-table .dx-datagrid-headers .dx-datagrid-content-fixed,
+.ms-table .dx-datagrid-headers .dx-datagrid-content-fixed .dx-datagrid-table {
+  background: #f5f5f5 !important;
+}
+
+.ms-table .dx-datagrid-headers .dx-datagrid-content-fixed {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 40 !important;
 }
 
 .ms-table .dx-freespace-row,
@@ -1788,13 +1934,21 @@ onBeforeUnmount(() => {
   display: inline-flex !important;
   align-items: center !important;
   border: none !important;
-  background: #cdeadf !important;
+  background: #fff !important;
   color: #101828 !important;
   font-size: 13px !important;
   line-height: 18px !important;
   font-weight: 600 !important;
   opacity: 0.75 !important;
   box-shadow: 0 2px 8px #0000001f !important;
+}
+
+.dx-datagrid-columns-separator,
+.dx-datagrid-columns-separator-transparent,
+.dx-datagrid-tracker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .dx-context-menu.dx-datagrid,

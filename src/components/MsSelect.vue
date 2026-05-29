@@ -172,13 +172,17 @@ const selectOption = (option) => {
   const value = getOptionValue(option)
   emit('update:modelValue', value)
   emit('change', option)
+  closeDropdown()
+}
+
+const closeDropdown = () => {
   isOpen.value = false
   searchText.value = ''
 }
 
 const handleClickOutside = (event) => {
   if (selectRef.value && !selectRef.value.contains(event.target)) {
-    isOpen.value = false
+    closeDropdown()
   }
 }
 
@@ -201,6 +205,7 @@ watch(isOpen, async (value) => {
     searchInputRef.value?.focus?.()
   }
 })
+
 </script>
 
 <style scoped>

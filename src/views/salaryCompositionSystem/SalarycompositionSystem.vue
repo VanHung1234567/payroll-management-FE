@@ -36,8 +36,11 @@
     :data-api="SalaryCompositionSystemAPI"
     key-expr="salaryCompositionSystemID"
     :search="debouncedSearchKeyword"
-    search-fields="SalaryCompositionCode,SalaryCompositionName"
     :filters="salaryCompositionSystemFilters"
+    :show-active-action="false"
+    :show-copy-action="false"
+    :show-edit-action="false"
+    :show-delete-action="false"
   />
 </template>
 
@@ -134,5 +137,35 @@ const salaryCompositionSystemFilters = computed(() => {
   -webkit-mask-position: -203px -4px;
   -webkit-mask-repeat: no-repeat;
   background-color: #6e737a;
+}
+
+.ms-trash-red {
+  width: 20px;
+  height: 20px;
+  -webkit-mask-image: url('../assets/images/ICON.svg');
+  -webkit-mask-position: -100px -21px;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  background-color: #ff6161;
+}
+
+.ms-circle-orange {
+  width: 20px;
+  height: 20px;
+  -webkit-mask-image: url('../assets/images/ICON.svg');
+  -webkit-mask-position: -180px -40px;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  background-color: #f90 !important;
+}
+
+.ms-circle-check-green {
+  width: 20px;
+  height: 20px;
+  -webkit-mask-image: url('../assets/images/ICON.svg');
+  -webkit-mask-position: -141px -41px;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  background-color: #25b973 !important;
 }
 </style>

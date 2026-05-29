@@ -39,7 +39,7 @@
   </div>
 
   <GridOptions v-model:search="searchKeyword">
-    <template #options>
+    <!-- <template #options>
       <MsSelect v-model="selectedStatus" label="Trạng thái" :options="statusOptions" />
 
       <MsTreeSelect
@@ -50,11 +50,13 @@
         label-key="organizationName"
         placeholder="Tất cả đơn vị"
       />
+    </template> -->
+    <template>
+      
     </template>
   </GridOptions>
   <GridTable
     :search="debouncedSearchKeyword"
-    search-fields="SalaryCompositionCode,SalaryCompositionName"
     :filters="salaryCompositionFilters"
   />
 </template>
