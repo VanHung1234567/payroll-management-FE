@@ -8,6 +8,10 @@ defineProps({
     type: String,
     default: '',
   },
+  bulkMode: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['update:search'])
@@ -29,12 +33,11 @@ const emit = defineEmits(['update:search'])
           </MsInput>
         </div>
 
-        <slot name="options" />
-
-
+        <slot v-if="bulkMode" name="bulk-actions" />
+        <slot v-else name="options" />
       </div>
 
-      <div class="flex items-center gap-8">
+      <div v-if="!bulkMode" class="flex items-center gap-8">
         <MsTooltip content="Bộ lọc">
           <MsButton
             width="32px"

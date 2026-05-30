@@ -20,6 +20,7 @@
             border-color="none"
             justify-content="left"
             :button-class="['sidebar_menu_button', { active: activeKey === 'overview' }]"
+            height="36px"
             @click="setActive('overview')"
           >
             <div class="mi-sidebar-home"></div>
@@ -45,6 +46,7 @@
             :color="activeKey === 'salary-composition' ? '#0e9a62' : '#101828'"
             border-color="none"
             justify-content="left"
+            height="36px"
             :button-class="['sidebar_menu_button', { active: activeKey === 'salary-composition' }]"
             @click="setActive('salary-composition')"
           >
@@ -71,6 +73,7 @@
             :color="activeKey === 'salary-template' ? '#0e9a62' : '#101828'"
             border-color="none"
             justify-content="left"
+            height="36px"
             :button-class="['sidebar_menu_button', { active: activeKey === 'salary-template' }]"
             @click="setActive('salary-template')"
           >
@@ -79,15 +82,7 @@
           </MsButton>
         </MsTooltip>
       </RouterLink>
-      <MsTooltip
-        content="Dữ liệu tính lương"
-        placement="right"
-        align="center"
-        :offset="8"
-        :hover-size="0"
-        font-size="12px"
-        line-height="16px"
-      >
+      <div class="sidebar-menu-item-with-panel">
         <MsButton
           width="100%"
           active-background-color="#D5D7DA"
@@ -96,6 +91,7 @@
           :color="activeKey === 'salary-data' ? '#0e9a62' : '#101828'"
           border-color="none"
           justify-content="left"
+          height="36px"
           :button-class="['sidebar_menu_button', { active: activeKey === 'salary-data' }]"
           @click="setActive('salary-data')"
         >
@@ -103,16 +99,18 @@
           <div class="sidebar_menu_item_text">Dữ liệu tính lương</div>
           <div class="mi-icon-chevron-right"></div>
         </MsButton>
-      </MsTooltip>
-      <MsTooltip
-        content="Tính lương"
-        placement="right"
-        align="center"
-        :offset="8"
-        :hover-size="0"
-        font-size="12px"
-        line-height="16px"
-      >
+        <div class="ms-sidebar-submenu">
+          <button
+            v-for="item in salaryDataSubmenus"
+            :key="item"
+            type="button"
+            class="ms-sidebar-submenu__item"
+          >
+            {{ item }}
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-menu-item-with-panel">
         <MsButton
           width="100%"
           active-background-color="#D5D7DA"
@@ -121,6 +119,7 @@
           :color="activeKey === 'salary-calculate' ? '#0e9a62' : '#101828'"
           border-color="none"
           justify-content="left"
+          height="36px"
           :button-class="['sidebar_menu_button', { active: activeKey === 'salary-calculate' }]"
           @click="setActive('salary-calculate')"
         >
@@ -128,16 +127,18 @@
           <div class="sidebar_menu_item_text">Tính lương</div>
           <div class="mi-icon-chevron-right"></div>
         </MsButton>
-      </MsTooltip>
-      <MsTooltip
-        content="Chi trả"
-        placement="right"
-        align="center"
-        :offset="8"
-        :hover-size="0"
-        font-size="12px"
-        line-height="16px"
-      >
+        <div class="ms-sidebar-submenu ms-sidebar-submenu--salary-calculate">
+          <button
+            v-for="item in salaryCalculateSubmenus"
+            :key="item"
+            type="button"
+            class="ms-sidebar-submenu__item"
+          >
+            {{ item }}
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-menu-item-with-panel">
         <MsButton
           width="100%"
           active-background-color="#D5D7DA"
@@ -146,6 +147,7 @@
           :color="activeKey === 'payment' ? '#0e9a62' : '#101828'"
           border-color="none"
           justify-content="left"
+          height="36px"
           :button-class="['sidebar_menu_button', { active: activeKey === 'payment' }]"
           @click="setActive('payment')"
         >
@@ -153,7 +155,17 @@
           <div class="sidebar_menu_item_text">Chi trả</div>
           <div class="mi-icon-chevron-right"></div>
         </MsButton>
-      </MsTooltip>
+        <div class="ms-sidebar-submenu ms-sidebar-submenu--payment">
+          <button
+            v-for="item in paymentSubmenus"
+            :key="item"
+            type="button"
+            class="ms-sidebar-submenu__item"
+          >
+            {{ item }}
+          </button>
+        </div>
+      </div>
       <MsTooltip
         content="Báo cáo"
         placement="right"
@@ -171,6 +183,7 @@
           :color="activeKey === 'report' ? '#0e9a62' : '#101828'"
           border-color="none"
           justify-content="left"
+          height="36px"
           :button-class="['sidebar_menu_button', { active: activeKey === 'report' }]"
           @click="setActive('report')"
         >
@@ -204,6 +217,24 @@ import { path } from '@/utils/path'
 
 const activeKey = ref('salary-composition')
 const isCollapsed = ref(false)
+const salaryDataSubmenus = [
+  'Chấm công',
+  'Doanh số',
+  'KPI',
+  'Sản phẩm',
+  'Thu nhập khác',
+  'Khấu trừ khác',
+]
+const salaryCalculateSubmenus = [
+  'Bảng lương',
+  'Tạm ứng',
+  'Tổng hợp lương',
+  'Phân bổ lương',
+  'Ngân sách lương',
+  'Bảng thuế',
+  'Quyết toán thuế',
+]
+const paymentSubmenus = ['Bảng chi trả', 'Tổng hợp chi trả']
 
 const setActive = (key: string) => {
   activeKey.value = key
@@ -248,6 +279,68 @@ const toggleSidebar = () => {
 
 .sidebar_menu_button {
   width: 100%;
+}
+
+.sidebar-menu-item-with-panel {
+  position: relative;
+  width: 100%;
+}
+
+.sidebar-menu-item-with-panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 100%;
+  width: 15px;
+  height: 100%;
+}
+
+.sidebar-menu-item-with-panel:hover :deep(.sidebar_menu_button),
+.sidebar-menu-item-with-panel:focus-within :deep(.sidebar_menu_button) {
+  background: #e9eaeb !important;
+  border-color: transparent !important;
+}
+
+.ms-sidebar-submenu {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 15px);
+  z-index: 1000;
+  width: 200px;
+  padding: 16px;
+  display: none;
+  flex-direction: column;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 16px #0000001f;
+  box-sizing: border-box;
+  gap: 4px;
+}
+
+.sidebar-menu-item-with-panel:hover .ms-sidebar-submenu,
+.sidebar-menu-item-with-panel:focus-within .ms-sidebar-submenu {
+  display: flex;
+}
+
+.ms-sidebar-submenu__item {
+  width: 100%;
+  height: 36px;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #101828;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ms-sidebar-submenu__item:hover,
+.ms-sidebar-submenu__item:focus-visible {
+  outline: none;
+  background: #e9eaeb;
+  color: #101828;
 }
 
 .sidebar_container.is-collapsed .sidebar_menu_button {

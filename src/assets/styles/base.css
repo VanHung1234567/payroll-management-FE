@@ -57,7 +57,7 @@
   --color-scrollbar-pressed: #666666;
 
   /* Size and spacing */
-  --font-family-base: Inter, Arial, sans-serif;
+  --font-family-base: Inter, Helvetica, Arial, sans-serif;
   --font-size-base: 13px;
   --control-height: 36px;
   --button-min-width: 80px;
@@ -75,6 +75,7 @@
   padding: 0;
   box-sizing: border-box;
   font-family: var(--font-family-base);
+  font-variant-numeric: lining-nums tabular-nums;
   scrollbar-width: thin;
   scrollbar-color: var(--ms-color-neutral-300, #b0b0b0) transparent;
 }

@@ -11,6 +11,7 @@
       </span>
 
       <input
+        ref="inputRef"
         :id="inputId"
         class="ms-input__field"
         :name="name"
@@ -39,7 +40,7 @@
 </template>
 
 <script setup>
-import { computed, useId } from 'vue'
+import { computed, ref, useId } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -95,6 +96,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'input', 'blur', 'focus'])
 
 const fallbackId = useId()
+const inputRef = ref(null)
 const inputId = computed(() => props.id || props.name || fallbackId)
 const errorId = computed(() => (props.errorMessage ? `${inputId.value}-error` : undefined))
 const isInvalid = computed(() => Boolean(props.errorMessage && (!props.meta || props.meta.touched)))
@@ -103,6 +105,10 @@ const handleInput = (event) => {
   emit('update:modelValue', event.target.value)
   emit('input', event)
 }
+
+defineExpose({
+  focus: () => inputRef.value?.focus?.(),
+})
 </script>
 
 <style scoped>
@@ -141,7 +147,8 @@ const handleInput = (event) => {
     background-color 0.12s ease;
 }
 
-.ms-input__control:hover {
+.ms-input__control:hover,
+.ms-input__control:focus-within {
   border-color: #0e9a62;
 }
 

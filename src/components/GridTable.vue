@@ -122,6 +122,14 @@
         </button>
         <div v-if="hasVisibleActions" class="ms-table__action-cell" :style="actionCellStyle">
           <button
+            v-if="showAddAction"
+            type="button"
+            class="button-command-wrap"
+            @click.stop="$emit('row-add', data.data)"
+          >
+            <span class="mi-plus-primary" title="Thêm"></span>
+          </button>
+          <button
             v-if="showActiveAction"
             type="button"
             class="button-command-wrap"
@@ -215,6 +223,14 @@
       @mouseenter="clearActionHideTimer"
       @mouseleave="scheduleHideRowActions"
     >
+      <button
+        v-if="showAddAction"
+        type="button"
+        class="button-command-wrap"
+        @click.stop="$emit('row-add', hoveredRow)"
+      >
+        <span class="mi-plus-primary" title="Thêm"></span>
+      </button>
       <button
         v-if="showActiveAction"
         type="button"
@@ -333,6 +349,10 @@ const props = defineProps({
     type: String,
     default: 'salary_composition',
   },
+  configGridKey: {
+    type: String,
+    default: '',
+  },
   dataApi: {
     type: [Object, String],
     default: () => SalaryCompositionAPI,
@@ -365,6 +385,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  showAddAction: {
+    type: Boolean,
+    default: false,
+  },
   showCopyAction: {
     type: Boolean,
     default: true,
@@ -377,9 +401,21 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  clearSelectionSignal: {
+    type: Number,
+    default: 0,
+  },
 })
 
-defineEmits(['row-active', 'row-copy', 'row-edit', 'row-delete'])
+const emit = defineEmits([
+  'row-active',
+  'row-add',
+  'row-copy',
+  'row-edit',
+  'row-delete',
+  'selection-change',
+  'update:selectedRows',
+])
 
 const gridTableStore = useGridTableStore()
 const gridState = gridTableStore.ensureGridState(props.gridKey, {
@@ -398,6 +434,7 @@ const pageSize = computed({
 })
 const sort = ref('')
 const selectedKeys = ref(new Set())
+const selectedRowMap = ref(new Map())
 const configColumns = ref([])
 const pinDialogVisible = ref(false)
 const tableContainerRef = ref(null)
@@ -498,7 +535,8 @@ const headerMenu = reactive({
   top: 0,
 })
 
-const gridConfigQueryKey = computed(() => ['grid-config', props.gridKey])
+const resolvedConfigGridKey = computed(() => props.configGridKey || props.gridKey)
+const gridConfigQueryKey = computed(() => ['grid-config', resolvedConfigGridKey.value])
 const pagingQueryKey = computed(() => [
   'grid-table-paging',
   props.gridKey,
@@ -512,7 +550,7 @@ const pagingQueryKey = computed(() => [
 
 const { data: gridConfigResponse, isFetching: isConfigFetching } = useQuery({
   queryKey: gridConfigQueryKey,
-  queryFn: () => GridConfigAPI.getGridKey(props.gridKey),
+  queryFn: () => GridConfigAPI.getGridKey(resolvedConfigGridKey.value),
 })
 
 const { data: pagingResponse, isFetching: isRowsFetching } = useQuery({
@@ -571,6 +609,7 @@ const showEmptyState = computed(() => !isLoading.value && rows.value.length === 
 const visibleActionCount = computed(
   () =>
     Number(props.showActiveAction) +
+    Number(props.showAddAction) +
     Number(props.showCopyAction) +
     Number(props.showEditAction) +
     Number(props.showDeleteAction),
@@ -581,6 +620,7 @@ const actionCellStyle = computed(() => ({
   width: `${actionColumnWidth.value - 40}px`,
 }))
 const showActiveAction = computed(() => props.showActiveAction)
+const showAddAction = computed(() => props.showAddAction)
 const showCopyAction = computed(() => props.showCopyAction)
 const showEditAction = computed(() => props.showEditAction)
 const showDeleteAction = computed(() => props.showDeleteAction)
@@ -598,6 +638,13 @@ watch(
     hideRowActions()
   },
   { flush: 'post' },
+)
+
+watch(
+  () => props.clearSelectionSignal,
+  () => {
+    clearSelection()
+  },
 )
 
 const displayColumns = computed(() =>
@@ -742,23 +789,56 @@ function isRowChecked(row) {
 
 function toggleRow(row) {
   const next = new Set(selectedKeys.value)
+  const nextRows = new Map(selectedRowMap.value)
   const key = getRowKey(row)
   if (next.has(key)) {
     next.delete(key)
+    nextRows.delete(key)
   } else {
     next.add(key)
+    nextRows.set(key, row)
   }
   selectedKeys.value = next
+  selectedRowMap.value = nextRows
+  emitSelectionChange()
 }
 
 function toggleAllPageRows() {
   const next = new Set(selectedKeys.value)
+  const nextRows = new Map(selectedRowMap.value)
   if (isAllPageChecked.value) {
-    rows.value.forEach((row) => next.delete(getRowKey(row)))
+    rows.value.forEach((row) => {
+      const key = getRowKey(row)
+      next.delete(key)
+      nextRows.delete(key)
+    })
   } else {
-    rows.value.forEach((row) => next.add(getRowKey(row)))
+    rows.value.forEach((row) => {
+      const key = getRowKey(row)
+      next.add(key)
+      nextRows.set(key, row)
+    })
   }
   selectedKeys.value = next
+  selectedRowMap.value = nextRows
+  emitSelectionChange()
+}
+
+function clearSelection() {
+  if (!selectedKeys.value.size) return
+  selectedKeys.value = new Set()
+  selectedRowMap.value = new Map()
+  emitSelectionChange()
+}
+
+function getSelectedRows() {
+  return [...selectedRowMap.value.values()]
+}
+
+function emitSelectionChange() {
+  const selectedRows = getSelectedRows()
+  emit('selection-change', selectedRows)
+  emit('update:selectedRows', selectedRows)
 }
 
 function handleContextMenuPreparing(event) {
@@ -2088,6 +2168,17 @@ onBeforeUnmount(() => {
   width: 195px;
   height: 133px;
   background-position: -152px -3046px;
+}
+
+.mi-plus-primary {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  flex-shrink: 0;
+  -webkit-mask-image: url('../assets/images/ICON.svg');
+  -webkit-mask-position: -240px 0px;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #0E9A62;
 }
 
 .ms-table__loading-overlay {

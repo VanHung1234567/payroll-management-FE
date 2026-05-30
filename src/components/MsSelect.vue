@@ -8,7 +8,7 @@
     <button
       type="button"
       class="ms-select__trigger"
-      :class="{ 'is-open': isOpen }"
+      :class="{ 'is-open': isOpen, 'is-chevron-rotated': isOpen && placement === 'top' }"
       :disabled="disabled"
       @click="toggleDropdown"
     >
@@ -205,7 +205,6 @@ watch(isOpen, async (value) => {
     searchInputRef.value?.focus?.()
   }
 })
-
 </script>
 
 <style scoped>
@@ -239,7 +238,8 @@ watch(isOpen, async (value) => {
 }
 
 .ms-select--form .ms-select__trigger {
-  gap: 20px;
+  gap: 12px;
+  padding: 0 8px 0 12px;
   letter-spacing: 1px;
 }
 
@@ -301,7 +301,7 @@ watch(isOpen, async (value) => {
   background: #fff;
   box-shadow: 0 4px 16px #0000001f;
   box-sizing: border-box;
-  max-height: 300px;
+  max-height: 336px;
   overflow: auto;
 }
 
@@ -413,8 +413,8 @@ watch(isOpen, async (value) => {
   transition: transform 0.12s ease;
 }
 
-.ms-select__trigger.is-open .mi-chevron-down,
-.ms-select__trigger.is-open .chevron-down-form {
+.ms-select__trigger.is-chevron-rotated .mi-chevron-down,
+.ms-select__trigger.is-chevron-rotated .chevron-down-form {
   transform: rotate(180deg);
 }
 </style>

@@ -4,7 +4,7 @@
       Tổng số: <b>{{ total }}</b>
     </div>
 
-    <div class="ms-pagination__right">
+    <div v-if="total > 0" class="ms-pagination__right">
       <label class="ms-pagination__page-size">
         <span>Số dòng/trang</span>
       </label>
@@ -180,7 +180,7 @@ function selectPageSize(size) {
 
 .ms-pagination__buttons button:disabled {
   color: #d5d7da;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 .ms-pagination__svg {

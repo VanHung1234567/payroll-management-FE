@@ -19,7 +19,7 @@
     <h2 class="content-header__title">Danh mục thành phần lương của hệ thống</h2>
   </div>
 
-  <GridOptions v-model:search="searchKeyword">
+  <GridOptions v-model:search="searchKeyword" :bulk-mode="hasSelectedRows">
     <template #options>
       <MsSelect
         v-model="selectedSalaryCompositionTypeId"
@@ -27,8 +27,33 @@
         :options="salaryCompositionTypeOptions"
         label-key="typeName"
         value-key="salaryCompositionTypeID"
-        :menu-width="210"
+        :menu-width="166.21"
       />
+    </template>
+    <template #bulk-actions>
+      <div class="bulk-actions">
+        <div class="bulk-actions__count">
+          <span>Đã chọn</span>
+          <strong>{{ selectedRows.length }}</strong>
+        </div>
+        <button type="button" class="bulk-actions__clear" @click="clearSelectedRows">
+          Bỏ chọn
+        </button>
+        <MsButton
+          background-color="#FFFFFF"
+          border-color="#D5D7DA"
+          color="#101828"
+          hover-background-color="#E9EAEB"
+          hover-border-color="#D5D7DA"
+          active-background-color="#D5D7DA"
+          active-border-color="#D5D7DA"
+          padding="0 12px"
+          gap="4px"
+        >
+          <span class="mi-plus"></span>
+          <span class="button-action-text">Đưa vào danh sách sử dụng</span>
+        </MsButton>
+      </div>
     </template>
   </GridOptions>
   <GridTable
@@ -37,16 +62,20 @@
     key-expr="salaryCompositionSystemID"
     :search="debouncedSearchKeyword"
     :filters="salaryCompositionSystemFilters"
+    :clear-selection-signal="clearSelectionSignal"
     :show-active-action="false"
+    :show-add-action="true"
     :show-copy-action="false"
     :show-edit-action="false"
     :show-delete-action="false"
+    @selection-change="selectedRows = $event"
   />
 </template>
 
 <script setup>
 import GridOptions from '@/components/GridOptions.vue'
 import GridTable from '@/components/GridTable.vue'
+import MsButton from '@/components/MsButton.vue'
 import MsTooltip from '@/components/MsTooltip.vue'
 import { path } from '@/utils/path'
 import SalaryCompositionSystemAPI from '@/apis/components/salaryCompositionSystem/SalaryCompositionSystem'
@@ -58,6 +87,8 @@ import MsSelect from '@/components/MsSelect.vue'
 const selectedSalaryCompositionTypeId = ref(null)
 const searchKeyword = ref('')
 const debouncedSearchKeyword = ref('')
+const selectedRows = ref([])
+const clearSelectionSignal = ref(0)
 let searchDebounceTimer = null
 
 const { data: salaryCompositionTypeResponse } = useQuery({
@@ -73,6 +104,7 @@ const salaryCompositionTypeOptions = computed(() => [
 
   ...(salaryCompositionTypeResponse.value?.data?.data ?? []),
 ])
+const hasSelectedRows = computed(() => selectedRows.value.length > 0)
 
 watch(searchKeyword, (value) => {
   if (searchDebounceTimer) {
@@ -97,6 +129,10 @@ const salaryCompositionSystemFilters = computed(() => {
     salaryCompositionTypeID: selectedSalaryCompositionTypeId.value,
   }
 })
+
+function clearSelectedRows() {
+  clearSelectionSignal.value += 1
+}
 </script>
 
 <style scoped>
@@ -142,7 +178,7 @@ const salaryCompositionSystemFilters = computed(() => {
 .ms-trash-red {
   width: 20px;
   height: 20px;
-  -webkit-mask-image: url('../assets/images/ICON.svg');
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
   -webkit-mask-position: -100px -21px;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
@@ -152,7 +188,7 @@ const salaryCompositionSystemFilters = computed(() => {
 .ms-circle-orange {
   width: 20px;
   height: 20px;
-  -webkit-mask-image: url('../assets/images/ICON.svg');
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
   -webkit-mask-position: -180px -40px;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
@@ -162,10 +198,56 @@ const salaryCompositionSystemFilters = computed(() => {
 .ms-circle-check-green {
   width: 20px;
   height: 20px;
-  -webkit-mask-image: url('../assets/images/ICON.svg');
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
   -webkit-mask-position: -141px -41px;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   background-color: #25b973 !important;
+}
+
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #101828;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.bulk-actions__count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bulk-actions__count strong {
+  font-weight: 700;
+}
+
+.bulk-actions__clear {
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #34b057;
+  font: inherit;
+  cursor: pointer;
+  margin: 0 8px;
+}
+
+.button-action-text {
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.mi-plus {
+  width: 20px;
+  height: 14px;
+  display: inline-block;
+  flex-shrink: 0;
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
+  -webkit-mask-position: -240px -3px;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #6e737a;
 }
 </style>
