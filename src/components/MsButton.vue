@@ -80,7 +80,7 @@ const props = defineProps({
   },
   padding: {
     type: [Number, String],
-    default: '',
+    default: '0 12px',
   },
   margin: {
     type: [Number, String],

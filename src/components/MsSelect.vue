@@ -9,6 +9,7 @@
       type="button"
       class="ms-select__trigger"
       :class="{ 'is-open': isOpen, 'is-chevron-rotated': isOpen && placement === 'top' }"
+      :style="triggerStyle"
       :disabled="disabled"
       @click="toggleDropdown"
     >
@@ -67,7 +68,7 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: 'Tất cả',
+    default: '',
   },
   labelKey: {
     type: String,
@@ -80,6 +81,14 @@ const props = defineProps({
   width: {
     type: [Number, String],
     default: 'auto',
+  },
+  triggerPadding: {
+    type: String,
+    default: '',
+  },
+  letterSpacing: {
+    type: [Number, String],
+    default: '',
   },
   menuWidth: {
     type: [Number, String],
@@ -127,12 +136,21 @@ const selectRef = ref(null)
 const searchInputRef = ref(null)
 const isOpen = ref(false)
 const searchText = ref('')
+const shouldFilterSearch = ref(false)
+const suppressNextSearchWatch = ref(false)
 
 const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : value)
 
 const selectStyle = computed(() => ({
   width: normalizeCssSize(props.width),
 }))
+
+const triggerStyle = computed(() => {
+  const style = {}
+  if (props.triggerPadding) style.padding = props.triggerPadding
+  if (props.letterSpacing !== '') style.letterSpacing = normalizeCssSize(props.letterSpacing)
+  return style
+})
 
 const menuStyle = computed(() => ({
   width: normalizeCssSize(props.menuWidth),
@@ -155,7 +173,7 @@ const selectedLabel = computed(() =>
 
 const filteredOptions = computed(() => {
   const keyword = searchText.value.trim().toLowerCase()
-  if (!props.searchable || !keyword) return props.options
+  if (!props.searchable || !keyword || !shouldFilterSearch.value) return props.options
 
   return props.options.filter((option) => getOptionLabel(option).toLowerCase().includes(keyword))
 })
@@ -178,6 +196,7 @@ const selectOption = (option) => {
 const closeDropdown = () => {
   isOpen.value = false
   searchText.value = ''
+  shouldFilterSearch.value = false
 }
 
 const handleClickOutside = (event) => {
@@ -197,12 +216,28 @@ onBeforeUnmount(() => {
 watch(isOpen, async (value) => {
   if (!value) {
     searchText.value = ''
+    shouldFilterSearch.value = false
     return
   }
 
   if (props.searchable) {
+    shouldFilterSearch.value = false
+    suppressNextSearchWatch.value = true
+    searchText.value = selectedOption.value ? getOptionLabel(selectedOption.value) : ''
     await nextTick()
     searchInputRef.value?.focus?.()
+    searchInputRef.value?.setSelectionRange?.(searchText.value.length, searchText.value.length)
+  }
+})
+
+watch(searchText, () => {
+  if (suppressNextSearchWatch.value) {
+    suppressNextSearchWatch.value = false
+    return
+  }
+
+  if (isOpen.value && props.searchable) {
+    shouldFilterSearch.value = true
   }
 })
 </script>
@@ -240,7 +275,7 @@ watch(isOpen, async (value) => {
 .ms-select--form .ms-select__trigger {
   gap: 12px;
   padding: 0 8px 0 12px;
-  letter-spacing: 1px;
+  letter-spacing: 0;
 }
 
 .ms-select__trigger:hover,
@@ -253,6 +288,7 @@ watch(isOpen, async (value) => {
 .ms-select--form .ms-select__trigger.is-open {
   background-color: #fff;
   border-color: #0e9a62;
+  box-shadow: 0 0 0 2px #2563eb1a;
 }
 
 .ms-select__trigger:disabled {
@@ -266,10 +302,12 @@ watch(isOpen, async (value) => {
 
 .ms-select__value {
   min-width: 0;
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #101828;
   font-weight: 500;
+  text-align: left;
 }
 
 .ms-select--form .ms-select__value {
@@ -280,6 +318,7 @@ watch(isOpen, async (value) => {
   min-width: 0;
   width: 100%;
   height: 30px;
+  flex: 1;
   padding: 0;
   border: none;
   outline: none;
@@ -289,6 +328,7 @@ watch(isOpen, async (value) => {
   font: inherit;
   font-size: 13px;
   line-height: 18px;
+  text-align: left;
 }
 
 .ms-select__menu {
@@ -396,6 +436,7 @@ watch(isOpen, async (value) => {
   -webkit-mask-repeat: no-repeat;
   background-color: #6e737a;
   margin-left: 4px;
+  margin-right: 0;
   transition: transform 0.12s ease;
 }
 
@@ -410,6 +451,7 @@ watch(isOpen, async (value) => {
   flex-shrink: 0;
   background-image: none;
   background-color: #717680;
+  margin-left: auto;
   transition: transform 0.12s ease;
 }
 

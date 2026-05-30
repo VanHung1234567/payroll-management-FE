@@ -247,7 +247,9 @@ const { data: salaryCompositionTypeResponse } = useQuery({
 
 const organizations = computed(() => organizationResponse.value?.data?.data ?? [])
 const salaryCompositionEnum = computed(
-  () => salaryCompositionEnumResponse.value?.data?.data ?? salaryCompositionEnumResponse.value?.data ?? {},
+  () =>
+    salaryCompositionEnumResponse.value?.data ??
+    {},
 )
 const statusOptions = computed(() => [
   { label: 'Tất cả', value: null },

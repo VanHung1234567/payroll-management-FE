@@ -1,5 +1,10 @@
 <template>
-  <div ref="selectRef" class="ms-tree-select" :style="{ width: normalizedWidth }">
+  <div
+    ref="selectRef"
+    class="ms-tree-select"
+    :class="{ 'is-error': isInvalid }"
+    :style="{ width: normalizedWidth }"
+  >
     <div class="ms-tree-select__box" :class="{ 'is-open': isOpen }" @click="openDropdown">
       <div class="ms-tree-select__values">
         <template v-if="hiddenSelectedCount">
@@ -66,7 +71,11 @@
       </div>
 
       <label v-if="showInactiveOption" class="ms-tree-select__inactive">
-        <input v-model="showInactiveChecked" class="ms-tree-select__inactive-input" type="checkbox" />
+        <input
+          v-model="showInactiveChecked"
+          class="ms-tree-select__inactive-input"
+          type="checkbox"
+        />
         <span class="ms-tree-select__checkbox" :class="{ 'is-checked': showInactiveChecked }">
           <svg
             v-if="showInactiveChecked"
@@ -86,6 +95,10 @@
         </span>
         <span>Hiển thị đơn vị ngừng theo dõi</span>
       </label>
+    </div>
+
+    <div v-if="isInvalid && errorMessage" class="ms-tree-select__error">
+      {{ errorMessage }}
     </div>
   </div>
 </template>
@@ -251,6 +264,14 @@ const props = defineProps({
     type: [Number, String],
     default: 1,
   },
+  errorMessage: {
+    type: String,
+    default: '',
+  },
+  meta: {
+    type: Object,
+    default: null,
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
@@ -266,6 +287,7 @@ const normalizedWidth = computed(() =>
 )
 const selectedValues = computed(() => props.modelValue)
 const selectedSet = computed(() => new Set(props.modelValue))
+const isInvalid = computed(() => Boolean(props.errorMessage && (!props.meta || props.meta.touched)))
 
 const getId = (option) => option?.[props.idKey]
 const getParentId = (option) => option?.[props.parentKey]
@@ -514,6 +536,12 @@ watch(
 .ms-tree-select__box:hover,
 .ms-tree-select__box.is-open {
   border-color: #0e9a62;
+  box-shadow: 0 0 0 2px #2563eb1a;
+  outline: none;
+}
+
+.ms-tree-select.is-error .ms-tree-select__box {
+  border-color: #f04438;
 }
 
 .ms-tree-select__values {
@@ -757,6 +785,13 @@ watch(
   color: #667085;
   font-size: 13px;
   line-height: 18px;
+}
+
+.ms-tree-select__error {
+  margin-top: 4px;
+  color: #f04438;
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .mi-chevron-down-black {

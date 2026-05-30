@@ -1673,8 +1673,8 @@ onBeforeUnmount(() => {
 
 .ms-table__check-mark,
 .ms-table__minus-mark {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   flex-shrink: 0;
 }
 

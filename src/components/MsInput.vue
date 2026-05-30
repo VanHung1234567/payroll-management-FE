@@ -1,40 +1,46 @@
 <template>
-  <div class="ms-input" :class="{ 'is-error': isInvalid, 'is-disabled': disabled }">
+  <div
+    class="ms-input"
+    :class="{ 'is-error': isInvalid, 'is-disabled': disabled, 'ms-input--has-label': label }"
+    :style="inputStyle"
+  >
     <label v-if="label" class="ms-input__label" :for="inputId">
       <span>{{ label }}</span>
       <span v-if="required" class="ms-input__required">*</span>
     </label>
 
-    <div class="ms-input__control">
-      <span title="Tìm kiếm" v-if="$slots.prefix" class="ms-input__icon ms-input__prefix">
-        <slot name="prefix" />
-      </span>
+    <div class="ms-input__field-wrap" :style="fieldWrapStyle">
+      <div class="ms-input__control">
+        <span title="Tìm kiếm" v-if="$slots.prefix" class="ms-input__icon ms-input__prefix">
+          <slot name="prefix" />
+        </span>
 
-      <input
-        ref="inputRef"
-        :id="inputId"
-        class="ms-input__field"
-        :name="name"
-        :type="type"
-        :value="modelValue"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        :readonly="readonly"
-        :autocomplete="autocomplete"
-        :aria-invalid="isInvalid"
-        :aria-describedby="errorId"
-        @input="handleInput"
-        @blur="$emit('blur', $event)"
-        @focus="$emit('focus', $event)"
-      />
+        <input
+          ref="inputRef"
+          :id="inputId"
+          class="ms-input__field"
+          :name="name"
+          :type="type"
+          :value="modelValue"
+          :placeholder="placeholder"
+          :disabled="disabled"
+          :readonly="readonly"
+          :autocomplete="autocomplete"
+          :aria-invalid="isInvalid"
+          :aria-describedby="errorId"
+          @input="handleInput"
+          @blur="$emit('blur', $event)"
+          @focus="$emit('focus', $event)"
+        />
 
-      <span v-if="$slots.suffix" class="ms-input__icon ms-input__suffix">
-        <slot name="suffix" />
-      </span>
-    </div>
+        <span v-if="$slots.suffix" class="ms-input__icon ms-input__suffix">
+          <slot name="suffix" />
+        </span>
+      </div>
 
-    <div v-if="isInvalid && errorMessage" :id="errorId" class="ms-input__error">
-      {{ errorMessage }}
+      <div v-if="isInvalid && errorMessage" :id="errorId" class="ms-input__error">
+        {{ errorMessage }}
+      </div>
     </div>
   </div>
 </template>
@@ -91,15 +97,31 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  width: {
+    type: [Number, String],
+    default: '100%',
+  },
+  labelWidth: {
+    type: [Number, String],
+    default: 200,
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'input', 'blur', 'focus'])
 
 const fallbackId = useId()
 const inputRef = ref(null)
+const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : value)
 const inputId = computed(() => props.id || props.name || fallbackId)
 const errorId = computed(() => (props.errorMessage ? `${inputId.value}-error` : undefined))
 const isInvalid = computed(() => Boolean(props.errorMessage && (!props.meta || props.meta.touched)))
+const inputStyle = computed(() => ({
+  '--ms-input-label-width': normalizeCssSize(props.labelWidth),
+  width: props.label ? '100%' : normalizeCssSize(props.width),
+}))
+const fieldWrapStyle = computed(() => ({
+  width: normalizeCssSize(props.width),
+}))
 
 const handleInput = (event) => {
   emit('update:modelValue', event.target.value)
@@ -116,15 +138,32 @@ defineExpose({
   width: 100%;
 }
 
+.ms-input--has-label {
+  display: flex;
+  align-items: flex-start;
+}
+
 .ms-input__label {
+  width: var(--ms-input-label-width);
+  min-height: 32px;
+  padding-right: 8px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 2px;
+  margin-bottom: 0;
   color: #101828;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 18px;
+  flex-shrink: 0;
+}
+
+.ms-input__field-wrap {
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.ms-input:not(.ms-input--has-label) .ms-input__field-wrap {
+  width: 100%;
+  flex: 1 1 auto;
 }
 
 .ms-input__required {
@@ -196,5 +235,22 @@ defineExpose({
   color: #f04438;
   font-size: 12px;
   line-height: 16px;
+}
+
+@media (max-width: 1120px) {
+  .ms-input--has-label {
+    flex-direction: column;
+  }
+
+  .ms-input--has-label .ms-input__label {
+    width: 100%;
+    min-height: 24px;
+    padding-right: 0;
+    margin-bottom: 6px;
+  }
+
+  .ms-input--has-label .ms-input__field-wrap {
+    width: 100% !important;
+  }
 }
 </style>

@@ -467,6 +467,14 @@ select:disabled {
   margin-left: 8px;
 }
 
+.ml-16 {
+  margin-left: 16px;
+}
+
+.ml-32 {
+  margin-left: 32px;
+}
+
 .mt-8 {
   margin-top: 8px;
 }
@@ -521,4 +529,8 @@ select:disabled {
 
 .w-300 {
   width: 300px;
+}
+
+.w-200 {
+  width: 200px;
 }
