@@ -6,7 +6,7 @@
   --color-primary-focus: #eaf7ee;
 
   /* Text */
-  --color-text-primary: #212121;
+  --color-text-primary: #101828;
   --color-text-secondary: #666666;
   --color-text-placeholder: #9e9e9e;
   --color-text-inverse: #ffffff;
@@ -19,42 +19,12 @@
   --color-pressed-bg: #ebebeb;
   --color-readonly-bg: #ebebeb;
 
-  /* Data grid */
-  --color-grid-border: #e0e0e0;
-  --color-grid-header-bg: #f6f6f6;
-
   /* Status */
   --color-error: #e54848;
   --color-warning: #ffd000;
   --color-warning-dark: #ff9900;
   --color-success: #34b057;
 
-  /* Avatar/tag palette */
-  --color-tag-01: #e83950;
-  --color-tag-02: #fd632e;
-  --color-tag-03: #fd9a02;
-  --color-tag-04: #edc201;
-  --color-tag-05: #a4cf32;
-  --color-tag-06: #64d271;
-  --color-tag-07: #39c5ab;
-  --color-tag-08: #21aaea;
-  --color-tag-09: #4386e0;
-  --color-tag-10: #7c70ef;
-  --color-tag-11: #aa64e3;
-  --color-tag-12: #e364e3;
-  --color-tag-13: #ea509d;
-  --color-tag-14: #fc91ad;
-  --color-tag-15: #deeef9;
-
-  /* Icon */
-  --color-icon: #707070;
-  --color-icon-hover-bg: #f2f2f2;
-  --color-icon-pressed-bg: #ebebeb;
-
-  /* Scrollbar */
-  --color-scrollbar: #9e9e9e;
-  --color-scrollbar-hover: #757575;
-  --color-scrollbar-pressed: #666666;
 
   /* Size and spacing */
   --font-family-base: Inter, Helvetica, Arial, sans-serif;
@@ -114,7 +84,7 @@ select:disabled {
   color: var(--color-text-placeholder);
 }
 
-/* Button */
+/* Button
 .ms-btn {
   display: inline-flex;
   align-items: center;
@@ -187,7 +157,7 @@ select:disabled {
   height: var(--button-icon-size);
   margin-left: 8px;
   border-left: 1px solid rgb(255 255 255 / 45%);
-}
+} */
 
 /* Textbox */
 /* .ms-input {
@@ -224,7 +194,7 @@ select:disabled {
 } */
 
 /* Dropdown and menu */
-.ms-dropdown {
+/* .ms-dropdown {
   position: relative;
 }
 
@@ -256,128 +226,7 @@ select:disabled {
 }
 
 /* Checkbox, radio, toggle */
-.ms-checkbox,
-.ms-radio {
-  accent-color: var(--color-primary);
-  width: 16px;
-  height: 16px;
-}
 
-.ms-toggle {
-  position: relative;
-  display: inline-flex;
-  width: 40px;
-  height: 20px;
-  border: 0;
-  border-radius: 999px;
-  background: #bdbdbd;
-}
-
-.ms-toggle::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-surface);
-  transition: left 0.16s ease;
-}
-
-.ms-toggle.is-on {
-  background: var(--color-primary);
-}
-
-.ms-toggle.is-on::after {
-  left: 22px;
-}
-
-.ms-toggle:disabled,
-.ms-toggle.is-disabled {
-  opacity: 0.6;
-}
-
-/* Toast and tooltip */
-.ms-toast {
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  border: 1px solid currentcolor;
-  border-radius: var(--radius-sm);
-  color: var(--color-primary);
-  background: var(--color-primary-focus);
-}
-
-.ms-toast__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  align-self: stretch;
-  color: var(--color-text-inverse);
-  background: var(--color-primary);
-}
-
-.ms-toast__content {
-  padding: 0 12px;
-}
-
-.ms-toast__close {
-  padding: 0 8px 0 0;
-}
-
-.ms-toast--warning {
-  color: var(--color-warning-dark);
-  background: #fff4db;
-}
-
-.ms-toast--warning .ms-toast__icon {
-  background: var(--color-warning-dark);
-}
-
-.ms-toast--error {
-  color: var(--color-error);
-  background: #ffe8e8;
-}
-
-.ms-toast--error .ms-toast__icon {
-  background: var(--color-error);
-}
-
-.ms-tooltip {
-  max-width: 420px;
-  padding: 12px;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-inverse);
-  background: #333333;
-  box-shadow: var(--shadow-dropdown);
-}
-
-.ms-tooltip__secondary {
-  color: var(--color-text-tooltip-secondary);
-}
-
-/* Icon button */
-.ms-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 50%;
-  color: var(--color-icon);
-  background: transparent;
-}
-
-.ms-icon-btn:hover {
-  background: var(--color-icon-hover-bg);
-}
-
-.ms-icon-btn:active {
-  background: var(--color-icon-pressed-bg);
-}
 
 ::-webkit-scrollbar {
   width: 8px;

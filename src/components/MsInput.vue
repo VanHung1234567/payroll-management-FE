@@ -186,8 +186,8 @@ defineExpose({
     background-color 0.12s ease;
 }
 
-.ms-input__control:hover,
-.ms-input__control:focus-within {
+.ms-input:not(.is-disabled) .ms-input__control:hover,
+.ms-input:not(.is-disabled) .ms-input__control:focus-within {
   border-color: #0e9a62;
 }
 

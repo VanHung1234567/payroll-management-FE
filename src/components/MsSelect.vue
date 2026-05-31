@@ -25,7 +25,14 @@
       </template>
       <template v-else>
         <span v-if="label" class="ms-select__label">{{ label }}:</span>
-        <span class="ms-select__value">{{ selectedLabel }}</span>
+        <span class="ms-select__value" :class="{ 'is-placeholder': !selectedOption }">
+          <template v-if="selectedOption && hasOptionCode(selectedOption)">
+            <span>{{ getOptionLabel(selectedOption) }} (</span>
+            <span class="ms-select__code">{{ getOptionCode(selectedOption) }}</span>
+            <span>)</span>
+          </template>
+          <template v-else>{{ selectedLabel }}</template>
+        </span>
       </template>
       <span :class="variant === 'form' ? 'chevron-down-form' : 'mi-chevron-down'"></span>
     </button>
@@ -39,7 +46,14 @@
         :class="{ 'is-active': isSelected(option) }"
         @click="selectOption(option)"
       >
-        <span class="ms-select__item-label">{{ getOptionLabel(option) }}</span>
+        <span class="ms-select__item-label">
+          <template v-if="hasOptionCode(option)">
+            <span>{{ getOptionLabel(option) }} (</span>
+            <span class="ms-select__code">{{ getOptionCode(option) }}</span>
+            <span>)</span>
+          </template>
+          <template v-else>{{ getOptionLabel(option) }}</template>
+        </span>
         <span v-if="isSelected(option) && variant !== 'form'" class="mi-check"></span>
       </button>
 
@@ -77,6 +91,10 @@ const props = defineProps({
   valueKey: {
     type: String,
     default: 'value',
+  },
+  codeKey: {
+    type: String,
+    default: '',
   },
   width: {
     type: [Number, String],
@@ -162,6 +180,10 @@ const menuClass = computed(() => ({
 
 const getOptionLabel = (option) => option?.[props.labelKey] ?? ''
 const getOptionValue = (option) => option?.[props.valueKey] ?? null
+const getOptionCode = (option) => (props.codeKey ? (option?.[props.codeKey] ?? '') : '')
+const hasOptionCode = (option) => Boolean(getOptionCode(option))
+const getOptionSearchText = (option) =>
+  `${getOptionLabel(option)} ${getOptionCode(option)}`.trim().toLowerCase()
 
 const selectedOption = computed(() =>
   props.options.find((option) => getOptionValue(option) === props.modelValue),
@@ -175,7 +197,7 @@ const filteredOptions = computed(() => {
   const keyword = searchText.value.trim().toLowerCase()
   if (!props.searchable || !keyword || !shouldFilterSearch.value) return props.options
 
-  return props.options.filter((option) => getOptionLabel(option).toLowerCase().includes(keyword))
+  return props.options.filter((option) => getOptionSearchText(option).includes(keyword))
 })
 
 const isInvalid = computed(() => Boolean(props.errorMessage && (!props.meta || props.meta.touched)))
@@ -278,13 +300,13 @@ watch(searchText, () => {
   letter-spacing: 0;
 }
 
-.ms-select__trigger:hover,
+.ms-select__trigger:hover:not(:disabled),
 .ms-select__trigger.is-open {
   background-color: #e9eaeb;
   border-color: #d5d7da;
 }
 
-.ms-select--form .ms-select__trigger:hover,
+.ms-select--form .ms-select__trigger:hover:not(:disabled),
 .ms-select--form .ms-select__trigger.is-open {
   background-color: #fff;
   border-color: #0e9a62;
@@ -292,8 +314,8 @@ watch(searchText, () => {
 }
 
 .ms-select__trigger:disabled {
+  background: #f5f5f5;
   cursor: not-allowed;
-  opacity: 0.6;
 }
 
 .ms-select__label {
@@ -310,8 +332,17 @@ watch(searchText, () => {
   text-align: left;
 }
 
+.ms-select__value.is-placeholder {
+  color: #98a2b3;
+  font-weight: 400;
+}
+
 .ms-select--form .ms-select__value {
   font-weight: 400;
+}
+
+.ms-select__code {
+  font-weight: 600;
 }
 
 .ms-select__search-input {
@@ -388,6 +419,10 @@ watch(searchText, () => {
   background: #cdeadf;
   color: #0e9a62;
   font-weight: 500;
+}
+
+.ms-select--form .ms-select__item.is-active {
+  background: #edfcf4;
 }
 
 .ms-select__item-label {

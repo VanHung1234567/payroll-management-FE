@@ -27,7 +27,7 @@
         :options="salaryCompositionTypeOptions"
         label-key="typeName"
         value-key="salaryCompositionTypeID"
-        :menu-width="166.21"
+        :menu-width="172"
       />
     </template>
     <template #bulk-actions>
@@ -50,7 +50,7 @@
           padding="0 12px"
           gap="4px"
         >
-          <span class="mi-plus"></span>
+          <span title="Đưa vào danh sách sử dụng" class="mi-plus"></span>
           <span class="button-action-text">Đưa vào danh sách sử dụng</span>
         </MsButton>
       </div>

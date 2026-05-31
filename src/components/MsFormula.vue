@@ -4,11 +4,24 @@
       <PrismEditor
         v-model="formulaValue"
         class="ms-formula__editor"
+        :class="{ 'has-agent-button': showAgentButton }"
         :highlight="highlightFormula"
         :placeholder="placeholder"
         @focus="handleFocus"
         @blur="handleBlur"
       />
+      <button
+        v-if="showAgentButton"
+        type="button"
+        class="btn-ava create-composition-formula-agent-btn"
+        :aria-label="agentButtonText"
+        :title="agentButtonText"
+        @mousedown.prevent
+        @click="emit('agent-click')"
+      >
+        <span class="create-composition-formula-agent-btn__icon"></span>
+        <span class="create-composition-formula-agent-btn__text">{{ agentButtonText }}</span>
+      </button>
     </div>
 
     <div v-if="isPanelOpen" class="ms-formula__panel">
@@ -42,7 +55,8 @@
           <span class="ms-formula__fx">ƒ×</span>
           <span class="ms-formula__item-content">
             <span class="ms-formula__item-title">
-              <strong>{{ formula.name }}</strong>{{ formula.signature }}
+              <strong>{{ formula.name }}</strong
+              >{{ formula.signature }}
             </span>
           </span>
         </button>
@@ -79,7 +93,8 @@ import 'vue-prism-editor/dist/prismeditor.min.css'
 import { highlight, languages } from 'prismjs/components/prism-core'
 
 languages.formula = {
-  function: /\b(?:SUM|IF|IFS|AND|OR|ROUND|ROUNDUP|ROUNDDOWN|DATE|DATEDIF|MONTH|TODAY|INT|DINHMUC|CHINHTHUC|THUVIEC|HOCVIEC)\b/,
+  function:
+    /\b(?:SUM|IF|IFS|AND|OR|ROUND|ROUNDUP|ROUNDDOWN|DATE|DATEDIF|MONTH|TODAY|INT|DINHMUC|CHINHTHUC|THUVIEC|HOCVIEC)\b/,
   number: /-?\b\d+(?:[.,]\d+)?\b/,
   boolean: /\b(?:TRUE|FALSE)\b/i,
   operator: /[+\-*/<>=!&|]+/,
@@ -104,9 +119,17 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  showAgentButton: {
+    type: Boolean,
+    default: false,
+  },
+  agentButtonText: {
+    type: String,
+    default: 'Tạo công thức với AVA Tiền lương',
+  },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'agent-click'])
 
 const formulaRef = ref(null)
 const isFocused = ref(false)
@@ -342,6 +365,10 @@ function normalizeText(value) {
   caret-color: #1570ef;
 }
 
+.ms-formula__editor.has-agent-button {
+  padding-right: 56px;
+}
+
 .ms-formula__editor :deep(.prism-editor__textarea),
 .ms-formula__editor :deep(.prism-editor__editor) {
   outline: none;
@@ -365,6 +392,83 @@ function normalizeText(value) {
   color: #f04438;
 }
 
+.btn-ava.create-composition-formula-agent-btn {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: inline-flex;
+  height: 32px;
+  width: 43px;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 6px 12px 6px 6px;
+  border: 1px solid #fff;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 0 12px #0003;
+  cursor: pointer;
+  color: #101828;
+  font: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  background: linear-gradient(
+    270deg,
+    #efe9ff 7.74%,
+    #f0f8ff 40.17%,
+    #dff8ff 64.73%,
+    #f3f3ff 84.04%
+  );
+  transition:
+    width 0.2s ease,
+    padding 0.2s ease,
+    border-radius 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn-ava.create-composition-formula-agent-btn:hover,
+.btn-ava.create-composition-formula-agent-btn:focus-visible {
+  width: auto;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid #dae5ff;
+  border-radius: 14px;
+  background: linear-gradient(
+    270deg,
+    #efe9ff 7.74%,
+    #f0f8ff 40.17%,
+    #dff8ff 64.73%,
+    #f3f3ff 84.04%
+  );
+  box-shadow: none;
+}
+
+.create-composition-formula-agent-btn__icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: url('../assets/images/payroll_agent-d_2srbQV.webp') center / cover no-repeat;
+}
+
+.create-composition-formula-agent-btn__text {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-width 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.btn-ava.create-composition-formula-agent-btn:hover .create-composition-formula-agent-btn__text,
+.btn-ava.create-composition-formula-agent-btn:focus-visible
+  .create-composition-formula-agent-btn__text {
+  max-width: 220px;
+  opacity: 1;
+}
+
 .ms-formula__panel {
   position: absolute;
   top: calc(100% - 2px);
@@ -373,7 +477,7 @@ function normalizeText(value) {
   width: 100%;
   max-height: 270px;
   padding: 18px 38px 20px;
-  border-radius: 0 0 12px 12px;
+  border-radius: 12px;
   background: #fff;
   box-shadow: 0 8px 22px #0000001f;
   box-sizing: border-box;
@@ -427,7 +531,7 @@ function normalizeText(value) {
 }
 
 .ms-formula__item:hover {
-  background: #E6F5EF;
+  background: #e6f5ef;
   color: #0e9a62;
 }
 
