@@ -1,34 +1,58 @@
 import * as yup from 'yup'
 
-export const candidateSchema = (candidates = [], currentId = null) =>
+const REQUIRED_MESSAGE = 'Không được để trống.'
+const MAX_LENGTH_MESSAGE = 'Không được vượt quá 255 ký tự.'
+
+const normalizeCode = (value) =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+
+const getSalaryCompositionCode = (item) =>
+  item?.salaryCompositionCode ?? item?.SalaryCompositionCode ?? item?.code ?? item?.Code ?? ''
+
+const getSalaryCompositionId = (item) =>
+  item?.salaryCompositionID ?? item?.SalaryCompositionID ?? item?.id ?? item?.ID ?? null
+
+export const salaryCompositionSchema = (salaryCompositions = [], currentId = null) =>
   yup.object({
-    name: yup.string().required('Nhập họ tên'),
-
-    phoneNumber: yup
+    salaryCompositionName: yup
       .string()
-      .matches(/^(03|09)[0-9]{8}$/, 'SĐT không hợp lệ')
-      .required('Nhập số điện thoại')
-      .test('duplicate-phone', 'SĐT đã tồn tại', function (value) {
+      .trim()
+      .required(REQUIRED_MESSAGE)
+      .max(255, MAX_LENGTH_MESSAGE),
+
+    salaryCompositionCode: yup
+      .string()
+      .trim()
+      .required(REQUIRED_MESSAGE)
+      .max(255, MAX_LENGTH_MESSAGE)
+      .test('not-number', 'Mã thành phần phải khác một số thực', (value) => {
         if (!value) return true
+        return !/^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/.test(String(value).trim())
+      })
+      .test('unique-code', 'Mã thành phần đã tồn tại.', (value) => {
+        if (!value) return true
+        const normalizedValue = normalizeCode(value)
 
-        if (!value.startsWith('03')) {
-          return true
-        }
-
-        return !candidates.some((item) => item.phoneNumber === value && item.id !== currentId)
+        return !salaryCompositions.some((item) => {
+          const itemId = getSalaryCompositionId(item)
+          if (currentId !== null && currentId !== undefined && itemId === currentId) return false
+          return normalizeCode(getSalaryCompositionCode(item)) === normalizedValue
+        })
       }),
 
-    email: yup.string().email('Email sai định dạng').required('Nhập email'),
+    salaryCompositionTypeID: yup.mixed().required(REQUIRED_MESSAGE),
 
-    dateOfBirth: yup.string().required('Chọn ngày sinh'),
+    nature: yup.mixed().required(REQUIRED_MESSAGE),
 
-    gender: yup.string().required('Chọn giới tính'),
+    organizationIDs: yup.array().min(1, REQUIRED_MESSAGE).required(REQUIRED_MESSAGE),
   })
 
-export const candidateDefaultValues = {
-  name: '',
-  phoneNumber: '',
-  email: '',
-  gender: '',
-  dateOfBirth: '',
+export const salaryCompositionDefaultValues = {
+  salaryCompositionName: '',
+  salaryCompositionCode: '',
+  salaryCompositionTypeID: null,
+  nature: null,
+  organizationIDs: [],
 }

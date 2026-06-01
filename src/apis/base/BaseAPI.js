@@ -22,10 +22,6 @@ export default class BaseAPI {
     return api.post(`${this.controller}/filter`, payload)
   }
 
-  enum() {
-    return api.get(`${this.controller}/enum`)
-  }
-
   /**
    * Hàm cập nhật dữ liệu
    * @param {*} id

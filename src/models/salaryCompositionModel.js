@@ -4,16 +4,15 @@
  */
 export class SalaryCompositionModel {
   constructor(data = {}) {
-
     this.salaryCompositionID = data.salaryCompositionID || null
 
     this.salaryCompositionCode = data.salaryCompositionCode || ''
 
     this.salaryCompositionName = data.salaryCompositionName || ''
 
-    this.organizationID = data.organizationID || null
+    this.organizationIDs = data.organizationIDs || ''
 
-    this.organizationName = data.organizationName || ''
+    this.organizationNames = data.organizationNames || ''
 
     this.salaryCompositionTypeID = data.salaryCompositionTypeID || null
 
@@ -43,7 +42,7 @@ export class SalaryCompositionModel {
      * true  - Có giảm trừ
      * false - Không giảm trừ
      */
-    this.isTaxReduction = data.isTaxReduction || false
+    this.isTaxReduction = data.isTaxReduction || null
 
     /**
      * Công thức định mức
@@ -64,12 +63,13 @@ export class SalaryCompositionModel {
     /**
      * Kiểu giá trị
      * Giá trị:
-     * 1 - Tiền tệ
-     * 2 - Số
+     * 1 - Số
+     * 2 - Tiền tệ
      * 3 - Phần trăm
-     * 4 - Công thức
+     * 4 - Chữ
+     * 5 - Ngày
      */
-    this.valueType = data.valueType || null
+    this.valueType = data.valueType || 2
 
     /**
      * Giá trị hoặc công thức
@@ -89,7 +89,7 @@ export class SalaryCompositionModel {
      * 2 - Không hiển thị
      * 3 - Chỉ hiển thị nếu giá trị khác 0
      */
-    this.payslipDisplayType = data.payslipDisplayType || null
+    this.payslipDisplayType = data.payslipDisplayType || 1
 
     /**
      * Nguồn tạo dữ liệu
@@ -103,7 +103,7 @@ export class SalaryCompositionModel {
      * Trạng thái
      * Giá trị:
      * 1 - Đang theo dõi
-     * 2 - Ngừng theo dõi
+     * 0 - Ngừng theo dõi
      */
     this.status = data.status || 1
   }

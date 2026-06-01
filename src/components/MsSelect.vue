@@ -6,6 +6,7 @@
     :style="selectStyle"
   >
     <button
+      ref="triggerRef"
       type="button"
       class="ms-select__trigger"
       :class="{ 'is-open': isOpen, 'is-chevron-rotated': isOpen && placement === 'top' }"
@@ -60,7 +61,9 @@
       <div v-if="!filteredOptions.length" class="ms-select__empty">Không có dữ liệu</div>
     </div>
 
-    <div v-if="isInvalid && errorMessage" class="ms-select__error">{{ errorMessage }}</div>
+    <div v-if="isInvalid && errorMessage" class="ms-select__error text-error">
+      {{ errorMessage }}
+    </div>
   </div>
 </template>
 
@@ -148,9 +151,10 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue', 'change'])
+const emit = defineEmits(['update:modelValue', 'change', 'blur'])
 
 const selectRef = ref(null)
+const triggerRef = ref(null)
 const searchInputRef = ref(null)
 const isOpen = ref(false)
 const searchText = ref('')
@@ -223,7 +227,11 @@ const closeDropdown = () => {
 
 const handleClickOutside = (event) => {
   if (selectRef.value && !selectRef.value.contains(event.target)) {
+    const wasOpen = isOpen.value
     closeDropdown()
+    if (wasOpen) {
+      emit('blur', event)
+    }
   }
 }
 
@@ -261,6 +269,21 @@ watch(searchText, () => {
   if (isOpen.value && props.searchable) {
     shouldFilterSearch.value = true
   }
+})
+
+defineExpose({
+  focus: async () => {
+    if (props.disabled) return
+
+    if (props.searchable) {
+      isOpen.value = true
+      await nextTick()
+      searchInputRef.value?.focus?.()
+      return
+    }
+
+    triggerRef.value?.focus?.()
+  },
 })
 </script>
 
@@ -300,14 +323,14 @@ watch(searchText, () => {
   letter-spacing: 0;
 }
 
-.ms-select__trigger:hover:not(:disabled),
-.ms-select__trigger.is-open {
+.ms-select:not(.is-error) .ms-select__trigger:hover:not(:disabled),
+.ms-select:not(.is-error) .ms-select__trigger.is-open {
   background-color: #e9eaeb;
   border-color: #d5d7da;
 }
 
-.ms-select--form .ms-select__trigger:hover:not(:disabled),
-.ms-select--form .ms-select__trigger.is-open {
+.ms-select--form:not(.is-error) .ms-select__trigger:hover:not(:disabled),
+.ms-select--form:not(.is-error) .ms-select__trigger.is-open {
   background-color: #fff;
   border-color: #0e9a62;
   box-shadow: 0 0 0 2px #2563eb1a;
@@ -342,7 +365,7 @@ watch(searchText, () => {
 }
 
 .ms-select__code {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ms-select__search-input {
@@ -447,7 +470,16 @@ watch(searchText, () => {
   margin-top: 4px;
   color: #f04438;
   font-size: 12px;
-  line-height: 16px;
+  height: auto;
+  line-height: 20px;
+}
+
+.text-error {
+  color: #f7453b !important;
+  font-size: 12px !important;
+  height: auto;
+  line-height: 20px;
+  margin-top: 8px !important;
 }
 
 .mi-check {

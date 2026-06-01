@@ -29,6 +29,7 @@
         </template>
 
         <input
+          ref="inputRef"
           v-model="searchText"
           class="ms-tree-select__input"
           :placeholder="selectedDisplayOptions.length ? '' : placeholder"
@@ -97,7 +98,7 @@
       </label>
     </div>
 
-    <div v-if="isInvalid && errorMessage" class="ms-tree-select__error">
+    <div v-if="isInvalid && errorMessage" class="ms-tree-select__error text-error">
       {{ errorMessage }}
     </div>
   </div>
@@ -277,6 +278,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'change'])
 
 const selectRef = ref(null)
+const inputRef = ref(null)
 const isOpen = ref(false)
 const searchText = ref('')
 const expandedKeys = ref(new Set())
@@ -511,6 +513,10 @@ watch(
   },
   { immediate: true },
 )
+
+defineExpose({
+  focus: () => inputRef.value?.focus?.(),
+})
 </script>
 
 <style>
@@ -522,6 +528,7 @@ watch(
 }
 
 .ms-tree-select__box {
+  position: relative;
   min-height: 32px;
   padding: 3px 60px 3px 4px;
   display: flex;
@@ -533,8 +540,8 @@ watch(
   cursor: pointer;
 }
 
-.ms-tree-select__box:hover,
-.ms-tree-select__box.is-open {
+.ms-tree-select:not(.is-error) .ms-tree-select__box:hover,
+.ms-tree-select:not(.is-error) .ms-tree-select__box.is-open {
   border-color: #0e9a62;
   box-shadow: 0 0 0 2px #2563eb1a;
   outline: none;
@@ -665,6 +672,10 @@ watch(
   box-shadow: 0 4px 16px #0000001f;
 }
 
+.ms-tree-select.is-error .ms-tree-select__dropdown {
+  top: calc(100% - 18px);
+}
+
 .ms-tree-select__node-list {
   padding: 4px 0;
 }
@@ -791,7 +802,16 @@ watch(
   margin-top: 4px;
   color: #f04438;
   font-size: 12px;
-  line-height: 16px;
+  height: auto;
+  line-height: 20px;
+}
+
+.text-error {
+  color: #f7453b !important;
+  font-size: 12px !important;
+  height: auto;
+  line-height: 20px;
+  margin-top: 8px !important;
 }
 
 .mi-chevron-down-black {

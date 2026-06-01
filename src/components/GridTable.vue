@@ -182,6 +182,7 @@
             class="ms-table__header-button"
             @click.stop="openHeaderMenu(data, $event)"
           >
+            <span v-if="isPinnedIconColumn(data.column.dataField)" class="ms-icon-pinned"></span>
             <span class="ms-table__cell-truncate">{{ data.column.caption }}</span>
             <span
               v-if="getHeaderSortDirection(data.column.dataField)"
@@ -191,7 +192,6 @@
                   : 'ms-icon-sort-desc'
               "
             ></span>
-            <span v-if="isPinnedIconColumn(data.column.dataField)" class="ms-icon-pinned"></span>
           </button>
         </div>
       </template>
@@ -201,8 +201,28 @@
           <span class="ms-status-badge__dot"></span>
           {{ getStatusText(data.data) }}
         </span>
-        <span v-else class="ms-table__cell-truncate">
-          {{ formatCellValue(getDisplayValue(data.data, data.column.dataField)) }}
+        <span
+          v-else-if="shouldHighlightValueFormula(data.data, data.column.dataField)"
+          class="ms-table__cell-truncate ms-table__cell-truncate--value-formula"
+        >
+          <span
+            v-for="(token, index) in getFormulaTokens(data.data, data.column.dataField)"
+            :key="`${token.text}-${index}`"
+            :class="`ms-table__formula-token ms-table__formula-token--${token.type}`"
+          >
+            {{ token.text }}
+          </span>
+        </span>
+        <span
+          v-else
+          class="ms-table__cell-truncate"
+        >
+          {{
+            formatCellValue(
+              getDisplayValue(data.data, data.column.dataField),
+              data.column.dataField,
+            )
+          }}
         </span>
       </template>
     </DxDataGrid>
@@ -229,7 +249,7 @@
         class="button-command-wrap"
         @click.stop="$emit('row-add', hoveredRow)"
       >
-        <span class="mi-plus-primary" title="Thêm"></span>
+        <span class="mi-plus-primary" title="Đưa vào danh sách sử dụng"></span>
       </button>
       <button
         v-if="showActiveAction"
@@ -315,21 +335,15 @@
       class="ms-table__pagination"
     />
 
-    <div v-if="pinDialogVisible" class="ms-table-dialog__overlay">
-      <div class="ms-table-dialog">
-        <button type="button" class="ms-table-dialog__close" @click="pinDialogVisible = false">
-          x
-        </button>
-        <h3>Không thể ghim cột</h3>
-        <p>
-          Tổng độ rộng các cột được ghim vượt quá giới hạn cho phép. Vui lòng giảm độ rộng các cột
-          muốn ghim hoặc chọn ghim ít cột hơn.
-        </p>
-        <button type="button" class="ms-table-dialog__button" @click="pinDialogVisible = false">
-          Đóng
-        </button>
-      </div>
-    </div>
+    <MsModal
+      v-model="pinDialogVisible"
+      title="Không thể ghim cột"
+      confirm-text="Đóng"
+      :show-cancel="false"
+    >
+      Tổng độ rộng các cột được ghim vượt quá giới hạn cho phép. Vui lòng giảm độ rộng các cột muốn
+      ghim hoặc chọn ghim ít cột hơn.
+    </MsModal>
   </div>
 </template>
 
@@ -341,6 +355,7 @@ import 'devextreme/dist/css/dx.light.css'
 import GridConfigAPI from '@/apis/components/gridConfig/GridConfig.js'
 import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI.js'
 import SalaryCompositionSystemAPI from '@/apis/components/salaryCompositionSystem/SalaryCompositionSystem.js'
+import MsModal from '@/components/MsModal.vue'
 import MsPagination from '@/components/MsPagination.vue'
 import { useGridTableStore } from '@/stores/gridTable.js'
 
@@ -722,6 +737,14 @@ function getDisplayValue(row, fieldName) {
   const lowerField = String(fieldName || '').toLowerCase()
   const value = getRawCellValue(row, fieldName)
 
+  if (lowerField === 'normformula') {
+    return ''
+  }
+
+  if (lowerField === 'valueformula') {
+    return isAutoSumValueFormula(value) ? '-' : value
+  }
+
   if (lowerField === 'organizationid' || lowerField === 'organizationids') {
     return (
       row.organizationNames ??
@@ -781,6 +804,41 @@ function getDisplayValue(row, fieldName) {
 
 function optionText(value, map) {
   return map[Number(value)] ?? value
+}
+
+function isAutoSumValueFormula(value) {
+  if (typeof value !== 'string') return false
+
+  try {
+    return JSON.parse(value)?.mode === 'auto_sum'
+  } catch {
+    return value.includes('"mode":"auto_sum"') || value.includes('"mode": "auto_sum"')
+  }
+}
+
+function shouldHighlightValueFormula(row, fieldName) {
+  if (String(fieldName || '').toLowerCase() !== 'valueformula') return false
+
+  const value = getRawCellValue(row, fieldName)
+  return value !== null && value !== undefined && value !== '' && !isAutoSumValueFormula(value)
+}
+
+function getFormulaTokens(row, fieldName) {
+  const value = String(getRawCellValue(row, fieldName) ?? '')
+  const parts = value.split(/([=+\-*/(),])/).filter((part) => part !== '')
+
+  return parts.map((text, index) => {
+    if (/^[=+\-*/(),]$/.test(text)) {
+      return { text, type: 'operator' }
+    }
+
+    const nextToken = parts[index + 1] ?? ''
+    if (/^[A-Z][A-Z0-9_]*$/.test(text) && nextToken === '(' && !text.includes('_')) {
+      return { text, type: 'function' }
+    }
+
+    return { text, type: 'parameter' }
+  })
 }
 
 function isRowChecked(row) {
@@ -1145,7 +1203,8 @@ function persistColumn(column, patch) {
   })
 }
 
-function formatCellValue(value) {
+function formatCellValue(value, fieldName = '') {
+  if (String(fieldName || '').toLowerCase() === 'normformula') return ''
   if (value === null || value === undefined || value === '') return '-'
   if (typeof value === 'boolean') return value ? 'Có' : 'Không'
   return value
@@ -1592,6 +1651,22 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   color: #101828;
   text-align: left;
+}
+
+.ms-table__cell-truncate--value-formula {
+  color: #1570ef;
+}
+
+.ms-table__formula-token--parameter {
+  color: #1570ef;
+}
+
+.ms-table__formula-token--function {
+  color: #000;
+}
+
+.ms-table__formula-token--operator {
+  color: #f04438;
 }
 
 .ms-table__action-cell {
@@ -2178,7 +2253,7 @@ onBeforeUnmount(() => {
   -webkit-mask-image: url('../assets/images/ICON.svg');
   -webkit-mask-position: -240px 0px;
   -webkit-mask-repeat: no-repeat;
-  background-color: #0E9A62;
+  background-color: #0e9a62;
 }
 
 .ms-table__loading-overlay {

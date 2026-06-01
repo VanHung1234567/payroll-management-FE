@@ -38,7 +38,7 @@
         </span>
       </div>
 
-      <div v-if="isInvalid && errorMessage" :id="errorId" class="ms-input__error">
+      <div v-if="isInvalid && errorMessage" :id="errorId" class="ms-input__error text-error">
         {{ errorMessage }}
       </div>
     </div>
@@ -186,8 +186,8 @@ defineExpose({
     background-color 0.12s ease;
 }
 
-.ms-input:not(.is-disabled) .ms-input__control:hover,
-.ms-input:not(.is-disabled) .ms-input__control:focus-within {
+.ms-input:not(.is-disabled):not(.is-error) .ms-input__control:hover,
+.ms-input:not(.is-disabled):not(.is-error) .ms-input__control:focus-within {
   border-color: #0e9a62;
 }
 
@@ -234,7 +234,16 @@ defineExpose({
   margin-top: 4px;
   color: #f04438;
   font-size: 12px;
-  line-height: 16px;
+  height: auto;
+  line-height: 20px;
+}
+
+.text-error {
+  color: #f7453b;
+  font-size: 12px;
+  height: auto;
+  line-height: 20px;
+  margin-top: 8px;
 }
 
 @media (max-width: 1120px) {

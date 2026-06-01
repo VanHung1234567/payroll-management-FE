@@ -39,7 +39,7 @@ const props = defineProps({
   },
   duration: {
     type: Number,
-    default: 300,
+    default: 6000,
   },
   autoClose: {
     type: Boolean,
@@ -144,11 +144,8 @@ onBeforeUnmount(clearTimer)
   align-items: center;
   border-radius: 8px;
   color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 20px;
-  box-sizing: border-box;
   pointer-events: auto;
+  font-weight: 500;
   transition: box-shadow 0.12s ease;
 }
 
@@ -169,13 +166,13 @@ onBeforeUnmount(clearTimer)
 }
 
 .ms-toast-message__icon {
-  margin-left: 16px;
+  margin-left: 12px;
 }
 
 .ms-toast-message__text {
   min-width: 0;
   flex: 1;
-  padding: 0 12px;
+  padding: 0 12px 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -192,10 +189,6 @@ onBeforeUnmount(clearTimer)
   border: none;
   background: transparent;
   cursor: pointer;
-}
-
-.ms-toast-message__button:hover {
-  background: #ffffff26;
 }
 
 .ms-icon-danger-circle,

@@ -75,7 +75,7 @@ const props = defineProps({
   },
   width: {
     type: [Number, String],
-    default: 520,
+    default: 415,
   },
   confirmText: {
     type: String,
@@ -89,6 +89,11 @@ const props = defineProps({
     type: String,
     default: 'primary',
     validator: (value) => ['primary', 'danger'].includes(value),
+  },
+  cancelVariant: {
+    type: String,
+    default: 'secondary',
+    validator: (value) => ['secondary', 'primary-outline'].includes(value),
   },
   showCancel: {
     type: Boolean,
@@ -130,21 +135,31 @@ const confirmButtonClass = computed(() => ({
 }))
 
 const sharedButtonProps = {
-  height: 40,
+  height: 32,
   minWidth: 80,
-  padding: '0 16px',
-  borderRadius: 8,
 }
 
 const cancelButtonProps = computed(() => ({
   ...sharedButtonProps,
-  backgroundColor: '#FFFFFF',
-  borderColor: '#D0D5DD',
-  color: '#101828',
-  hoverBackgroundColor: '#F5F5F5',
-  hoverBorderColor: '#D0D5DD',
-  activeBackgroundColor: '#E9EAEB',
-  activeBorderColor: '#D0D5DD',
+  ...(props.cancelVariant === 'primary-outline'
+    ? {
+        backgroundColor: '#0E9A62',
+        borderColor: '#0E9A62',
+        color: '#FFFFFF',
+        hoverBackgroundColor: '#0A724B',
+        hoverBorderColor: '#0A724B',
+        activeBackgroundColor: '#0B5A3D',
+        activeBorderColor: '#0B5A3D',
+      }
+    : {
+        backgroundColor: '#FFFFFF',
+        borderColor: '#D5D7DA',
+        color: '#101828',
+        hoverBackgroundColor: '#E9EAEB',
+        hoverBorderColor: '#D5D7DA',
+        activeBackgroundColor: '#D5D7DA',
+        activeBorderColor: '#D5D7DA',
+      }),
 }))
 
 const confirmButtonProps = computed(() => {
@@ -222,7 +237,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .ms-popup {
@@ -235,28 +250,24 @@ onBeforeUnmount(() => {
 }
 
 .ms-popup__header {
-  min-height: 62px;
+  height: 62px;
   padding: 24px 24px 16px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  box-sizing: border-box;
 }
 
 .ms-popup__title {
   margin: 0;
-  color: #101828;
-  font-size: 20px;
+  color: #212121;
+  letter-spacing: 0.576px;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 28px;
 }
 
 .ms-popup__close {
   width: 32px;
   height: 32px;
-  margin: -8px -8px 0 0;
-  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -286,30 +297,23 @@ onBeforeUnmount(() => {
 
 .ms-popup__body {
   padding: 0 24px 16px;
-  color: #101828;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  box-sizing: border-box;
+  line-height: 18px;
 }
 
 .ms-popup__footer {
   padding: 0 24px 24px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-sizing: border-box;
+  gap: 8px;
 }
 
 .ms-popup__footer--right {
   justify-content: flex-end;
+  font-weight: 500;
 }
 
 .ms-popup__button {
   font: inherit;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 20px;
 }
 
 .ms-modal-fade-enter-active,

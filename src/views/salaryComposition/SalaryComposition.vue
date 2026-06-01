@@ -1,215 +1,295 @@
 <template>
-  <div class="content-header">
-    <h2 class="content-header__title">Thành phần lương</h2>
-    <div class="content-header__actions">
-      <RouterLink :to="path.systemCategory" style="text-decoration: none">
-        <MsButton
-          background-color="#FFFFFF"
-          border-color="#D5D7DA"
-          color="#101828"
-          gap="4px"
-          hover-background-color="#E9EAEB"
-          hover-border-color="#D5D7DA"
-          active-background-color="#D5D7DA"
-          active-border-color="#D5D7DA"
-        >
-          <div class="mi-rule"></div>
-          <div class="system-category-text">Danh mục của hệ thống</div>
-        </MsButton>
-      </RouterLink>
-      <div ref="addActionRef" class="container-action-add">
-        <RouterLink :to="path.add" style="text-decoration: none">
-          <MsButton border-radius="8px 0 0 8px" gap="4px">
-            <div class="mi-plus-white"></div>
-            <div class="action-add-text">Thêm</div>
-          </MsButton>
-        </RouterLink>
-        <div class="div-division"><div class="div-division-child"></div></div>
-        <MsButton
-          width="32px"
-          height="32px"
-          min-width="32px"
-          padding="0"
-          border-radius="0 8px 8px 0"
-          @click.stop="toggleAddMenu"
-        >
-          <div class="mi-chevron-down-white"></div>
-        </MsButton>
-        <div v-if="isAddMenuOpen" class="ms-menu__body">
-          <button type="button" class="ms-menu-item" @click="openSystemPicker">
-            Chọn từ danh mục của hệ thống
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <GridOptions v-model:search="searchKeyword" :bulk-mode="hasSelectedRows">
-    <template #options>
-      <MsSelect v-model="selectedStatus" label="Trạng thái" :options="statusOptions" />
-
-      <MsTreeSelect
-        v-model="selectedOrganizationIds"
-        :options="organizations"
-        id-key="organizationID"
-        parent-key="parentID"
-        label-key="organizationName"
-        placeholder="Tất cả đơn vị"
-      />
-    </template>
-    <template #bulk-actions>
-      <div class="bulk-actions">
-        <div class="bulk-actions__count">
-          <span>Đã chọn</span>
-          <strong>{{ selectedRows.length }}</strong>
-        </div>
-        <button type="button" class="bulk-actions__clear" @click="clearSelectedRows">
-          Bỏ chọn
-        </button>
-        <MsButton
-          v-if="selectedHasActive"
-          background-color="#ffffff"
-          border-color="#FF9900"
-          color="#FF9900"
-          hover-background-color="#FEF0C7"
-          hover-border-color="#DC6803"
-          active-background-color="#FEDF89"
-          active-border-color="#B54708"
-          gap="4px"
-          padding="0 12px"
-        >
-          <span class="mi-circle-orange"></span>
-          <span class="button-action-text">Ngừng theo dõi</span>
-        </MsButton>
-        <MsButton
-          v-if="selectedHasInactive"
-          background-color="#ffffff"
-          border-color="#34B057"
-          color="#34B057"
-          hover-background-color="#A8D9C8"
-          hover-border-color="#0A724B"
-          active-background-color="#7CC7AE"
-          active-border-color="#0B5A3D"
-          gap="4px"
-          padding="0 12px"
-        >
-          <span class="mi-circle-check-green"></span>
-          <span class="button-action-text">Đang theo dõi</span>
-        </MsButton>
-        <MsButton
-          background-color="#ffffff"
-          border-color="#F04438"
-          color="#F04438"
-          hover-background-color="#FEE4E2"
-          hover-border-color="#D92D20"
-          active-background-color="#FECDCA"
-          active-border-color="#B42318"
-          gap="4px"
-          padding="0 12px"
-        >
-          <span class="mi-trash-red"></span>
-          <span class="button-action-text">Xóa</span>
-        </MsButton>
-      </div>
-    </template>
-  </GridOptions>
-  <GridTable
-    :search="debouncedSearchKeyword"
-    :filters="salaryCompositionFilters"
-    :clear-selection-signal="clearSelectionSignal"
-    @selection-change="selectedRows = $event"
+  <FormSalaryComposition
+    v-if="isFormOpen"
+    :key="formKey"
+    :mode="formMode"
+    :salary-composition-id="editingSalaryCompositionId"
+    :initial-title="editingSalaryCompositionTitle"
+    @close="closeForm"
+    @saved="handleFormSaved"
+    @deleted="handleFormDeleted"
   />
-
-  <Teleport to="body">
-    <div v-if="isSystemPickerOpen" class="ms-popup-overlay">
-      <div class="ms-popup-container" @click.stop>
-        <div class="ms-popup__header">
-          <h3>Thêm từ danh mục của hệ thống</h3>
-          <button type="button" class="ms-popup__close" @click="closeSystemPicker">
-            <span class="mi-close"></span>
-          </button>
-        </div>
-
-        <div class="ms-popup__body">
-          <div class="system-picker-options">
-            <div class="system-picker-search">
-              <MsInput
-                ref="systemPickerSearchInputRef"
-                v-model="systemPickerSearchKeyword"
-                placeholder="Tìm kiếm"
-              >
-                <template #prefix>
-                  <div class="mi-search"></div>
-                </template>
-              </MsInput>
-            </div>
-            <MsSelect
-              v-model="selectedSystemPickerTypeId"
-              label="Loại thành phần"
-              :options="salaryCompositionTypeOptions"
-              label-key="typeName"
-              value-key="salaryCompositionTypeID"
-              :menu-width="210"
-            />
-          </div>
-
-          <div class="system-picker-grid">
-            <GridTable
-              grid-key="salary_composition_system_picker"
-              config-grid-key="salary_composition_system"
-              :data-api="SalaryCompositionSystemAPI"
-              key-expr="salaryCompositionSystemID"
-              :page-size="25"
-              :search="debouncedSystemPickerSearchKeyword"
-              :filters="systemPickerFilters"
-              :clear-selection-signal="systemPickerClearSelectionSignal"
-              :show-active-action="false"
-              :show-copy-action="false"
-              :show-edit-action="false"
-              :show-delete-action="false"
-              @selection-change="systemPickerSelectedRows = $event"
-            />
-          </div>
-        </div>
-
-        <div class="ms-popup__footer">
+  <template v-else>
+    <div class="content-header">
+      <h2 class="content-header__title">Thành phần lương</h2>
+      <div class="content-header__actions">
+        <RouterLink :to="path.systemCategory" style="text-decoration: none">
           <MsButton
             background-color="#FFFFFF"
             border-color="#D5D7DA"
             color="#101828"
+            gap="4px"
             hover-background-color="#E9EAEB"
             hover-border-color="#D5D7DA"
             active-background-color="#D5D7DA"
             active-border-color="#D5D7DA"
-            padding="0 12px"
-            width="80px"
-            margin="0 8px 0 0"
-            @click="closeSystemPicker"
           >
-            Hủy bỏ
+            <div class="mi-rule"></div>
+            <div class="system-category-text">Danh mục của hệ thống</div>
           </MsButton>
-          <MsButton width="80px" :disabled="!hasSystemPickerSelection" @click="confirmSystemPicker">
-            Đồng ý
+        </RouterLink>
+        <div ref="addActionRef" class="container-action-add">
+          <MsButton border-radius="8px 0 0 8px" gap="4px" @click="openAddForm">
+            <div class="mi-plus-white"></div>
+            <div class="action-add-text">Thêm</div>
           </MsButton>
+          <div class="div-division"><div class="div-division-child"></div></div>
+          <MsButton
+            width="32px"
+            height="32px"
+            min-width="32px"
+            padding="0"
+            border-radius="0 8px 8px 0"
+            @click.stop="toggleAddMenu"
+          >
+            <div class="mi-chevron-down-white"></div>
+          </MsButton>
+          <div v-if="isAddMenuOpen" class="ms-menu__body">
+            <button type="button" class="ms-menu-item" @click="openSystemPicker">
+              Chọn từ danh mục của hệ thống
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </Teleport>
+
+    <GridOptions v-model:search="searchKeyword" :bulk-mode="hasSelectedRows">
+      <template #options>
+        <MsSelect v-model="selectedStatus" label="Trạng thái" :options="statusOptions" />
+
+        <MsTreeSelect
+          v-model="selectedOrganizationIds"
+          :options="organizations"
+          id-key="organizationID"
+          parent-key="parentID"
+          label-key="organizationName"
+          placeholder="Tất cả đơn vị"
+        />
+      </template>
+      <template #bulk-actions>
+        <div class="bulk-actions">
+          <div class="bulk-actions__count">
+            <span>Đã chọn</span>
+            <strong>{{ selectedRows.length }}</strong>
+          </div>
+          <button type="button" class="bulk-actions__clear" @click="clearSelectedRows">
+            Bỏ chọn
+          </button>
+          <MsButton
+            v-if="selectedHasActive"
+            background-color="#ffffff"
+            border-color="#FF9900"
+            color="#FF9900"
+            hover-background-color="#FEF0C7"
+            hover-border-color="#DC6803"
+            active-background-color="#FEDF89"
+            active-border-color="#B54708"
+            gap="4px"
+            padding="0 12px"
+            @click="openBulkStatusModal(0)"
+          >
+            <span class="mi-circle-orange"></span>
+            <span class="button-action-text">Ngừng theo dõi</span>
+          </MsButton>
+          <MsButton
+            v-if="selectedHasInactive"
+            background-color="#ffffff"
+            border-color="#34B057"
+            color="#34B057"
+            hover-background-color="#A8D9C8"
+            hover-border-color="#0A724B"
+            active-background-color="#7CC7AE"
+            active-border-color="#0B5A3D"
+            gap="4px"
+            padding="0 12px"
+            @click="openBulkStatusModal(1)"
+          >
+            <span class="mi-circle-check-green"></span>
+            <span class="button-action-text">Đang theo dõi</span>
+          </MsButton>
+          <MsButton
+            background-color="#ffffff"
+            border-color="#F04438"
+            color="#F04438"
+            hover-background-color="#FEE4E2"
+            hover-border-color="#D92D20"
+            active-background-color="#FECDCA"
+            active-border-color="#B42318"
+            gap="4px"
+            padding="0 12px"
+            @click="openBulkDeleteModal"
+          >
+            <span class="mi-trash-red"></span>
+            <span class="button-action-text">Xóa</span>
+          </MsButton>
+        </div>
+      </template>
+    </GridOptions>
+    <GridTable
+      :search="debouncedSearchKeyword"
+      :filters="salaryCompositionFilters"
+      :clear-selection-signal="clearSelectionSignal"
+      @row-edit="openEditForm"
+      @row-active="openStatusModal"
+      @row-copy="openDuplicateForm"
+      @row-delete="openDeleteModal"
+      @selection-change="selectedRows = $event"
+    />
+
+    <Teleport to="body">
+      <div v-if="isSystemPickerOpen" class="ms-popup-overlay">
+        <div class="ms-popup-container" @click.stop>
+          <div class="ms-popup__header">
+            <h3>Thêm từ danh mục của hệ thống</h3>
+            <button type="button" class="ms-popup__close" @click="closeSystemPicker">
+              <span class="mi-close"></span>
+            </button>
+          </div>
+
+          <div class="ms-popup__body">
+            <div class="system-picker-options">
+              <div class="system-picker-search">
+                <MsInput
+                  ref="systemPickerSearchInputRef"
+                  v-model="systemPickerSearchKeyword"
+                  placeholder="Tìm kiếm"
+                >
+                  <template #prefix>
+                    <div class="mi-search"></div>
+                  </template>
+                </MsInput>
+              </div>
+              <MsSelect
+                v-model="selectedSystemPickerTypeId"
+                label="Loại thành phần"
+                :options="salaryCompositionTypeOptions"
+                label-key="typeName"
+                value-key="salaryCompositionTypeID"
+                :menu-width="210"
+              />
+            </div>
+
+            <div class="system-picker-grid">
+              <GridTable
+                grid-key="salary_composition_system_picker"
+                config-grid-key="salary_composition_system"
+                :data-api="SalaryCompositionSystemAPI"
+                key-expr="salaryCompositionSystemID"
+                :page-size="25"
+                :search="debouncedSystemPickerSearchKeyword"
+                :filters="systemPickerFilters"
+                :clear-selection-signal="systemPickerClearSelectionSignal"
+                :show-active-action="false"
+                :show-copy-action="false"
+                :show-edit-action="false"
+                :show-delete-action="false"
+                @selection-change="systemPickerSelectedRows = $event"
+              />
+            </div>
+          </div>
+
+          <div class="ms-popup__footer">
+            <MsButton
+              background-color="#FFFFFF"
+              border-color="#D5D7DA"
+              color="#101828"
+              hover-background-color="#E9EAEB"
+              hover-border-color="#D5D7DA"
+              active-background-color="#D5D7DA"
+              active-border-color="#D5D7DA"
+              padding="0 12px"
+              width="80px"
+              margin="0 8px 0 0"
+              @click="closeSystemPicker"
+            >
+              Hủy bỏ
+            </MsButton>
+            <MsButton
+              width="80px"
+              :disabled="!hasSystemPickerSelection"
+              @click="confirmSystemPicker"
+            >
+              Đồng ý
+            </MsButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+  </template>
+  <MsModal
+    v-model="isStatusConfirmModalOpen"
+    title="Chuyển trạng thái"
+    confirm-text="Đồng ý"
+    cancel-text="Hủy bỏ"
+    @confirm="confirmChangeStatus"
+  >
+    {{ statusConfirmMessage }}
+  </MsModal>
+  <MsModal
+    v-model="isBulkDeleteConfirmModalOpen"
+    title="Xóa thành phần lương"
+    width="960px"
+    confirm-text="Xóa"
+    cancel-text="Đóng"
+    confirm-variant="danger"
+    cancel-variant="primary-outline"
+    :show-confirm="hasBulkDeletableRows"
+    @confirm="confirmBulkDeleteSalaryCompositions"
+  >
+    <div class="bulk-delete-message">
+      <template v-if="bulkDefaultNames.length">
+        <strong>{{ bulkDefaultNames.join(', ') }}</strong>
+        là giá trị mặc định của hệ thống nên không thể xóa.
+      </template>
+      <template v-if="bulkDefaultNames.length && hasBulkDeletableRows">
+        Bạn có muốn xóa các thành phần lương còn lại không?
+      </template>
+      <template v-else-if="hasBulkDeletableRows">
+        Bạn có chắc chắn muốn xóa các thành phần lương đã chọn không?
+      </template>
+    </div>
+  </MsModal>
+  <MsModal
+    v-model="isDeleteConfirmModalOpen"
+    title="Thông báo"
+    confirm-text="Xóa"
+    cancel-text="Hủy"
+    confirm-variant="danger"
+    @confirm="confirmDeleteSalaryComposition"
+  >
+    <span>
+      Bạn có chắc chắn muốn xóa thành phần lương
+      <strong>{{ deleteSalaryCompositionName }}</strong>
+      không?
+    </span>
+  </MsModal>
+  <MsModal
+    v-model="isDefaultDeleteModalOpen"
+    title="Thông báo"
+    confirm-text="Đóng"
+    :show-cancel="false"
+  >
+    Đây là thành phần lương mặc định của hệ thống nên không thể xóa. Vui lòng kiểm tra lại.
+  </MsModal>
+  <MsToast v-model="toast.visible" type="success" :message="toast.message" />
 </template>
 
 <script setup lang="ts">
 import GridOptions from '@/components/GridOptions.vue'
 import GridTable from '@/components/GridTable.vue'
+import FormSalaryComposition from '@/views/salaryComposition/FormSalaryComposition.vue'
 import MsButton from '@/components/MsButton.vue'
 import { path } from '@/utils/path'
-import { useQuery } from '@tanstack/vue-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import OrganizationAPI from '@/apis/components/organization/Organization.js'
 import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI'
 import SalaryCompositionSystemAPI from '@/apis/components/salaryCompositionSystem/SalaryCompositionSystem'
 import SalaryCompositionTypeAPI from '@/apis/components/salaryCompositionType/SalaryCompositionType'
 import MsInput from '@/components/MsInput.vue'
+import MsModal from '@/components/MsModal.vue'
 import MsSelect from '@/components/MsSelect.vue'
+import MsToast from '@/components/MsToast.vue'
 import MsTreeSelect from '@/components/MsTreeSelect.vue'
 
 const selectedStatus = ref<number | string | null>(null)
@@ -227,6 +307,24 @@ const systemPickerSearchInputRef = ref<InstanceType<typeof MsInput> | null>(null
 const debouncedSystemPickerSearchKeyword = ref('')
 const systemPickerSelectedRows = ref<any[]>([])
 const systemPickerClearSelectionSignal = ref(0)
+const toast = ref({
+  visible: false,
+  message: 'Thêm thành công',
+})
+const isFormOpen = ref(false)
+const formMode = ref<'add' | 'edit' | 'duplicate'>('add')
+const editingSalaryCompositionId = ref<string | number | null>(null)
+const editingSalaryCompositionTitle = ref('')
+const formKey = computed(() => `${formMode.value}-${editingSalaryCompositionId.value ?? 'new'}`)
+const deleteTargetRow = ref<any | null>(null)
+const isDeleteConfirmModalOpen = ref(false)
+const isDefaultDeleteModalOpen = ref(false)
+const isBulkDeleteConfirmModalOpen = ref(false)
+const bulkDeleteRows = ref<any[]>([])
+const statusTargetRows = ref<any[]>([])
+const targetStatus = ref<number | null>(null)
+const isStatusConfirmModalOpen = ref(false)
+const queryClient = useQueryClient()
 let searchDebounceTimer: ReturnType<typeof window.setTimeout> | null = null
 let systemPickerSearchDebounceTimer: ReturnType<typeof window.setTimeout> | null = null
 
@@ -245,12 +343,40 @@ const { data: salaryCompositionTypeResponse } = useQuery({
   queryFn: () => SalaryCompositionTypeAPI.getAll(),
 })
 
+const deleteSalaryCompositionMutation = useMutation({
+  mutationFn: (id: string | number) => SalaryCompositionAPI.delete(id),
+  onSuccess: () => {
+    queryClient.invalidateQueries()
+    clearSelectedRows()
+    showToast('Xóa thành công')
+  },
+})
+
+const bulkDeleteSalaryCompositionMutation = useMutation({
+  mutationFn: (ids: Array<string | number>) => SalaryCompositionAPI.bulkDelete({ ids }),
+  onSuccess: () => {
+    queryClient.invalidateQueries()
+    clearSelectedRows()
+    bulkDeleteRows.value = []
+    showToast('Xóa thành công')
+  },
+})
+
+const changeStatusMutation = useMutation({
+  mutationFn: ({ rows, status }: { rows: any[]; status: number }) =>
+    SalaryCompositionAPI.updateBulkStatus({
+      ids: rows.map(getSalaryCompositionId).filter(Boolean),
+      status,
+    }),
+  onSuccess: () => {
+    queryClient.invalidateQueries()
+    clearSelectedRows()
+    showToast('Cập nhật trạng thái thành công')
+  },
+})
+
 const organizations = computed(() => organizationResponse.value?.data?.data ?? [])
-const salaryCompositionEnum = computed(
-  () =>
-    salaryCompositionEnumResponse.value?.data ??
-    {},
-)
+const salaryCompositionEnum = computed(() => salaryCompositionEnumResponse.value?.data ?? {})
 const statusOptions = computed(() => [
   { label: 'Tất cả', value: null },
   ...(salaryCompositionEnum.value.statuses ?? []),
@@ -338,6 +464,156 @@ function isActiveStatus(row: any) {
 
 function clearSelectedRows() {
   clearSelectionSignal.value += 1
+}
+
+function getSalaryCompositionId(row: any) {
+  return row?.salaryCompositionID ?? row?.SalaryCompositionID ?? row?.id ?? row?.ID
+}
+
+function getSalaryCompositionName(row: any) {
+  return row?.salaryCompositionName ?? row?.SalaryCompositionName ?? row?.name ?? row?.Name ?? ''
+}
+
+function getCreatedSource(row: any) {
+  return (
+    row?.createdSource ?? row?.CreatedSource ?? row?.createdSourceName ?? row?.CreatedSourceName
+  )
+}
+
+function isDefaultSourceRow(row: any) {
+  const source = getCreatedSource(row)
+  if (source === null || source === undefined || source === '') return false
+  if (typeof source === 'string') {
+    const normalizedSource = source
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+    return normalizedSource.includes('mac dinh')
+  }
+
+  return Number(source) !== 1
+}
+
+const deleteSalaryCompositionName = computed(
+  () => getSalaryCompositionName(deleteTargetRow.value) || 'thành phần lương',
+)
+const statusTargetName = computed(() => {
+  if (statusTargetRows.value.length !== 1) return 'các thành phần lương đã chọn'
+  return getSalaryCompositionName(statusTargetRows.value[0]) || 'thành phần lương'
+})
+const nextStatusText = computed(() =>
+  Number(targetStatus.value) === 1 ? 'đang theo dõi' : 'ngừng theo dõi',
+)
+const statusConfirmMessage = computed(() => {
+  if (statusTargetRows.value.length !== 1) {
+    return `Bạn có chắc chắn muốn chuyển trạng thái các thành phần lương đã chọn sang ${nextStatusText.value} không?`
+  }
+
+  return `Bạn có chắc chắn muốn chuyển trạng thái thành phần lương ${statusTargetName.value} sang ${nextStatusText.value} không?`
+})
+const bulkDefaultRows = computed(() => bulkDeleteRows.value.filter(isDefaultSourceRow))
+const bulkDeletableRows = computed(() => bulkDeleteRows.value.filter((row) => !isDefaultSourceRow(row)))
+const bulkDefaultNames = computed(() =>
+  bulkDefaultRows.value.map(getSalaryCompositionName).filter(Boolean),
+)
+const hasBulkDeletableRows = computed(() => bulkDeletableRows.value.length > 0)
+
+function openAddForm() {
+  formMode.value = 'add'
+  editingSalaryCompositionId.value = null
+  editingSalaryCompositionTitle.value = ''
+  isFormOpen.value = true
+}
+
+function openEditForm(row: any) {
+  const id = getSalaryCompositionId(row)
+  if (!id) return
+  formMode.value = 'edit'
+  editingSalaryCompositionId.value = id
+  editingSalaryCompositionTitle.value = getSalaryCompositionName(row)
+  isFormOpen.value = true
+}
+
+function openDuplicateForm(row: any) {
+  const id = getSalaryCompositionId(row)
+  if (!id) return
+  formMode.value = 'duplicate'
+  editingSalaryCompositionId.value = id
+  editingSalaryCompositionTitle.value = getSalaryCompositionName(row)
+  isFormOpen.value = true
+}
+
+function closeForm() {
+  isFormOpen.value = false
+  formMode.value = 'add'
+  editingSalaryCompositionId.value = null
+  editingSalaryCompositionTitle.value = ''
+}
+
+function handleFormSaved(action = 'create') {
+  showToast(action === 'update' ? 'Cập nhật thành phần lương thành công' : 'Thêm thành công')
+}
+
+function handleFormDeleted() {
+  showToast('Xóa thành công')
+}
+
+function showToast(message: string) {
+  toast.value.visible = false
+  toast.value.message = message
+  nextTick(() => {
+    toast.value.visible = true
+  })
+}
+
+function openDeleteModal(row: any) {
+  deleteTargetRow.value = row
+  if (isDefaultSourceRow(row)) {
+    isDefaultDeleteModalOpen.value = true
+    return
+  }
+
+  isDeleteConfirmModalOpen.value = true
+}
+
+function confirmDeleteSalaryComposition() {
+  const id = getSalaryCompositionId(deleteTargetRow.value)
+  if (!id) return
+  deleteSalaryCompositionMutation.mutate(id)
+}
+
+function openBulkDeleteModal() {
+  if (!selectedRows.value.length) return
+  bulkDeleteRows.value = [...selectedRows.value]
+  isBulkDeleteConfirmModalOpen.value = true
+}
+
+function confirmBulkDeleteSalaryCompositions() {
+  const ids = bulkDeletableRows.value.map(getSalaryCompositionId).filter(Boolean)
+  if (!ids.length) return
+  bulkDeleteSalaryCompositionMutation.mutate(ids)
+}
+
+function openStatusModal(row: any) {
+  statusTargetRows.value = [row]
+  targetStatus.value = isActiveStatus(row) ? 0 : 1
+  isStatusConfirmModalOpen.value = true
+}
+
+function openBulkStatusModal(status: number) {
+  const rows = selectedRows.value.filter((row) => (status === 1 ? !isActiveStatus(row) : isActiveStatus(row)))
+  if (!rows.length) return
+  statusTargetRows.value = rows
+  targetStatus.value = status
+  isStatusConfirmModalOpen.value = true
+}
+
+function confirmChangeStatus() {
+  if (targetStatus.value === null || !statusTargetRows.value.length) return
+  changeStatusMutation.mutate({
+    rows: statusTargetRows.value,
+    status: targetStatus.value,
+  })
 }
 
 function toggleAddMenu() {
@@ -639,6 +915,16 @@ function handleDocumentMouseDown(event: MouseEvent) {
   font: inherit;
   cursor: pointer;
   margin: 0 8px;
+}
+
+.bulk-delete-message {
+  color: #101828;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.bulk-delete-message strong {
+  font-weight: 700;
 }
 
 .mi-circle-orange,

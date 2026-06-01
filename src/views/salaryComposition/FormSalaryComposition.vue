@@ -11,11 +11,65 @@
         offset="4px"
         class="header-action"
       >
-        <button type="button" class="navbar-action" @click="openExitConfirmModal">
+        <button type="button" class="navbar-action" @click="handleBack">
           <div class="mi-arrow-left"></div>
         </button>
       </MsTooltip>
-      <div class="content-header__title">Thêm thành phần</div>
+      <div class="content-header__title">{{ formTitle }}</div>
+    </div>
+    <div v-if="isEditMode" class="form-header-actions flex items-center font-weight-500">
+      <MsButton
+        background-color="#FFFFFF"
+        border-color="#D5D7DA"
+        color="#101828"
+        hover-background-color="#E9EAEB"
+        hover-border-color="#D5D7DA"
+        active-background-color="#D5D7DA"
+        active-border-color="#D5D7DA"
+        width="80px"
+        margin="0 8px 0 0"
+        @click="goToSalaryCompositionList"
+      >
+        Hủy bỏ
+      </MsButton>
+      <MsButton width="80px" margin="0 8px 0 0" :disabled="isSaving" @click="handleSave">
+        Lưu
+      </MsButton>
+      <div ref="headerMenuRef" class="form-more-action">
+        <MsTooltip
+          content="Chức năng khác"
+          placement="bottom"
+          align="end"
+          arrow-position="16px"
+          hover-background="#e9eaeb"
+        >
+          <MsButton
+            background-color="#FFFFFF"
+            border-color="#D5D7DA"
+            color="#101828"
+            hover-background-color="#E9EAEB"
+            hover-border-color="#D5D7DA"
+            active-background-color="#D5D7DA"
+            active-border-color="#D5D7DA"
+            width="32px"
+            padding="0"
+            gap="4px"
+            @click.stop="toggleHeaderMenu"
+          >
+            <span class="mi-threedot"></span>
+          </MsButton>
+        </MsTooltip>
+        <div v-if="isHeaderMenuOpen" class="form-more-menu">
+          <button type="button" class="form-more-menu__item" @click="handleDuplicate">
+            <span class="ms-copy"></span>
+            <span>Nhân bản</span>
+          </button>
+          <button type="button" class="form-more-menu__item" @click="handleDelete">
+            <span class="ms-trash-red"></span>
+            <span>Xóa</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="w-full salarycomposition-page">
@@ -24,16 +78,30 @@
         <div class="salarycomposition-container">
           <div class="w-full">
             <div class="ms-row">
-              <MsInput label="Tên thành phần" required width="838px" />
+              <MsInput
+                ref="salaryCompositionNameInputRef"
+                v-model="salaryCompositionName"
+                label="Tên thành phần"
+                required
+                width="838px"
+                :error-message="formErrors.salaryCompositionName"
+                @input="handleSalaryCompositionNameInput"
+                @blur="validateField('salaryCompositionName')"
+              />
             </div>
             <div class="ms-row">
               <MsInput
+                ref="salaryCompositionCodeInputRef"
                 label="Mã thành phần"
                 placeholder="Nhập mã viết liền"
                 required
                 width="838px"
                 :show-inactive-option="false"
-                :error-message="organizationErrorMessage"
+                :model-value="salaryCompositionCode"
+                :disabled="isCodeDisabled"
+                :error-message="formErrors.salaryCompositionCode"
+                @input="handleSalaryCompositionCodeInput"
+                @blur="validateField('salaryCompositionCode')"
               />
             </div>
             <div class="ms-row">
@@ -44,6 +112,7 @@
                 </label>
               </div>
               <MsTreeSelect
+                ref="organizationTreeRef"
                 v-model="selectedOrganizationIds"
                 :options="organizations"
                 id-key="organizationID"
@@ -52,6 +121,8 @@
                 placeholder="Chọn đơn vị"
                 width="838px"
                 :show-inactive-option="false"
+                :error-message="formErrors.organizationIDs"
+                @change="handleOrganizationChange"
               />
             </div>
             <div class="ms-row">
@@ -62,6 +133,7 @@
                 </label>
               </div>
               <MsSelect
+                ref="salaryCompositionTypeSelectRef"
                 v-model="selectedSalaryCompositionTypeId"
                 :options="salaryCompositionTypeOptions"
                 searchable
@@ -73,6 +145,10 @@
                 :letter-spacing="0"
                 label-key="typeName"
                 value-key="salaryCompositionTypeID"
+                :disabled="isSourceDefault"
+                :error-message="formErrors.salaryCompositionTypeID"
+                @change="validateField('salaryCompositionTypeID')"
+                @blur="validateField('salaryCompositionTypeID')"
               />
             </div>
             <div class="ms-row">
@@ -84,6 +160,7 @@
               </div>
               <div class="flex">
                 <MsSelect
+                  ref="natureSelectRef"
                   v-model="selectedNature"
                   searchable
                   variant="form"
@@ -92,14 +169,19 @@
                   trigger-padding="4px 8px 4px 4px"
                   :letter-spacing="0"
                   :options="natureOptions"
+                  :disabled="isSourceDefault"
+                  :error-message="formErrors.nature"
+                  @change="validateField('nature')"
+                  @blur="validateField('nature')"
                 />
                 <div v-if="isIncomeNature" class="flex ml-16">
                   <label
                     v-for="option in taxTypeOptions"
                     :key="option.value"
                     class="ms-radio-wrapper"
+                    :class="{ 'is-disabled': isNatureOptionDisabled }"
                   >
-                    <span class="ms-radio-item" @click="selectedTaxType = option.value">
+                    <span class="ms-radio-item" @click="selectTaxType(option.value)">
                       <span
                         class="ms-radio-item__icon"
                         :class="{
@@ -120,12 +202,17 @@
                     </span>
                   </label>
                 </div>
-                <label v-else-if="isDeductionNature" class="ms-check-wrapper ml-16">
+                <label
+                  v-else-if="isDeductionNature"
+                  class="ms-check-wrapper ml-16"
+                  :class="{ 'is-disabled': isNatureOptionDisabled }"
+                >
                   <button
                     type="button"
                     class="ms-check-item__icon"
                     :class="{ 'is-checked': isTaxReduction }"
-                    @click="isTaxReduction = !isTaxReduction"
+                    :disabled="isNatureOptionDisabled"
+                    @click="toggleTaxReduction"
                   >
                     <svg
                       v-if="isTaxReduction"
@@ -410,7 +497,7 @@
                   autocorrect="off"
                   data-gramm="false"
                   data-testid="textarea"
-                  value=""
+                  v-model="description"
                 ></textarea>
               </div>
             </div>
@@ -457,7 +544,7 @@
               <MsInput v-model="sourceName" disabled width="315px" />
               <input type="hidden" :value="sourceValue" />
             </div>
-            <div class="ms-row">
+            <div v-if="isEditMode" class="ms-row">
               <div class="w-200">
                 <label>
                   <p>Trạng thái</p>
@@ -488,7 +575,7 @@
           </div>
         </div>
       </div>
-      <div class="insert-action-footer">
+      <div v-if="!isEditMode" class="insert-action-footer">
         <MsButton
           background-color="#FFFFFF"
           border-color="#D5D7DA"
@@ -511,10 +598,12 @@
           active-background-color="#7CC7AE"
           width="106px"
           margin="0 8px 0 0"
+          :disabled="isSaving"
+          @click="handleSaveAndAdd"
         >
           Lưu và thêm
         </MsButton>
-        <MsButton width="80px">Lưu </MsButton>
+        <MsButton width="80px" :disabled="isSaving" @click="handleSave">Lưu </MsButton>
       </div>
     </div>
   </div>
@@ -524,8 +613,31 @@
     message="Nếu bạn thoát, các dữ liệu đang nhập liệu sẽ không được lưu lại."
     cancel-text="Ở lại"
     confirm-text="Thoát, không lưu"
-    @confirm="goToSalaryCompositionList"
+    @confirm="confirmExitWithoutSave"
   />
+  <MsModal
+    v-model="isDeleteConfirmModalOpen"
+    title="Thông báo"
+    confirm-text="Xóa"
+    cancel-text="Hủy"
+    confirm-variant="danger"
+    @confirm="confirmDeleteSalaryComposition"
+  >
+    <span>
+      Bạn có chắc chắn muốn xóa thành phần lương
+      <strong>{{ deleteSalaryCompositionName }}</strong>
+      không?
+    </span>
+  </MsModal>
+  <MsModal
+    v-model="isDefaultDeleteModalOpen"
+    title="Thông báo"
+    confirm-text="Đóng"
+    :show-cancel="false"
+  >
+    Đây là thành phần lương mặc định của hệ thống nên không thể xóa. Vui lòng kiểm tra lại.
+  </MsModal>
+  <MsToast v-model="toast.visible" type="success" message="Thêm thành công" />
 </template>
 
 <script setup>
@@ -533,27 +645,54 @@ import MsInput from '@/components/MsInput.vue'
 import MsTooltip from '@/components/MsTooltip.vue'
 import MsTreeSelect from '@/components/MsTreeSelect.vue'
 import OrganizationAPI from '@/apis/components/organization/Organization.js'
-import { path } from '@/utils/path'
-import { useQuery } from '@tanstack/vue-query'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import MsButton from '@/components/MsButton.vue'
 import MsFormula from '@/components/MsFormula.vue'
 import MsModal from '@/components/MsModal.vue'
 import MsSelect from '@/components/MsSelect.vue'
+import MsToast from '@/components/MsToast.vue'
 import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI'
 import SalaryCompositionTypeAPI from '@/apis/components/salaryCompositionType/SalaryCompositionType'
-import { useRouter } from 'vue-router'
+import { salaryCompositionSchema } from '@/validations/salaryCompositionSchema'
 
-const router = useRouter()
+const props = defineProps({
+  mode: {
+    type: String,
+    default: 'add',
+    validator: (value) => ['add', 'edit', 'duplicate'].includes(value),
+  },
+  salaryCompositionId: {
+    type: [String, Number],
+    default: null,
+  },
+  initialTitle: {
+    type: String,
+    default: '',
+  },
+})
+
+const emit = defineEmits(['close', 'saved', 'deleted'])
+const queryClient = useQueryClient()
+const salaryCompositionNameInputRef = ref(null)
+const salaryCompositionCodeInputRef = ref(null)
+const organizationTreeRef = ref(null)
+const salaryCompositionTypeSelectRef = ref(null)
+const natureSelectRef = ref(null)
+const headerMenuRef = ref(null)
+const salaryCompositionName = ref('')
+const salaryCompositionCode = ref('')
 const selectedNature = ref(1)
 const selectedSalaryCompositionTypeId = ref(null)
 const selectedOrganizationIds = ref([])
-const organizationErrorMessage = ref('')
+const isSalaryCompositionCodeManual = ref(false)
+const formErrors = reactive({})
 const normFormula = ref('')
 const valueFormula = ref('')
+const description = ref('')
 const selectedTaxType = ref(1)
 const selectedValueType = ref(null)
-const selectedValueMode = ref('auto')
+const selectedValueMode = ref('formula')
 const selectedAggregationScopeValue = ref('sameOrganization')
 const selectedOrganizationLevel = ref(1)
 const selectedAggregateSalaryCompositionCode = ref(null)
@@ -564,8 +703,32 @@ const selectedStatus = ref(1)
 const openedValueSelect = ref('')
 const valueConfigRef = ref(null)
 const isExitConfirmModalOpen = ref(false)
+const isDeleteConfirmModalOpen = ref(false)
+const isDefaultDeleteModalOpen = ref(false)
+const isHeaderMenuOpen = ref(false)
+const isDuplicateMode = ref(false)
+const initialFormSnapshot = ref('')
 const isTaxReduction = ref(false)
 const isAllowOverNormValue = ref(false)
+const isSaveAndAddMode = ref(false)
+const toast = reactive({
+  visible: false,
+})
+const currentId = computed(() => props.salaryCompositionId ?? null)
+const isDetailSourceMode = computed(
+  () => ['edit', 'duplicate'].includes(props.mode) && Boolean(currentId.value),
+)
+const isEditMode = computed(() => isDetailSourceMode.value && !isDuplicateMode.value)
+const validationCurrentId = computed(() => (isEditMode.value ? currentId.value : null))
+const isFormDirty = computed(
+  () => Boolean(initialFormSnapshot.value) && getFormSnapshot() !== initialFormSnapshot.value,
+)
+const formTitle = computed(() =>
+  isEditMode.value ? props.initialTitle || 'Chi tiết thành phần' : 'Thêm thành phần',
+)
+const deleteSalaryCompositionName = computed(
+  () => props.initialTitle || salaryCompositionName.value || 'thành phần lương',
+)
 const taxTypeOptions = [
   { label: 'Chịu thuế', value: 1 },
   { label: 'Miễn thuế toàn phần', value: 2 },
@@ -633,6 +796,44 @@ const { data: salaryCompositionParameterResponse } = useQuery({
     }),
 })
 
+const { data: salaryCompositionDetailResponse } = useQuery({
+  queryKey: computed(() => ['salaryCompositionDetail', currentId.value]),
+  queryFn: () => SalaryCompositionAPI.detail(currentId.value),
+  enabled: computed(() => isDetailSourceMode.value),
+})
+
+const createSalaryCompositionMutation = useMutation({
+  mutationFn: (payload) => SalaryCompositionAPI.post(payload),
+  onSuccess: () => {
+    queryClient.invalidateQueries()
+    if (isSaveAndAddMode.value) {
+      showSuccessToast()
+      resetForm()
+      return
+    }
+    emit('saved', 'create')
+    emit('close')
+  },
+})
+
+const updateSalaryCompositionMutation = useMutation({
+  mutationFn: (payload) => SalaryCompositionAPI.put(currentId.value, payload),
+  onSuccess: () => {
+    queryClient.invalidateQueries()
+    emit('saved', 'update')
+    emit('close')
+  },
+})
+
+const deleteSalaryCompositionMutation = useMutation({
+  mutationFn: () => SalaryCompositionAPI.delete(currentId.value),
+  onSuccess: () => {
+    queryClient.invalidateQueries()
+    emit('deleted')
+    emit('close')
+  },
+})
+
 const organizations = computed(() => organizationResponse.value?.data?.data ?? [])
 const salaryCompositionEnum = computed(
   () =>
@@ -673,9 +874,16 @@ const isIncomeNature = computed(() => Number(selectedNature.value) === 1)
 const isDeductionNature = computed(() => Number(selectedNature.value) === 2)
 const isNormVisible = computed(() => isIncomeNature.value || isDeductionNature.value)
 const isValueTypeLocked = computed(() => isNormVisible.value)
+const isSourceDefault = computed(() => isEditMode.value && Number(sourceValue.value) !== 1)
+const isCodeDisabled = computed(
+  () => isEditMode.value && (Number(selectedStatus.value) === 1 || isSourceDefault.value),
+)
+const isNatureOptionDisabled = computed(() => isSourceDefault.value)
 const selectedValueTypeLabel = computed(() =>
   getOptionLabel(valueTypeOptions.value.find((option) => option.value === selectedValueType.value)),
 )
+
+isDuplicateMode.value = props.mode === 'duplicate'
 const isAutoValueConfigVisible = computed(() => {
   const label = normalizeText(selectedValueTypeLabel.value)
   return label.includes('tien te') || label === 'so' || label.includes(' so')
@@ -709,6 +917,11 @@ const currencyValueType = computed(
     )?.value ??
     valueTypeOptions.value.find((option) => Number(option?.value) === 1)?.value ??
     null,
+)
+const isSaving = computed(
+  () =>
+    createSalaryCompositionMutation.isPending.value ||
+    updateSalaryCompositionMutation.isPending.value,
 )
 
 function getEnumOptions(key) {
@@ -753,6 +966,330 @@ function getParameterCode(parameter) {
   )
 }
 
+function getFormData() {
+  return {
+    salaryCompositionName: salaryCompositionName.value,
+    salaryCompositionCode: salaryCompositionCode.value,
+    salaryCompositionTypeID: selectedSalaryCompositionTypeId.value,
+    nature: selectedNature.value,
+    organizationIDs: selectedOrganizationIds.value,
+  }
+}
+
+function getFormSnapshot() {
+  return JSON.stringify({
+    salaryCompositionName: salaryCompositionName.value,
+    salaryCompositionCode: salaryCompositionCode.value,
+    selectedNature: selectedNature.value,
+    selectedSalaryCompositionTypeId: selectedSalaryCompositionTypeId.value,
+    selectedOrganizationIds: selectedOrganizationIds.value,
+    normFormula: normFormula.value,
+    valueFormula: valueFormula.value,
+    description: description.value,
+    selectedTaxType: selectedTaxType.value,
+    selectedValueType: selectedValueType.value,
+    selectedValueMode: selectedValueMode.value,
+    selectedAggregationScopeValue: selectedAggregationScopeValue.value,
+    selectedOrganizationLevel: selectedOrganizationLevel.value,
+    selectedAggregateSalaryCompositionCode: selectedAggregateSalaryCompositionCode.value,
+    selectedDisplayOnPayslip: selectedDisplayOnPayslip.value,
+    selectedStatus: selectedStatus.value,
+    isTaxReduction: isTaxReduction.value,
+    isAllowOverNormValue: isAllowOverNormValue.value,
+  })
+}
+
+function setInitialFormSnapshot() {
+  nextTick(() => {
+    initialFormSnapshot.value = getFormSnapshot()
+  })
+}
+
+function getAutoValueScope() {
+  const scopeMap = {
+    sameOrganization: 'same_organization',
+    subordinate: 'subordinate',
+    organizationStructure: 'organization_level',
+  }
+
+  return scopeMap[selectedAggregationScopeValue.value] ?? scopeMap.sameOrganization
+}
+
+function getValueFormulaPayload() {
+  if (isAutoValueConfigVisible.value && selectedValueMode.value === 'auto') {
+    const autoValueConfig = {
+      mode: 'auto_sum',
+      scope: getAutoValueScope(),
+    }
+
+    if (selectedAggregationScopeValue.value === 'organizationStructure') {
+      autoValueConfig.level = Number(selectedOrganizationLevel.value)
+    }
+
+    autoValueConfig.salaryCode = selectedAggregateSalaryCompositionCode.value ?? ''
+
+    return JSON.stringify(autoValueConfig)
+  }
+
+  return valueFormula.value ?? ''
+}
+
+function buildSalaryCompositionPayload() {
+  return {
+    salaryCompositionCode: salaryCompositionCode.value,
+    salaryCompositionName: salaryCompositionName.value,
+    organizationIDs: selectedOrganizationIds.value.join(';'),
+    salaryCompositionTypeID: selectedSalaryCompositionTypeId.value,
+    nature: selectedNature.value,
+    taxType: isIncomeNature.value ? selectedTaxType.value : null,
+    isTaxReduction: isDeductionNature.value ? isTaxReduction.value : null,
+    normFormula: isNormVisible.value ? normFormula.value : '',
+    allowOverNorm: isNormVisible.value ? isAllowOverNormValue.value : false,
+    valueType: selectedValueType.value,
+    valueFormula: getValueFormulaPayload(),
+    description: description.value,
+    payslipDisplayType: selectedDisplayOnPayslip.value,
+    createdSource: sourceValue.value,
+    status: isEditMode.value ? selectedStatus.value : 1,
+  }
+}
+
+function resetForm() {
+  salaryCompositionName.value = ''
+  salaryCompositionCode.value = ''
+  selectedSalaryCompositionTypeId.value = null
+  selectedNature.value = 1
+  selectedTaxType.value = 1
+  isTaxReduction.value = false
+  normFormula.value = ''
+  isAllowOverNormValue.value = false
+  selectedValueMode.value = 'formula'
+  selectedAggregationScopeValue.value = 'sameOrganization'
+  selectedOrganizationLevel.value = 1
+  selectedAggregateSalaryCompositionCode.value = null
+  valueFormula.value = ''
+  description.value = ''
+  selectedDisplayOnPayslip.value = 1
+  isSalaryCompositionCodeManual.value = false
+  setFormErrors({ inner: [] })
+
+  const nearestOrganizationId = getNearestOrganizationId(organizations.value)
+  selectedOrganizationIds.value =
+    nearestOrganizationId !== null && nearestOrganizationId !== undefined
+      ? [nearestOrganizationId]
+      : []
+  setInitialFormSnapshot()
+}
+
+function normalizeResponseData(response) {
+  return response?.data?.data ?? response?.data ?? {}
+}
+
+function setFormValueFromDetail(detail) {
+  if (!detail || !Object.keys(detail).length) return
+
+  salaryCompositionName.value = detail.salaryCompositionName ?? detail.SalaryCompositionName ?? ''
+  salaryCompositionCode.value = detail.salaryCompositionCode ?? detail.SalaryCompositionCode ?? ''
+  selectedOrganizationIds.value = String(detail.organizationIDs ?? detail.OrganizationIDs ?? '')
+    .split(';')
+    .map((id) => id.trim())
+    .filter(Boolean)
+  selectedSalaryCompositionTypeId.value =
+    detail.salaryCompositionTypeID ?? detail.SalaryCompositionTypeID ?? null
+  selectedNature.value = detail.nature ?? detail.Nature ?? 1
+  selectedTaxType.value = detail.taxType ?? detail.TaxType ?? 1
+  isTaxReduction.value = Boolean(detail.isTaxReduction ?? detail.IsTaxReduction ?? false)
+  normFormula.value = detail.normFormula ?? detail.NormFormula ?? ''
+  isAllowOverNormValue.value = Boolean(detail.allowOverNorm ?? detail.AllowOverNorm ?? false)
+  selectedValueType.value = detail.valueType ?? detail.ValueType ?? null
+  description.value = detail.description ?? detail.Description ?? ''
+  selectedDisplayOnPayslip.value = detail.payslipDisplayType ?? detail.PayslipDisplayType ?? 1
+  sourceValue.value = detail.createdSource ?? detail.CreatedSource ?? 1
+  sourceName.value =
+    detail.createdSourceName ??
+    detail.CreatedSourceName ??
+    (Number(sourceValue.value) === 1 ? 'Tự thêm' : 'Mặc định')
+  selectedStatus.value = detail.status ?? detail.Status ?? 1
+  isSalaryCompositionCodeManual.value = true
+
+  setValueFormulaFromDetail(detail.valueFormula ?? detail.ValueFormula ?? '')
+  setFormErrors({ inner: [] })
+  setInitialFormSnapshot()
+}
+
+function setValueFormulaFromDetail(rawValueFormula) {
+  const rawFormula = rawValueFormula ?? ''
+
+  try {
+    const config = typeof rawFormula === 'string' ? JSON.parse(rawFormula) : rawFormula
+    if (config?.mode === 'auto_sum') {
+      selectedValueMode.value = 'auto'
+      selectedAggregationScopeValue.value = getAggregationScopeFromPayload(config.scope)
+      selectedOrganizationLevel.value = Number(config.level ?? 1)
+      selectedAggregateSalaryCompositionCode.value = config.salaryCode ?? ''
+      valueFormula.value = ''
+      return
+    }
+  } catch {
+    // Công thức tự đặt không phải JSON auto_sum.
+  }
+
+  selectedValueMode.value = 'formula'
+  valueFormula.value = rawFormula
+}
+
+function getAggregationScopeFromPayload(scope) {
+  const scopeMap = {
+    same_organization: 'sameOrganization',
+    subordinate: 'subordinate',
+    organization_level: 'organizationStructure',
+  }
+
+  return scopeMap[scope] ?? 'sameOrganization'
+}
+
+function generateSalaryCompositionCode(value) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/_+/g, '_')
+}
+
+function setFormErrors(errors) {
+  Object.keys(formErrors).forEach((key) => {
+    delete formErrors[key]
+  })
+
+  errors.inner?.forEach((error) => {
+    if (error.path && !formErrors[error.path]) {
+      formErrors[error.path] = error.message
+    }
+  })
+}
+
+const errorFieldRefs = {
+  salaryCompositionName: salaryCompositionNameInputRef,
+  salaryCompositionCode: salaryCompositionCodeInputRef,
+  organizationIDs: organizationTreeRef,
+  salaryCompositionTypeID: salaryCompositionTypeSelectRef,
+  nature: natureSelectRef,
+}
+
+function focusFirstError() {
+  const firstErrorField = [
+    'salaryCompositionName',
+    'salaryCompositionCode',
+    'organizationIDs',
+    'salaryCompositionTypeID',
+    'nature',
+  ].find((field) => Boolean(formErrors[field]))
+
+  if (!firstErrorField) return
+
+  nextTick(() => {
+    errorFieldRefs[firstErrorField]?.value?.focus?.()
+  })
+}
+
+function showSuccessToast() {
+  toast.visible = false
+  nextTick(() => {
+    toast.visible = true
+  })
+}
+
+function clearFormError(field) {
+  delete formErrors[field]
+}
+
+function setFieldError(field, message) {
+  if (message) {
+    formErrors[field] = message
+    return
+  }
+
+  clearFormError(field)
+}
+
+async function validateField(field) {
+  try {
+    await salaryCompositionSchema(
+      salaryCompositionParameters.value,
+      validationCurrentId.value,
+    ).validateAt(field, getFormData())
+    clearFormError(field)
+    return true
+  } catch (error) {
+    setFieldError(field, error.message)
+    return false
+  }
+}
+
+async function validateForm() {
+  try {
+    await salaryCompositionSchema(
+      salaryCompositionParameters.value,
+      validationCurrentId.value,
+    ).validate(getFormData(), {
+      abortEarly: false,
+    })
+    setFormErrors({ inner: [] })
+    return true
+  } catch (error) {
+    setFormErrors(error)
+    focusFirstError()
+    return false
+  }
+}
+
+function handleSalaryCompositionNameInput(event) {
+  const value = event.target.value
+  salaryCompositionName.value = value
+  if (formErrors.salaryCompositionName) {
+    validateField('salaryCompositionName')
+  }
+
+  if (!isSalaryCompositionCodeManual.value) {
+    salaryCompositionCode.value = generateSalaryCompositionCode(value)
+    validateField('salaryCompositionCode')
+  }
+}
+
+function handleSalaryCompositionCodeInput(event) {
+  isSalaryCompositionCodeManual.value = true
+  salaryCompositionCode.value = generateSalaryCompositionCode(event.target.value)
+  if (formErrors.salaryCompositionCode) {
+    validateField('salaryCompositionCode')
+  }
+}
+
+function handleOrganizationChange() {
+  validateField('organizationIDs')
+}
+
+async function handleSave() {
+  isSaveAndAddMode.value = false
+  if (!(await validateForm())) return
+  const payload = buildSalaryCompositionPayload()
+  if (isEditMode.value) {
+    updateSalaryCompositionMutation.mutate(payload)
+    return
+  }
+  createSalaryCompositionMutation.mutate(payload)
+}
+
+async function handleSaveAndAdd() {
+  isSaveAndAddMode.value = true
+  if (!(await validateForm())) return
+  createSalaryCompositionMutation.mutate(buildSalaryCompositionPayload())
+}
+
 function capitalizeFirstLetter(value) {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`
 }
@@ -767,9 +1304,63 @@ function selectAggregationScope(value) {
   openedValueSelect.value = ''
 }
 
+function selectTaxType(value) {
+  if (isNatureOptionDisabled.value) return
+  selectedTaxType.value = value
+}
+
+function toggleTaxReduction() {
+  if (isNatureOptionDisabled.value) return
+  isTaxReduction.value = !isTaxReduction.value
+}
+
+function toggleHeaderMenu() {
+  isHeaderMenuOpen.value = !isHeaderMenuOpen.value
+}
+
+function handleDuplicate() {
+  isHeaderMenuOpen.value = false
+  enterDuplicateMode()
+}
+
+function enterDuplicateMode() {
+  isDuplicateMode.value = true
+  salaryCompositionName.value = ''
+  salaryCompositionCode.value = ''
+  sourceValue.value = 1
+  sourceName.value = 'Tự thêm'
+  selectedStatus.value = 1
+  isSalaryCompositionCodeManual.value = false
+  setFormErrors({ inner: [] })
+  setInitialFormSnapshot()
+
+  nextTick(() => {
+    salaryCompositionNameInputRef.value?.focus?.()
+  })
+}
+
+function handleDelete() {
+  isHeaderMenuOpen.value = false
+  if (isSourceDefault.value) {
+    isDefaultDeleteModalOpen.value = true
+    return
+  }
+
+  isDeleteConfirmModalOpen.value = true
+}
+
+function confirmDeleteSalaryComposition() {
+  if (!currentId.value) return
+  deleteSalaryCompositionMutation.mutate()
+}
+
 function handleClickOutsideValueConfig(event) {
   if (!valueConfigRef.value?.contains(event.target)) {
     openedValueSelect.value = ''
+  }
+
+  if (headerMenuRef.value && !headerMenuRef.value.contains(event.target)) {
+    isHeaderMenuOpen.value = false
   }
 }
 
@@ -777,8 +1368,26 @@ function openExitConfirmModal() {
   isExitConfirmModalOpen.value = true
 }
 
+function handleBack() {
+  if (isFormDirty.value || !isEditMode.value) {
+    openExitConfirmModal()
+    return
+  }
+
+  confirmExitWithoutSave()
+}
+
 function goToSalaryCompositionList() {
-  router.push(path.salarycomposition)
+  if (isFormDirty.value) {
+    openExitConfirmModal()
+    return
+  }
+
+  confirmExitWithoutSave()
+}
+
+function confirmExitWithoutSave() {
+  emit('close')
 }
 
 function normalizeText(value) {
@@ -793,8 +1402,21 @@ function normalizeText(value) {
 watch(
   [selectedSalaryCompositionTypeId, salaryCompositionTypeOptions],
   () => {
+    if (isEditMode.value) return
     if (!selectedSalaryCompositionTypeId.value) return
     selectedNature.value = isAutoOtherNatureType.value ? 3 : 1
+  },
+  { immediate: true },
+)
+
+watch(
+  salaryCompositionDetailResponse,
+  (response) => {
+    if (!isDetailSourceMode.value) return
+    setFormValueFromDetail(normalizeResponseData(response))
+    if (props.mode === 'duplicate') {
+      enterDuplicateMode()
+    }
   },
   { immediate: true },
 )
@@ -844,6 +1466,9 @@ watch(
     const nearestOrganizationId = getNearestOrganizationId(options)
     if (nearestOrganizationId !== null && nearestOrganizationId !== undefined) {
       selectedOrganizationIds.value = [nearestOrganizationId]
+      if (!isDetailSourceMode.value) {
+        setInitialFormSnapshot()
+      }
     }
   },
   { immediate: true },
@@ -855,12 +1480,21 @@ watch(isNormVisible, (visible) => {
 })
 
 watch(isAutoValueConfigVisible, (visible) => {
-  selectedValueMode.value = visible ? 'auto' : 'formula'
+  if (!visible) {
+    selectedValueMode.value = 'formula'
+  }
   openedValueSelect.value = ''
 })
 
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutsideValueConfig)
+  if (isEditMode.value) return
+  nextTick(() => {
+    salaryCompositionNameInputRef.value?.focus?.()
+    if (!isDetailSourceMode.value) {
+      setInitialFormSnapshot()
+    }
+  })
 })
 
 onBeforeUnmount(() => {
@@ -889,6 +1523,48 @@ onBeforeUnmount(() => {
   font-weight: 700;
   line-height: 30px;
   margin-left: 8px;
+}
+
+.form-header-actions {
+  position: relative;
+}
+
+.form-more-action {
+  position: relative;
+}
+
+.form-more-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: -8px;
+  z-index: 60;
+  min-width: 160px;
+  padding: 8px 0;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1000000015);
+}
+
+.form-more-menu__item {
+  width: 100%;
+  height: 32px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: #101828;
+  font: inherit;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.form-more-menu__item:hover {
+  background: #e9eaeb;
 }
 
 .header-action {
@@ -1005,6 +1681,26 @@ label {
 
 .ms-radio-item:hover .ms-radio-item__icon {
   border-color: #0a724b;
+}
+
+.ms-radio-wrapper.is-disabled,
+.ms-check-wrapper.is-disabled {
+  cursor: not-allowed;
+}
+
+.ms-radio-wrapper.is-disabled .ms-radio-item,
+.ms-check-wrapper.is-disabled,
+.ms-check-wrapper.is-disabled .ms-check-item__icon {
+  cursor: not-allowed;
+}
+
+.ms-radio-wrapper.is-disabled .ms-radio-item:hover .ms-radio-item__icon {
+  border-color: #d5d7da;
+}
+
+.ms-radio-wrapper.is-disabled .ms-radio-item__icon,
+.ms-check-wrapper.is-disabled .ms-check-item__icon {
+  opacity: 0.5;
 }
 
 .ms-radio-item__icon--checked {
@@ -1260,7 +1956,8 @@ label {
   border-radius: 8px;
   outline: none;
   background: #fff;
-  color: #1570ef;
+  color: #101828;
+  caret-color: #0e9a62;
   -webkit-font-smoothing: antialiased;
   line-height: 18px;
   resize: vertical;
@@ -1302,5 +1999,38 @@ label {
   -webkit-mask-position: -129px -377px;
   -webkit-mask-repeat: no-repeat;
   background-color: #3a94ff;
+}
+
+.mi-threedot {
+  width: 16px;
+  height: 10px;
+  display: inline-block;
+  flex-shrink: 0;
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
+  -webkit-mask-position: -122px -44px;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #6e737a;
+}
+
+.ms-copy {
+  width: 22px;
+  height: 18px;
+  display: inline-block;
+  flex-shrink: 0;
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
+  -webkit-mask-position: -100px 0;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #6e737a;
+}
+
+.ms-trash-red {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  flex-shrink: 0;
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
+  -webkit-mask-position: -100px -21px;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #ff6161;
 }
 </style>

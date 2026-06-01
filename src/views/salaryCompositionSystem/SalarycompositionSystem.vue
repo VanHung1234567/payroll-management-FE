@@ -50,7 +50,7 @@
           padding="0 12px"
           gap="4px"
         >
-          <span title="Đưa vào danh sách sử dụng" class="mi-plus"></span>
+          <span class="mi-plus"></span>
           <span class="button-action-text">Đưa vào danh sách sử dụng</span>
         </MsButton>
       </div>
