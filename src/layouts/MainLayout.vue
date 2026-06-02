@@ -1,7 +1,7 @@
 <template>
   <MsHeader />
-  <div class="container">
-    <MsSidebar />
+  <div class="container" :class="{ 'is-sidebar-collapsed': isSidebarCollapsed }">
+    <MsSidebar v-model:collapsed="isSidebarCollapsed" />
     <div class="main-content">
       <router-view />
     </div>
@@ -9,22 +9,53 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue'
 import MsHeader from './ms-common/MsHeader.vue'
 import MsSidebar from './ms-common/MsSidebar.vue'
+
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'ms-sidebar-collapsed'
+
+function getInitialSidebarCollapsed() {
+  try {
+    return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+const isSidebarCollapsed = ref(getInitialSidebarCollapsed())
+
+watch(isSidebarCollapsed, (value) => {
+  try {
+    localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(value))
+  } catch {
+    // Ignore storage errors; layout still works for the current session.
+  }
+})
 </script>
 
 <style scoped>
 .container {
+  --ms-sidebar-width: 235px;
   width: 100%;
+  min-width: 1366px;
   height: calc(100% - 48px);
   display: flex;
+  overflow: hidden;
+}
+
+.container.is-sidebar-collapsed {
+  --ms-sidebar-width: 60px;
 }
 
 .main-content {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  width: calc(100% - 235px);
+  width: calc(100% - var(--ms-sidebar-width));
+  min-width: 0;
   height: 100%;
   padding: 12px 16px 16px;
+  transition: width 0.2s ease;
 }
 </style>

@@ -229,46 +229,57 @@ const TreeNode = defineComponent({
 })
 
 const props = defineProps({
+  // Danh sách id đang chọn, dùng với v-model.
   modelValue: {
     type: Array,
     default: () => [],
   },
+  // Danh sách node phẳng từ API.
   options: {
     type: Array,
     default: () => [],
   },
+  // Field id của node.
   idKey: {
     type: String,
     default: 'OrganizationID',
   },
+  // Field parent id để build cây.
   parentKey: {
     type: String,
     default: 'ParentID',
   },
+  // Field label hiển thị.
   labelKey: {
     type: String,
     default: 'OrganizationName',
   },
+  // Text khi chưa chọn.
   placeholder: {
     type: String,
     default: 'Tất cả đơn vị',
   },
+  // Chiều rộng trigger/menu.
   width: {
     type: [Number, String],
     default: 350,
   },
+  // Hiển thị option "Không điều kiện".
   showInactiveOption: {
     type: Boolean,
     default: true,
   },
+  // Số tag được hiển thị trực tiếp trong trigger.
   maxVisibleTags: {
     type: [Number, String],
     default: 1,
   },
+  // Message lỗi validate.
   errorMessage: {
     type: String,
     default: '',
   },
+  // Metadata validate, thường dùng meta.touched.
   meta: {
     type: Object,
     default: null,

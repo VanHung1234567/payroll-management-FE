@@ -61,60 +61,74 @@ import MsButton from '@/components/MsButton.vue'
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 
 const props = defineProps({
+  // Trạng thái mở/đóng modal, dùng với v-model.
   modelValue: {
     type: Boolean,
     default: false,
   },
+  // Tiêu đề mặc định nếu không truyền slot title.
   title: {
     type: String,
     default: 'Thông báo',
   },
+  // Nội dung mặc định nếu không truyền slot default.
   message: {
     type: String,
     default: '',
   },
+  // Chiều rộng popup.
   width: {
     type: [Number, String],
     default: 415,
   },
+  // Text nút xác nhận.
   confirmText: {
     type: String,
     default: 'Đồng ý',
   },
+  // Text nút hủy.
   cancelText: {
     type: String,
     default: 'Hủy bỏ',
   },
+  // Kiểu nút xác nhận.
   confirmVariant: {
     type: String,
     default: 'primary',
     validator: (value) => ['primary', 'danger'].includes(value),
   },
+  // Kiểu nút hủy.
   cancelVariant: {
     type: String,
     default: 'secondary',
     validator: (value) => ['secondary', 'primary-outline'].includes(value),
   },
+  // Ẩn/hiện nút hủy.
   showCancel: {
     type: Boolean,
     default: true,
   },
+  // Ẩn/hiện nút xác nhận.
   showConfirm: {
     type: Boolean,
     default: true,
   },
+  // Ẩn/hiện icon đóng trên header.
   showClose: {
     type: Boolean,
     default: true,
   },
+  // Ẩn/hiện footer button.
   showFooter: {
     type: Boolean,
     default: true,
   },
+  // Cho phép click overlay để đóng.
   closeOnOverlay: {
     type: Boolean,
     default: false,
   },
+  // Cho phép nhấn Escape để đóng.
   closeOnEsc: {
     type: Boolean,
     default: true,

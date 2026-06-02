@@ -65,10 +65,12 @@ import MsInput from './MsInput.vue'
 import MsTooltip from './MsTooltip.vue'
 
 defineProps({
+  // Giá trị ô tìm kiếm của toolbar.
   search: {
     type: String,
     default: '',
   },
+  // Khi true thì ẩn filter thường và hiển thị slot bulk-actions.
   bulkMode: {
     type: Boolean,
     default: false,

@@ -21,7 +21,7 @@
       <div class="ms-pagination__range">{{ pageFrom }} - {{ pageTo }}</div>
 
       <div class="ms-pagination__buttons">
-        <button type="button" :disabled="isFirstPage" @click="goToPage(1)">
+        <button type="button" title="Trang đầu" :disabled="isFirstPage" @click="goToPage(1)">
           <svg class="ms-pagination__svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
               d="M10 12L6 8L10 4"
@@ -33,7 +33,7 @@
             <path d="M4 4V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
           </svg>
         </button>
-        <button type="button" :disabled="isFirstPage" @click="goToPage(pageIndex - 1)">
+        <button type="button" title="Trang trước" :disabled="isFirstPage" @click="goToPage(pageIndex - 1)">
           <svg class="ms-pagination__svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
               d="M10 12L6 8L10 4"
@@ -44,7 +44,7 @@
             />
           </svg>
         </button>
-        <button type="button" :disabled="isLastPage" @click="goToPage(pageIndex + 1)">
+        <button type="button" title="Trang sau" :disabled="isLastPage" @click="goToPage(pageIndex + 1)">
           <svg class="ms-pagination__svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
               d="M6 12L10 8L6 4"
@@ -55,7 +55,7 @@
             />
           </svg>
         </button>
-        <button type="button" :disabled="isLastPage" @click="goToPage(totalPages)">
+        <button type="button" title="Trang cuối" :disabled="isLastPage" @click="goToPage(totalPages)">
           <svg class="ms-pagination__svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
               d="M6 12L10 8L6 4"
@@ -77,18 +77,22 @@ import { computed } from 'vue'
 import MsSelect from '@/components/MsSelect.vue'
 
 const props = defineProps({
+  // Tổng số bản ghi từ API.
   total: {
     type: Number,
     default: 0,
   },
+  // Trang hiện tại, dùng với v-model:page-index.
   pageIndex: {
     type: Number,
     default: 1,
   },
+  // Số dòng/trang, dùng với v-model:page-size.
   pageSize: {
     type: Number,
     default: 15,
   },
+  // Danh sách lựa chọn số dòng/trang.
   pageSizeOptions: {
     type: Array,
     default: () => [15, 25, 50, 100],

@@ -49,58 +49,72 @@
 import { computed, ref, useId } from 'vue'
 
 const props = defineProps({
+  // Giá trị input dùng với v-model.
   modelValue: {
     type: [String, Number],
     default: '',
   },
+  // Id HTML, nếu không truyền sẽ tự sinh.
   id: {
     type: String,
     default: '',
   },
+  // Name HTML của input.
   name: {
     type: String,
     default: '',
   },
+  // Type HTML của input.
   type: {
     type: String,
     default: 'text',
   },
+  // Label hiển thị bên trái input.
   label: {
     type: String,
     default: '',
   },
+  // Placeholder của input.
   placeholder: {
     type: String,
     default: '',
   },
+  // Hiển thị dấu * ở label.
   required: {
     type: Boolean,
     default: false,
   },
+  // Disable input.
   disabled: {
     type: Boolean,
     default: false,
   },
+  // Chỉ đọc, vẫn focus được.
   readonly: {
     type: Boolean,
     default: false,
   },
+  // Thuộc tính autocomplete.
   autocomplete: {
     type: String,
     default: 'off',
   },
+  // Message lỗi hiển thị dưới input.
   errorMessage: {
     type: String,
     default: '',
   },
+  // Metadata validate, thường dùng meta.touched.
   meta: {
     type: Object,
     default: null,
   },
+  // Chiều rộng vùng input.
   width: {
     type: [Number, String],
     default: '100%',
   },
+  // Chiều rộng label khi có label.
   labelWidth: {
     type: [Number, String],
     default: 200,

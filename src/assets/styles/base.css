@@ -51,11 +51,13 @@
 }
 
 #app {
+  min-width: 1366px;
   height: 100vh;
 }
 
 html,
 body {
+  min-width: 1366px;
   color: var(--color-text-primary);
   font-size: var(--font-size-base);
   background: var(--color-background);

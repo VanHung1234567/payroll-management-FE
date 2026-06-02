@@ -40,60 +40,74 @@ import { computed } from 'vue'
 
 //làm thêm custom arrow
 const props = defineProps({
+  // Nội dung tooltip nếu không truyền slot #tooltip.
   content: {
     type: String,
     default: '',
   },
+  // Vị trí tooltip so với trigger: top, right, bottom hoặc left.
   placement: {
     type: String,
     default: 'bottom',
     validator: (value) => ['top', 'right', 'bottom', 'left'].includes(value),
   },
+  // Cách căn bubble theo trigger.
   align: {
     type: String,
     default: 'center',
     validator: (value) => ['start', 'center', 'end'].includes(value),
   },
+  // Màu nền vòng tròn hover quanh trigger.
   hoverBackground: {
     type: String,
     default: '#eff1f654',
   },
+  // Kích thước vòng tròn hover.
   hoverSize: {
     type: [Number, String],
     default: 36,
   },
+  // Khoảng cách giữa bubble và trigger.
   offset: {
     type: [Number, String],
     default: 8,
   },
+  // Vị trí mũi tên trên cạnh tooltip.
   arrowPosition: {
     type: String,
     default: '50%',
   },
+  // Tắt tooltip và hover state.
   disabled: {
     type: Boolean,
     default: false,
   },
+  // Ẩn/hiện mũi tên tooltip.
   showArrow: {
     type: Boolean,
     default: true,
   },
+  // Class custom cho bubble tooltip.
   tooltipClass: {
     type: [String, Array, Object],
     default: '',
   },
+  // Class custom cho wrapper/hover trigger.
   hoverClass: {
     type: [String, Array, Object],
     default: '',
   },
+  // Cỡ chữ tooltip.
   fontSize: {
     type: [Number, String],
     default: 13,
   },
+  // Chiều cao dòng tooltip.
   lineHeight: {
     type: [Number, String],
     default: 18,
   },
+  // Độ đậm chữ tooltip.
   fontWeight: {
     type: [Number, String],
     default: 400,

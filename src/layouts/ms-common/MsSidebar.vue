@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar_container" :class="{ 'is-collapsed': isCollapsed }">
+  <div class="sidebar_container" :class="{ 'is-collapsed': collapsed }">
     <div class="sidebar_menu">
       <RouterLink :to="path.dashboard" class="text-decoration-none">
         <MsTooltip
@@ -193,7 +193,7 @@
       </MsTooltip>
     </div>
     <MsTooltip
-      :content="isCollapsed ? 'Mở rộng' : 'Thu gọn'"
+      :content="collapsed ? 'Mở rộng' : 'Thu gọn'"
       placement="right"
       align="center"
       :offset="8"
@@ -216,7 +216,14 @@ import MsTooltip from '@/components/MsTooltip.vue'
 import { path } from '@/utils/path'
 
 const activeKey = ref('salary-composition')
-const isCollapsed = ref(false)
+const props = defineProps({
+  // Trạng thái thu gọn/mở rộng do MainLayout quản lý và lưu localStorage.
+  collapsed: {
+    type: Boolean,
+    default: false,
+  },
+})
+const emit = defineEmits(['update:collapsed'])
 const salaryDataSubmenus = [
   'Chấm công',
   'Doanh số',
@@ -241,7 +248,7 @@ const setActive = (key: string) => {
 }
 
 const toggleSidebar = () => {
-  isCollapsed.value = !isCollapsed.value
+  emit('update:collapsed', !props.collapsed)
 }
 </script>
 
@@ -249,6 +256,7 @@ const toggleSidebar = () => {
 .sidebar_container {
   position: relative;
   width: 235px;
+  flex-shrink: 0;
   height: 100%;
   background: var(--color-surface);
   padding: 15px;

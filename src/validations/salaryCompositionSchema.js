@@ -9,10 +9,10 @@ const normalizeCode = (value) =>
     .toLowerCase()
 
 const getSalaryCompositionCode = (item) =>
-  item?.salaryCompositionCode ?? item?.SalaryCompositionCode ?? item?.code ?? item?.Code ?? ''
+  item?.salaryCompositionCode ?? item?.SalaryCompositionCode ?? ''
 
 const getSalaryCompositionId = (item) =>
-  item?.salaryCompositionID ?? item?.SalaryCompositionID ?? item?.id ?? item?.ID ?? null
+  item?.salaryCompositionID ?? item?.SalaryCompositionID ?? null
 
 export const salaryCompositionSchema = (salaryCompositions = [], currentId = null) =>
   yup.object({

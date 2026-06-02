@@ -103,26 +103,32 @@ languages.formula = {
 }
 
 const props = defineProps({
+  // Chuỗi công thức, dùng với v-model.
   modelValue: {
     type: String,
     default: '',
   },
+  // Chiều rộng vùng nhập công thức.
   width: {
     type: [Number, String],
     default: 838,
   },
+  // Placeholder khi chưa nhập công thức.
   placeholder: {
     type: String,
     default: 'Tự động gợi ý công thức và tham số khi gõ',
   },
+  // Danh sách tham số/thành phần lương để gợi ý trong formula.
   parameters: {
     type: Array,
     default: () => [],
   },
+  // Hiển thị nút tạo công thức bằng agent.
   showAgentButton: {
     type: Boolean,
     default: false,
   },
+  // Text của nút agent.
   agentButtonText: {
     type: String,
     default: 'Tạo công thức với AVA Tiền lương',
@@ -292,8 +298,6 @@ function insertText(text) {
 function getParameterName(parameter) {
   return (
     parameter?.salaryCompositionName ??
-    parameter?.SalaryCompositionName ??
-    parameter?.name ??
     parameter?.Name ??
     ''
   )
@@ -302,8 +306,6 @@ function getParameterName(parameter) {
 function getParameterCode(parameter) {
   return (
     parameter?.salaryCompositionCode ??
-    parameter?.SalaryCompositionCode ??
-    parameter?.code ??
     parameter?.Code ??
     ''
   )

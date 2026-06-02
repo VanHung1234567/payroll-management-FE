@@ -367,62 +367,77 @@ import MsPagination from '@/components/MsPagination.vue'
 import { useGridTableStore } from '@/stores/gridTable.js'
 
 const props = defineProps({
+  // Key định danh state paging/search và query data của grid.
   gridKey: {
     type: String,
     default: 'salary_composition',
   },
+  // Key riêng để lấy cấu hình cột; dùng khi một grid muốn reuse config của grid khác.
   configGridKey: {
     type: String,
     default: '',
   },
+  // Object API hoặc tên API map nội bộ; cần có paging/filter.
   dataApi: {
     type: [Object, String],
     default: () => SalaryCompositionAPI,
   },
+  // Field khóa chính của row.
   keyExpr: {
     type: String,
     default: 'salaryCompositionID',
   },
+  // Trang mặc định khi khởi tạo state.
   pageIndex: {
     type: Number,
     default: 1,
   },
+  // Số dòng/trang mặc định khi khởi tạo state.
   pageSize: {
     type: Number,
     default: 15,
   },
+  // Từ khóa tìm kiếm gửi lên API.
   search: {
     type: String,
     default: '',
   },
+  // Danh sách field search nếu backend hỗ trợ.
   searchFields: {
     type: String,
     default: '',
   },
+  // Bộ lọc truyền từ toolbar/page, sẽ merge vào payload API.
   filters: {
     type: Object,
     default: () => ({}),
   },
+  // Hiển thị action đổi trạng thái theo dõi/ngừng theo dõi.
   showActiveAction: {
     type: Boolean,
     default: true,
   },
+  // Hiển thị action thêm/đưa vào sử dụng.
   showAddAction: {
     type: Boolean,
     default: false,
   },
+  // Hiển thị action nhân bản.
   showCopyAction: {
     type: Boolean,
     default: true,
   },
+  // Hiển thị action sửa.
   showEditAction: {
     type: Boolean,
     default: true,
   },
+  // Hiển thị action xóa.
   showDeleteAction: {
     type: Boolean,
     default: true,
   },
+  // Tăng giá trị này từ parent để yêu cầu grid clear toàn bộ checkbox.
   clearSelectionSignal: {
     type: Number,
     default: 0,

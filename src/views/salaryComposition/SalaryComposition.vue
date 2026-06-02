@@ -141,7 +141,7 @@
         <div class="ms-popup-container" @click.stop>
           <div class="ms-popup__header">
             <h3>Thêm từ danh mục của hệ thống</h3>
-            <button type="button" class="ms-popup__close" @click="closeSystemPicker">
+            <button type="button" class="ms-popup__close" @click="requestCloseSystemPicker">
               <span class="mi-close"></span>
             </button>
           </div>
@@ -183,6 +183,7 @@
                 :show-copy-action="false"
                 :show-edit-action="false"
                 :show-delete-action="false"
+                :show-add-action="false"
                 @selection-change="systemPickerSelectedRows = $event"
               />
             </div>
@@ -200,13 +201,13 @@
               padding="0 12px"
               width="80px"
               margin="0 8px 0 0"
-              @click="closeSystemPicker"
+              @click="requestCloseSystemPicker"
             >
               Hủy bỏ
             </MsButton>
             <MsButton
               width="80px"
-              :disabled="!hasSystemPickerSelection"
+              :disabled="!hasSystemPickerSelection || isCopyingFromSystem"
               @click="confirmSystemPicker"
             >
               Đồng ý
@@ -271,6 +272,15 @@
   >
     Đây là thành phần lương mặc định của hệ thống nên không thể xóa. Vui lòng kiểm tra lại.
   </MsModal>
+  <MsModal
+    v-model="isSystemPickerDiscardModalOpen"
+    title="Thoát và không lưu?"
+    confirm-text="Thoát, không lưu"
+    cancel-text="Ở lại"
+    @confirm="confirmDiscardSystemPicker"
+  >
+    Nếu bạn thoát, các dữ liệu đang nhập liệu sẽ không được lưu lại.
+  </MsModal>
   <MsToast v-model="toast.visible" type="success" :message="toast.message" />
 </template>
 
@@ -307,13 +317,14 @@ const systemPickerSearchInputRef = ref<InstanceType<typeof MsInput> | null>(null
 const debouncedSystemPickerSearchKeyword = ref('')
 const systemPickerSelectedRows = ref<any[]>([])
 const systemPickerClearSelectionSignal = ref(0)
+const isSystemPickerDiscardModalOpen = ref(false)
 const toast = ref({
   visible: false,
   message: 'Thêm thành công',
 })
 const isFormOpen = ref(false)
 const formMode = ref<'add' | 'edit' | 'duplicate'>('add')
-const editingSalaryCompositionId = ref<string | number | null>(null)
+const editingSalaryCompositionId = ref<string | number | null>('')
 const editingSalaryCompositionTitle = ref('')
 const formKey = computed(() => `${formMode.value}-${editingSalaryCompositionId.value ?? 'new'}`)
 const deleteTargetRow = ref<any | null>(null)
@@ -325,8 +336,8 @@ const statusTargetRows = ref<any[]>([])
 const targetStatus = ref<number | null>(null)
 const isStatusConfirmModalOpen = ref(false)
 const queryClient = useQueryClient()
-let searchDebounceTimer: ReturnType<typeof window.setTimeout> | null = null
-let systemPickerSearchDebounceTimer: ReturnType<typeof window.setTimeout> | null = null
+let searchDebounceTimer: number | null = null
+let systemPickerSearchDebounceTimer: number | null = null
 
 const { data: organizationResponse } = useQuery({
   queryKey: ['organizations'],
@@ -375,6 +386,18 @@ const changeStatusMutation = useMutation({
   },
 })
 
+const copyFromSystemMutation = useMutation({
+  mutationFn: (rows: any[]) =>
+    SalaryCompositionAPI.copyFromSystem({
+      salaryCompositionSystemIDs: rows.map(getSalaryCompositionSystemId).filter(Boolean),
+    }),
+  onSuccess: () => {
+    queryClient.invalidateQueries()
+    closeSystemPicker()
+    showToast('Thêm thành công')
+  },
+})
+
 const organizations = computed(() => organizationResponse.value?.data?.data ?? [])
 const salaryCompositionEnum = computed(() => salaryCompositionEnumResponse.value?.data ?? {})
 const statusOptions = computed(() => [
@@ -393,6 +416,7 @@ const hasSelectedRows = computed(() => selectedRows.value.length > 0)
 const selectedHasActive = computed(() => selectedRows.value.some((row) => isActiveStatus(row)))
 const selectedHasInactive = computed(() => selectedRows.value.some((row) => !isActiveStatus(row)))
 const hasSystemPickerSelection = computed(() => systemPickerSelectedRows.value.length > 0)
+const isCopyingFromSystem = computed(() => copyFromSystemMutation.isPending.value)
 
 watch(searchKeyword, (value) => {
   if (searchDebounceTimer) {
@@ -474,6 +498,10 @@ function getSalaryCompositionName(row: any) {
   return row?.salaryCompositionName ?? row?.SalaryCompositionName ?? row?.name ?? row?.Name ?? ''
 }
 
+function getSalaryCompositionSystemId(row: any) {
+  return row?.salaryCompositionSystemID ?? row?.SalaryCompositionSystemID ?? row?.id ?? row?.ID
+}
+
 function getCreatedSource(row: any) {
   return (
     row?.createdSource ?? row?.CreatedSource ?? row?.createdSourceName ?? row?.CreatedSourceName
@@ -512,7 +540,9 @@ const statusConfirmMessage = computed(() => {
   return `Bạn có chắc chắn muốn chuyển trạng thái thành phần lương ${statusTargetName.value} sang ${nextStatusText.value} không?`
 })
 const bulkDefaultRows = computed(() => bulkDeleteRows.value.filter(isDefaultSourceRow))
-const bulkDeletableRows = computed(() => bulkDeleteRows.value.filter((row) => !isDefaultSourceRow(row)))
+const bulkDeletableRows = computed(() =>
+  bulkDeleteRows.value.filter((row) => !isDefaultSourceRow(row)),
+)
 const bulkDefaultNames = computed(() =>
   bulkDefaultRows.value.map(getSalaryCompositionName).filter(Boolean),
 )
@@ -601,7 +631,9 @@ function openStatusModal(row: any) {
 }
 
 function openBulkStatusModal(status: number) {
-  const rows = selectedRows.value.filter((row) => (status === 1 ? !isActiveStatus(row) : isActiveStatus(row)))
+  const rows = selectedRows.value.filter((row) =>
+    status === 1 ? !isActiveStatus(row) : isActiveStatus(row),
+  )
   if (!rows.length) return
   statusTargetRows.value = rows
   targetStatus.value = status
@@ -623,12 +655,23 @@ function toggleAddMenu() {
 async function openSystemPicker() {
   isAddMenuOpen.value = false
   isSystemPickerOpen.value = true
+  isSystemPickerDiscardModalOpen.value = false
   await nextTick()
   systemPickerSearchInputRef.value?.focus()
 }
 
+function requestCloseSystemPicker() {
+  if (hasSystemPickerSelection.value) {
+    isSystemPickerDiscardModalOpen.value = true
+    return
+  }
+
+  closeSystemPicker()
+}
+
 function closeSystemPicker() {
   isSystemPickerOpen.value = false
+  isSystemPickerDiscardModalOpen.value = false
   selectedSystemPickerTypeId.value = null
   systemPickerSearchKeyword.value = ''
   debouncedSystemPickerSearchKeyword.value = ''
@@ -636,9 +679,13 @@ function closeSystemPicker() {
   systemPickerSelectedRows.value = []
 }
 
+function confirmDiscardSystemPicker() {
+  closeSystemPicker()
+}
+
 function confirmSystemPicker() {
   if (!hasSystemPickerSelection.value) return
-  closeSystemPicker()
+  copyFromSystemMutation.mutate([...systemPickerSelectedRows.value])
 }
 
 function handleDocumentMouseDown(event: MouseEvent) {
@@ -744,7 +791,7 @@ function handleDocumentMouseDown(event: MouseEvent) {
 .ms-menu__body {
   position: absolute;
   top: calc(100% + 4px);
-  right: 0;
+  right: -8px;
   z-index: 100;
   width: 224px;
   padding: 8px 0;

@@ -12,7 +12,7 @@
             aria-label="Đóng"
             @click="close"
           >
-            <span class="ms-icon-close"></span>
+            <span class="mi-icon-close"></span>
           </button>
         </div>
       </div>
@@ -24,31 +24,38 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps({
+  // Trạng thái hiển thị toast, dùng với v-model.
   modelValue: {
     type: Boolean,
     default: false,
   },
+  // Loại toast để đổi màu/icon.
   type: {
     type: String,
     default: 'success',
     validator: (value) => ['success', 'danger', 'error', 'warning'].includes(value),
   },
+  // Nội dung toast.
   message: {
     type: String,
     default: '',
   },
+  // Thời gian tự đóng, tính bằng ms.
   duration: {
     type: Number,
     default: 6000,
   },
+  // Bật/tắt tự đóng.
   autoClose: {
     type: Boolean,
     default: true,
   },
+  // Ẩn/hiện nút đóng.
   closable: {
     type: Boolean,
     default: true,
   },
+  // Vị trí toast trên màn hình.
   position: {
     type: String,
     default: 'top',
@@ -231,7 +238,7 @@ onBeforeUnmount(clearTimer)
   line-height: 1;
 }
 
-.ms-icon-close {
+.mi-icon-close {
   width: 16px;
   height: 16px;
   display: inline-block;

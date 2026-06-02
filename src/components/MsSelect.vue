@@ -71,80 +71,99 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
+  // Giá trị đang chọn, dùng với v-model.
   modelValue: {
     type: [String, Number, Boolean],
     default: null,
   },
+  // Danh sách option nguồn.
   options: {
     type: Array,
     default: () => [],
   },
+  // Nhãn đứng trước giá trị, ví dụ "Trạng thái".
   label: {
     type: String,
     default: '',
   },
+  // Text hiển thị khi chưa chọn.
   placeholder: {
     type: String,
     default: '',
   },
+  // Tên field lấy label từ option.
   labelKey: {
     type: String,
     default: 'label',
   },
+  // Tên field lấy value từ option.
   valueKey: {
     type: String,
     default: 'value',
   },
+  // Tên field mã/code để hiển thị dạng Label (CODE).
   codeKey: {
     type: String,
     default: '',
   },
+  // Chiều rộng trigger.
   width: {
     type: [Number, String],
     default: 'auto',
   },
+  // Padding riêng cho trigger.
   triggerPadding: {
     type: String,
     default: '',
   },
+  // Letter spacing riêng cho trigger.
   letterSpacing: {
     type: [Number, String],
     default: '',
   },
+  // Chiều rộng dropdown menu.
   menuWidth: {
     type: [Number, String],
     default: 160,
   },
+  // Disable select.
   disabled: {
     type: Boolean,
     default: false,
   },
+  // Cho phép gõ tìm trong dropdown.
   searchable: {
     type: Boolean,
     default: false,
   },
+  // Placeholder của ô search khi searchable.
   searchPlaceholder: {
     type: String,
     default: '',
   },
+  // Hướng mở menu.
   placement: {
     type: String,
     default: 'bottom',
     validator: (value) => ['bottom', 'top'].includes(value),
   },
+  // Ép select chiếm 100% width.
   fullWidth: {
     type: Boolean,
     default: false,
   },
+  // Biến thể style: filter hoặc form.
   variant: {
     type: String,
     default: 'filter',
     validator: (value) => ['filter', 'form'].includes(value),
   },
+  // Message lỗi.
   errorMessage: {
     type: String,
     default: '',
   },
+  // Metadata validate, thường dùng meta.touched.
   meta: {
     type: Object,
     default: null,

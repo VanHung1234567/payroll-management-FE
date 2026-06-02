@@ -13,83 +13,103 @@
 import { computed } from 'vue'
 
 const props = defineProps({
+  // Loại button HTML.
   type: {
     type: String,
     default: 'button',
     validator: (value) => ['button', 'submit', 'reset'].includes(value),
   },
+  // Disable button và chặn hover/active.
   disabled: {
     type: Boolean,
     default: false,
   },
+  // Màu nền mặc định.
   backgroundColor: {
     type: String,
     default: '',
   },
+  // Màu chữ mặc định.
   color: {
     type: String,
     default: '',
   },
+  // Màu border mặc định.
   borderColor: {
     type: String,
     default: '',
   },
+  // Bo góc button.
   borderRadius: {
     type: [Number, String],
     default: '',
   },
+  // Màu nền khi hover.
   hoverBackgroundColor: {
     type: String,
     default: '#0A724B',
   },
+  // Màu chữ khi hover.
   hoverColor: {
     type: String,
     default: '',
   },
+  // Màu border khi hover.
   hoverBorderColor: {
     type: String,
     default: '#0A724B',
   },
+  // Màu nền khi nhấn.
   activeBackgroundColor: {
     type: String,
     default: '#0B5A3D',
   },
+  // Màu chữ khi nhấn.
   activeColor: {
     type: String,
     default: '',
   },
+  // Màu border khi nhấn.
   activeBorderColor: {
     type: String,
     default: '#0B5A3D',
   },
+  // Chiều rộng button.
   width: {
     type: [Number, String],
     default: 'auto',
   },
+  // Chiều cao button.
   height: {
     type: [Number, String],
     default: 32,
   },
+  // Cách căn nội dung theo trục ngang.
   justifyContent: {
     type: String,
     default: 'center',
   },
+  // Class bổ sung truyền từ ngoài vào.
   buttonClass: {
     type: [String, Array, Object],
     default: '',
   },
+  // Padding inline hoặc shorthand CSS.
   padding: {
     type: [Number, String],
     default: '0 12px',
   },
+  // Margin inline hoặc shorthand CSS.
   margin: {
     type: [Number, String],
     default: '',
   },
+  // Khoảng cách giữa icon/text trong slot.
   gap: {
     type: [Number, String],
     default: '',
   },
+  // Chiều rộng tối thiểu.
   minWidth: {
     type: [Number, String],
     default: '',

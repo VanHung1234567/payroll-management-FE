@@ -61,11 +61,11 @@
         </MsTooltip>
         <div v-if="isHeaderMenuOpen" class="form-more-menu">
           <button type="button" class="form-more-menu__item" @click="handleDuplicate">
-            <span class="ms-copy"></span>
+            <span class="mi-copy"></span>
             <span>Nhân bản</span>
           </button>
           <button type="button" class="form-more-menu__item" @click="handleDelete">
-            <span class="ms-trash-red"></span>
+            <span class="mi-trash-red"></span>
             <span>Xóa</span>
           </button>
         </div>
@@ -664,7 +664,7 @@ const props = defineProps({
   },
   salaryCompositionId: {
     type: [String, Number],
-    default: null,
+    default: "",
   },
   initialTitle: {
     type: String,
@@ -2012,7 +2012,7 @@ label {
   background-color: #6e737a;
 }
 
-.ms-copy {
+.mi-copy {
   width: 22px;
   height: 18px;
   display: inline-block;
@@ -2023,7 +2023,7 @@ label {
   background-color: #6e737a;
 }
 
-.ms-trash-red {
+.mi-trash-red {
   width: 20px;
   height: 20px;
   display: inline-block;
