@@ -49,6 +49,7 @@
           active-border-color="#D5D7DA"
           padding="0 12px"
           gap="4px"
+          @click="openCopyFromSystemModal(selectedRows)"
         >
           <span class="mi-plus"></span>
           <span class="button-action-text">Đưa vào danh sách sử dụng</span>
@@ -69,26 +70,55 @@
     :show-edit-action="false"
     :show-delete-action="false"
     @selection-change="selectedRows = $event"
+    @row-add="openCopyFromSystemModal([$event])"
   />
+
+  <MsModal
+    v-model="isCopyConfirmModalOpen"
+    title="Thông báo"
+    confirm-text="Đồng ý"
+    cancel-text="Hủy bỏ"
+    @confirm="confirmCopyFromSystem"
+  >
+    <span v-if="copyRows.length === 1">
+      Bạn có chắc chắn muốn đưa thành phần lương mặc định
+      <strong>{{ copyTargetName }}</strong>
+      vào danh sách sử dụng không?
+    </span>
+    <span v-else>
+      Bạn có chắc chắn muốn đưa các thành phần lương mặc định đã chọn vào danh sách sử dụng không?
+    </span>
+  </MsModal>
+  <MsToast v-model="toast.visible" type="success" :message="toast.message" />
 </template>
 
 <script setup>
 import GridOptions from '@/components/GridOptions.vue'
 import GridTable from '@/components/GridTable.vue'
 import MsButton from '@/components/MsButton.vue'
+import MsModal from '@/components/MsModal.vue'
 import MsTooltip from '@/components/MsTooltip.vue'
 import { path } from '@/utils/path'
+import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI'
 import SalaryCompositionSystemAPI from '@/apis/components/salaryCompositionSystem/SalaryCompositionSystem'
 import SalaryCompositionTypeAPI from '@/apis/components/salaryCompositionType/SalaryCompositionType'
-import { useQuery } from '@tanstack/vue-query'
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import MsSelect from '@/components/MsSelect.vue'
+import MsToast from '@/components/MsToast.vue'
 
 const selectedSalaryCompositionTypeId = ref(null)
 const searchKeyword = ref('')
 const debouncedSearchKeyword = ref('')
 const selectedRows = ref([])
 const clearSelectionSignal = ref(0)
+const copyRows = ref([])
+const isCopyConfirmModalOpen = ref(false)
+const toast = ref({
+  visible: false,
+  message: 'Thêm thành công',
+})
+const queryClient = useQueryClient()
 let searchDebounceTimer = null
 
 const { data: salaryCompositionTypeResponse } = useQuery({
@@ -105,6 +135,20 @@ const salaryCompositionTypeOptions = computed(() => [
   ...(salaryCompositionTypeResponse.value?.data?.data ?? []),
 ])
 const hasSelectedRows = computed(() => selectedRows.value.length > 0)
+const copyTargetName = computed(() => getSalaryCompositionSystemName(copyRows.value[0]))
+
+const copyFromSystemMutation = useMutation({
+  mutationFn: (rows) =>
+    SalaryCompositionAPI.copyFromSystem({
+      salaryCompositionSystemIDs: rows.map(getSalaryCompositionSystemId).filter(Boolean),
+    }),
+  onSuccess: () => {
+    queryClient.invalidateQueries()
+    clearSelectedRows()
+    copyRows.value = []
+    showToast('Thêm thành công')
+  },
+})
 
 watch(searchKeyword, (value) => {
   if (searchDebounceTimer) {
@@ -132,6 +176,34 @@ const salaryCompositionSystemFilters = computed(() => {
 
 function clearSelectedRows() {
   clearSelectionSignal.value += 1
+}
+
+function openCopyFromSystemModal(rows) {
+  const nextRows = rows.filter(Boolean)
+  if (!nextRows.length) return
+  copyRows.value = nextRows
+  isCopyConfirmModalOpen.value = true
+}
+
+function confirmCopyFromSystem() {
+  if (!copyRows.value.length) return
+  copyFromSystemMutation.mutate(copyRows.value)
+}
+
+function showToast(message) {
+  toast.value.visible = false
+  toast.value.message = message
+  nextTick(() => {
+    toast.value.visible = true
+  })
+}
+
+function getSalaryCompositionSystemId(row) {
+  return row?.salaryCompositionSystemID ?? row?.SalaryCompositionSystemID
+}
+
+function getSalaryCompositionSystemName(row) {
+  return row?.salaryCompositionSystemName ?? row?.SalaryCompositionName ?? ''
 }
 </script>
 

@@ -21,6 +21,7 @@
       @option-changed="handleOptionChanged"
     >
       <DxScrolling mode="standard" show-scrollbar="always" :use-native="true" />
+      <DxColumnFixing :enabled="true" />
       <DxPaging :enabled="false" />
 
       <DxColumn
@@ -350,7 +351,13 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import { DxColumn, DxDataGrid, DxPaging, DxScrolling } from 'devextreme-vue/data-grid'
+import {
+  DxColumn,
+  DxColumnFixing,
+  DxDataGrid,
+  DxPaging,
+  DxScrolling,
+} from 'devextreme-vue/data-grid'
 import 'devextreme/dist/css/dx.light.css'
 import GridConfigAPI from '@/apis/components/gridConfig/GridConfig.js'
 import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI.js'
@@ -1571,7 +1578,9 @@ onBeforeUnmount(() => {
 .ms-table .dx-datagrid-sticky-column-right::after,
 .ms-table .dx-datagrid-sticky-column-border-left::after,
 .ms-table .dx-datagrid-sticky-column-border-right::after {
-  border: none !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-left: none !important;
   box-shadow: none !important;
 }
 
@@ -1579,7 +1588,10 @@ onBeforeUnmount(() => {
 .ms-table .dx-header-row > td.dx-datagrid-sticky-column-right,
 .ms-table .dx-header-row > td.dx-datagrid-sticky-column-border-left,
 .ms-table .dx-header-row > td.dx-datagrid-sticky-column-border-right {
+  position: sticky !important;
   background: #f5f5f5 !important;
+  z-index: 35 !important;
+  overflow: hidden !important;
 }
 
 .ms-table .dx-header-row > td:first-child.dx-datagrid-sticky-column-left,
@@ -1604,6 +1616,41 @@ onBeforeUnmount(() => {
 .ms-table .dx-data-row:not(:hover):not(.is-selected) > td.dx-datagrid-sticky-column-border-left,
 .ms-table .dx-data-row:not(:hover):not(.is-selected) > td.dx-datagrid-sticky-column-border-right {
   background: #fff !important;
+}
+
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-left,
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-right,
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-border-left,
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-border-right,
+.ms-table .dx-datagrid-headers .dx-datagrid-content-fixed .dx-header-row > td {
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 8px !important;
+  background: #f5f5f5 !important;
+  border-bottom: none !important;
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
+}
+
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-left .ms-table__header-content,
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-right .ms-table__header-content,
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-border-left .ms-table__header-content,
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-border-right .ms-table__header-content,
+.ms-table .dx-datagrid-headers .dx-datagrid-content-fixed .ms-table__header-content {
+  height: 36px !important;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-left .ms-table__header-button,
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-right .ms-table__header-button,
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-border-left .ms-table__header-button,
+.ms-table .dx-datagrid-headers .dx-datagrid-sticky-column-border-right .ms-table__header-button,
+.ms-table .dx-datagrid-headers .dx-datagrid-content-fixed .ms-table__header-button {
+  height: 36px !important;
+  min-width: 0;
+  width: 100%;
 }
 
 .ms-table__header-content {
@@ -1863,26 +1910,33 @@ onBeforeUnmount(() => {
   border-top: none !important;
   border-left: none !important;
   border-right: none !important;
-  border-bottom: 1px solid #d5d7da !important;
   box-shadow: none !important;
 }
 
 .ms-table .dx-datagrid-content-fixed .dx-header-row > td {
   height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
   padding: 0 8px !important;
   background: #f5f5f5 !important;
   color: #101828 !important;
   font-size: 13px !important;
   font-weight: 600 !important;
   line-height: 18px !important;
+  border-bottom: none !important;
+  box-sizing: border-box !important;
 }
 
 .ms-table .dx-datagrid-content-fixed .dx-data-row > td {
   height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
   padding: 0 12px !important;
   background: #fff !important;
   color: #001b3d !important;
   vertical-align: middle !important;
+  border-bottom: 1px solid #d5d7da !important;
+  box-sizing: border-box !important;
 }
 
 .ms-table .dx-datagrid-content-fixed .dx-data-row:hover > td,

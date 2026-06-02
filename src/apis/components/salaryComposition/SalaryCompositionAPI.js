@@ -22,6 +22,10 @@ class SalaryCompositionAPI extends BaseAPI {
   bulkDelete(payload) {
     return api.post(`${this.controller}/bulk-delete`, payload)
   }
+
+  copyFromSystem(payload) {
+    return api.post(`${this.controller}/copy-from-system`, payload)
+  }
 }
 
 export default new SalaryCompositionAPI()

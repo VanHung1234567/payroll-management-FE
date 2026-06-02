@@ -18,6 +18,10 @@ export default class BaseAPI {
     return api.post(`${this.controller}/paging`, payload)
   }
 
+  /**
+   * Hàm để lọc kèm phân trang
+   * @param {*} payload
+   */
   filter(payload) {
     return api.post(`${this.controller}/filter`, payload)
   }

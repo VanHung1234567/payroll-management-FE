@@ -1,22 +1,3 @@
-<script setup lang="ts">
-import MsButton from './MsButton.vue'
-import MsInput from './MsInput.vue'
-import MsTooltip from './MsTooltip.vue'
-
-defineProps({
-  search: {
-    type: String,
-    default: '',
-  },
-  bulkMode: {
-    type: Boolean,
-    default: false,
-  },
-})
-
-const emit = defineEmits(['update:search'])
-</script>
-
 <template>
   <div class="grid-options">
     <div class="flex items-center justify-between w-full h-full">
@@ -77,6 +58,25 @@ const emit = defineEmits(['update:search'])
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import MsButton from './MsButton.vue'
+import MsInput from './MsInput.vue'
+import MsTooltip from './MsTooltip.vue'
+
+defineProps({
+  search: {
+    type: String,
+    default: '',
+  },
+  bulkMode: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const emit = defineEmits(['update:search'])
+</script>
 
 <style scoped>
 .grid-options {

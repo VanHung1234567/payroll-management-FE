@@ -745,8 +745,8 @@ defineExpose({
 }
 
 .ms-treeselect__check-mark {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   margin-left: 1px;
   flex-shrink: 0;
 }
