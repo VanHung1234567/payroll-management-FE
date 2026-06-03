@@ -42,7 +42,7 @@ export const salaryCompositionSchema = (salaryCompositions = [], currentId = nul
         })
       }),
 
-    salaryCompositionTypeID: yup.mixed().required(REQUIRED_MESSAGE),
+    salaryCompositionType: yup.mixed().required(REQUIRED_MESSAGE),
 
     nature: yup.mixed().required(REQUIRED_MESSAGE),
 
@@ -52,7 +52,7 @@ export const salaryCompositionSchema = (salaryCompositions = [], currentId = nul
 export const salaryCompositionDefaultValues = {
   salaryCompositionName: '',
   salaryCompositionCode: '',
-  salaryCompositionTypeID: null,
+  salaryCompositionType: null,
   nature: null,
   organizationIDs: [],
 }

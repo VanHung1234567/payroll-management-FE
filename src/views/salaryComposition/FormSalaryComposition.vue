@@ -143,12 +143,12 @@
                 menu-width="315px"
                 trigger-padding="4px 8px 4px 4px"
                 :letter-spacing="0"
-                label-key="typeName"
-                value-key="salaryCompositionTypeID"
+                label-key="label"
+                value-key="value"
                 :disabled="isSourceDefault"
-                :error-message="formErrors.salaryCompositionTypeID"
-                @change="validateField('salaryCompositionTypeID')"
-                @blur="validateField('salaryCompositionTypeID')"
+                :error-message="formErrors.salaryCompositionType"
+                @change="validateField('salaryCompositionType')"
+                @blur="validateField('salaryCompositionType')"
               />
             </div>
             <div class="ms-row">
@@ -653,7 +653,11 @@ import MsModal from '@/components/MsModal.vue'
 import MsSelect from '@/components/MsSelect.vue'
 import MsToast from '@/components/MsToast.vue'
 import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI'
-import SalaryCompositionTypeAPI from '@/apis/components/salaryCompositionType/SalaryCompositionType'
+import {
+  SALARY_COMPOSITION_NATURE_OPTIONS,
+  SALARY_COMPOSITION_TYPE_OPTIONS,
+  SALARY_COMPOSITION_VALUE_TYPE_OPTIONS,
+} from '@/utils/constants'
 import { salaryCompositionSchema } from '@/validations/salaryCompositionSchema'
 
 const props = defineProps({
@@ -664,7 +668,7 @@ const props = defineProps({
   },
   salaryCompositionId: {
     type: [String, Number],
-    default: "",
+    default: '',
   },
   initialTitle: {
     type: String,
@@ -776,16 +780,6 @@ const { data: organizationResponse } = useQuery({
   queryFn: () => OrganizationAPI.getAll(),
 })
 
-const { data: salaryCompositionEnumResponse } = useQuery({
-  queryKey: ['salaryCompositionEnum'],
-  queryFn: () => SalaryCompositionAPI.enum(),
-})
-
-const { data: salaryCompositionTypeResponse } = useQuery({
-  queryKey: ['salaryCompositionTypes'],
-  queryFn: () => SalaryCompositionTypeAPI.getAll(),
-})
-
 const { data: salaryCompositionParameterResponse } = useQuery({
   queryKey: ['salaryCompositionParameters'],
   queryFn: () =>
@@ -835,15 +829,7 @@ const deleteSalaryCompositionMutation = useMutation({
 })
 
 const organizations = computed(() => organizationResponse.value?.data?.data ?? [])
-const salaryCompositionEnum = computed(
-  () =>
-    salaryCompositionEnumResponse.value?.data?.data ??
-    salaryCompositionEnumResponse.value?.data ??
-    {},
-)
-const salaryCompositionTypeOptions = computed(
-  () => salaryCompositionTypeResponse.value?.data?.data ?? [],
-)
+const salaryCompositionTypeOptions = computed(() => SALARY_COMPOSITION_TYPE_OPTIONS)
 const salaryCompositionParameterPayload = computed(
   () =>
     salaryCompositionParameterResponse.value?.data?.data ??
@@ -855,15 +841,15 @@ const salaryCompositionParameters = computed(() => {
   if (Array.isArray(payload)) return payload
   return payload.data ?? []
 })
-const natureOptions = computed(() => getEnumOptions('natures'))
-const valueTypeOptions = computed(() => getEnumOptions('valueTypes'))
+const natureOptions = computed(() => SALARY_COMPOSITION_NATURE_OPTIONS)
+const valueTypeOptions = computed(() => SALARY_COMPOSITION_VALUE_TYPE_OPTIONS)
 const selectedSalaryCompositionType = computed(() =>
   salaryCompositionTypeOptions.value.find(
-    (option) => option.salaryCompositionTypeID === selectedSalaryCompositionTypeId.value,
+    (option) => Number(option.value) === Number(selectedSalaryCompositionTypeId.value),
   ),
 )
 const normalizedSelectedTypeName = computed(() =>
-  normalizeText(selectedSalaryCompositionType.value?.typeName ?? ''),
+  normalizeText(selectedSalaryCompositionType.value?.label ?? ''),
 )
 const isAutoOtherNatureType = computed(() =>
   ['cham cong', 'kpi', 'san pham'].some((keyword) =>
@@ -924,28 +910,43 @@ const isSaving = computed(
     updateSalaryCompositionMutation.isPending.value,
 )
 
-function getEnumOptions(key) {
-  const enumData = salaryCompositionEnum.value ?? {}
-  return enumData[key] ?? enumData[capitalizeFirstLetter(key)] ?? []
-}
-
+/// Lay nhan hien thi cua option.
+/// <param name="option">Option can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getOptionLabel(option) {
   return option?.label ?? option?.Label ?? option?.name ?? option?.Name ?? ''
 }
 
+/// Lay Id don vi tu du lieu don vi.
+/// <param name="organization">Du lieu don vi can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getOrganizationId(organization) {
   return organization?.organizationID ?? organization?.OrganizationID ?? organization?.id ?? null
 }
 
+/// Lay Id don vi cha tu du lieu don vi.
+/// <param name="organization">Du lieu don vi can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getOrganizationParentId(organization) {
   return organization?.parentID ?? organization?.ParentID ?? organization?.parentId ?? null
 }
 
+/// Lay Id don vi goc gan nhat de tu chon khi mo form.
+/// <param name="options">Danh sach option can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getNearestOrganizationId(options) {
   const rootOrganization = options.find((option) => !getOrganizationParentId(option))
   return getOrganizationId(rootOrganization ?? options[0])
 }
 
+/// Lay ten tham so thanh phan luong.
+/// <param name="parameter">Tham so thanh phan luong can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getParameterName(parameter) {
   return (
     parameter?.salaryCompositionName ??
@@ -956,6 +957,10 @@ function getParameterName(parameter) {
   )
 }
 
+/// Lay ma tham so thanh phan luong.
+/// <param name="parameter">Tham so thanh phan luong can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getParameterCode(parameter) {
   return (
     parameter?.salaryCompositionCode ??
@@ -966,16 +971,22 @@ function getParameterCode(parameter) {
   )
 }
 
+/// Lay du lieu form dung cho validate.
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getFormData() {
   return {
     salaryCompositionName: salaryCompositionName.value,
     salaryCompositionCode: salaryCompositionCode.value,
-    salaryCompositionTypeID: selectedSalaryCompositionTypeId.value,
+    salaryCompositionType: selectedSalaryCompositionTypeId.value,
     nature: selectedNature.value,
     organizationIDs: selectedOrganizationIds.value,
   }
 }
 
+/// Lay snapshot du lieu form de kiem tra thay doi.
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getFormSnapshot() {
   return JSON.stringify({
     salaryCompositionName: salaryCompositionName.value,
@@ -999,12 +1010,18 @@ function getFormSnapshot() {
   })
 }
 
+/// Thiet lap snapshot ban dau cua form.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function setInitialFormSnapshot() {
   nextTick(() => {
     initialFormSnapshot.value = getFormSnapshot()
   })
 }
 
+/// Lay ma pham vi tu dong cong tong de gui backend.
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getAutoValueScope() {
   const scopeMap = {
     sameOrganization: 'same_organization',
@@ -1015,6 +1032,9 @@ function getAutoValueScope() {
   return scopeMap[selectedAggregationScopeValue.value] ?? scopeMap.sameOrganization
 }
 
+/// Tao gia tri cong thuc gui backend theo che do dang chon.
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getValueFormulaPayload() {
   if (isAutoValueConfigVisible.value && selectedValueMode.value === 'auto') {
     const autoValueConfig = {
@@ -1034,12 +1054,15 @@ function getValueFormulaPayload() {
   return valueFormula.value ?? ''
 }
 
+/// Tao payload thanh phan luong de them hoac cap nhat.
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function buildSalaryCompositionPayload() {
   return {
     salaryCompositionCode: salaryCompositionCode.value,
     salaryCompositionName: salaryCompositionName.value,
     organizationIDs: selectedOrganizationIds.value.join(';'),
-    salaryCompositionTypeID: selectedSalaryCompositionTypeId.value,
+    salaryCompositionType: selectedSalaryCompositionTypeId.value,
     nature: selectedNature.value,
     taxType: isIncomeNature.value ? selectedTaxType.value : null,
     isTaxReduction: isDeductionNature.value ? isTaxReduction.value : null,
@@ -1054,6 +1077,9 @@ function buildSalaryCompositionPayload() {
   }
 }
 
+/// Dat lai form ve trang thai them moi ban dau.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function resetForm() {
   salaryCompositionName.value = ''
   salaryCompositionCode.value = ''
@@ -1081,10 +1107,18 @@ function resetForm() {
   setInitialFormSnapshot()
 }
 
+/// Chuan hoa du lieu tra ve tu API ve payload su dung trong man hinh.
+/// <param name="response">Response tra ve tu API.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function normalizeResponseData(response) {
   return response?.data?.data ?? response?.data ?? {}
 }
 
+/// Gan du lieu chi tiet thanh phan luong len form.
+/// <param name="detail">Du lieu chi tiet thanh phan luong.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function setFormValueFromDetail(detail) {
   if (!detail || !Object.keys(detail).length) return
 
@@ -1095,7 +1129,7 @@ function setFormValueFromDetail(detail) {
     .map((id) => id.trim())
     .filter(Boolean)
   selectedSalaryCompositionTypeId.value =
-    detail.salaryCompositionTypeID ?? detail.SalaryCompositionTypeID ?? null
+    detail.salaryCompositionType ?? detail.SalaryCompositionType ?? null
   selectedNature.value = detail.nature ?? detail.Nature ?? 1
   selectedTaxType.value = detail.taxType ?? detail.TaxType ?? 1
   isTaxReduction.value = Boolean(detail.isTaxReduction ?? detail.IsTaxReduction ?? false)
@@ -1117,6 +1151,10 @@ function setFormValueFromDetail(detail) {
   setInitialFormSnapshot()
 }
 
+/// Gan cau hinh cong thuc gia tri tu du lieu chi tiet len form.
+/// <param name="rawValueFormula">Chuoi cong thuc gia tri tu backend.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function setValueFormulaFromDetail(rawValueFormula) {
   const rawFormula = rawValueFormula ?? ''
 
@@ -1138,6 +1176,10 @@ function setValueFormulaFromDetail(rawValueFormula) {
   valueFormula.value = rawFormula
 }
 
+/// Chuyen ma pham vi backend sang gia tri chon tren form.
+/// <param name="scope">Ma pham vi tu dong cong tong.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getAggregationScopeFromPayload(scope) {
   const scopeMap = {
     same_organization: 'sameOrganization',
@@ -1148,6 +1190,10 @@ function getAggregationScopeFromPayload(scope) {
   return scopeMap[scope] ?? 'sameOrganization'
 }
 
+/// Sinh ma thanh phan luong tu ten thanh phan.
+/// <param name="value">Gia tri can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function generateSalaryCompositionCode(value) {
   return String(value ?? '')
     .normalize('NFD')
@@ -1161,6 +1207,10 @@ function generateSalaryCompositionCode(value) {
     .replace(/_+/g, '_')
 }
 
+/// Gan danh sach loi validate len form.
+/// <param name="errors">Danh sach loi validate.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function setFormErrors(errors) {
   Object.keys(formErrors).forEach((key) => {
     delete formErrors[key]
@@ -1177,16 +1227,19 @@ const errorFieldRefs = {
   salaryCompositionName: salaryCompositionNameInputRef,
   salaryCompositionCode: salaryCompositionCodeInputRef,
   organizationIDs: organizationTreeRef,
-  salaryCompositionTypeID: salaryCompositionTypeSelectRef,
+  salaryCompositionType: salaryCompositionTypeSelectRef,
   nature: natureSelectRef,
 }
 
+/// Focus vao truong loi dau tien tren form.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function focusFirstError() {
   const firstErrorField = [
     'salaryCompositionName',
     'salaryCompositionCode',
     'organizationIDs',
-    'salaryCompositionTypeID',
+    'salaryCompositionType',
     'nature',
   ].find((field) => Boolean(formErrors[field]))
 
@@ -1197,6 +1250,9 @@ function focusFirstError() {
   })
 }
 
+/// Hien thi toast thong bao luu thanh cong.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function showSuccessToast() {
   toast.visible = false
   nextTick(() => {
@@ -1204,10 +1260,19 @@ function showSuccessToast() {
   })
 }
 
+/// Xoa loi validate cua mot truong.
+/// <param name="field">Ten truong can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function clearFormError(field) {
   delete formErrors[field]
 }
 
+/// Gan hoac xoa loi validate cua mot truong.
+/// <param name="field">Ten truong can xu ly.</param>
+/// <param name="message">Noi dung thong bao.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function setFieldError(field, message) {
   if (message) {
     formErrors[field] = message
@@ -1217,6 +1282,10 @@ function setFieldError(field, message) {
   clearFormError(field)
 }
 
+/// Validate mot truong du lieu tren form.
+/// <param name="field">Ten truong can xu ly.</param>
+/// <returns>true neu hop le, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 async function validateField(field) {
   try {
     await salaryCompositionSchema(
@@ -1231,6 +1300,9 @@ async function validateField(field) {
   }
 }
 
+/// Validate toan bo du lieu form truoc khi luu.
+/// <returns>true neu form hop le, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 async function validateForm() {
   try {
     await salaryCompositionSchema(
@@ -1248,6 +1320,10 @@ async function validateForm() {
   }
 }
 
+/// Xu ly nhap ten thanh phan va tu sinh ma khi chua sua thu cong.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleSalaryCompositionNameInput(event) {
   const value = event.target.value
   salaryCompositionName.value = value
@@ -1261,6 +1337,10 @@ function handleSalaryCompositionNameInput(event) {
   }
 }
 
+/// Xu ly nhap ma thanh phan va ngat lien ket tu sinh ma.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleSalaryCompositionCodeInput(event) {
   isSalaryCompositionCodeManual.value = true
   salaryCompositionCode.value = generateSalaryCompositionCode(event.target.value)
@@ -1269,10 +1349,16 @@ function handleSalaryCompositionCodeInput(event) {
   }
 }
 
+/// Validate don vi ap dung khi nguoi dung thay doi lua chon.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleOrganizationChange() {
   validateField('organizationIDs')
 }
 
+/// Validate va luu thanh phan luong.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 async function handleSave() {
   isSaveAndAddMode.value = false
   if (!(await validateForm())) return
@@ -1284,45 +1370,68 @@ async function handleSave() {
   createSalaryCompositionMutation.mutate(payload)
 }
 
+/// Validate, luu thanh phan luong va mo lai form them moi.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 async function handleSaveAndAdd() {
   isSaveAndAddMode.value = true
   if (!(await validateForm())) return
   createSalaryCompositionMutation.mutate(buildSalaryCompositionPayload())
 }
 
-function capitalizeFirstLetter(value) {
-  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`
-}
-
+/// Mo hoac dong dropdown cau hinh gia tri tu dong.
+/// <param name="name">Ten dropdown can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function toggleValueSelect(name) {
   if (selectedValueMode.value === 'formula') return
   openedValueSelect.value = openedValueSelect.value === name ? '' : name
 }
 
+/// Chon pham vi tu dong cong tong gia tri.
+/// <param name="value">Gia tri can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function selectAggregationScope(value) {
   selectedAggregationScopeValue.value = value
   openedValueSelect.value = ''
 }
 
+/// Chon kieu tinh thue cua thanh phan thu nhap.
+/// <param name="value">Gia tri can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function selectTaxType(value) {
   if (isNatureOptionDisabled.value) return
   selectedTaxType.value = value
 }
 
+/// Bat hoac tat lua chon giam tru khi tinh thue.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function toggleTaxReduction() {
   if (isNatureOptionDisabled.value) return
   isTaxReduction.value = !isTaxReduction.value
 }
 
+/// Mo hoac dong menu chuc nang tren header form.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function toggleHeaderMenu() {
   isHeaderMenuOpen.value = !isHeaderMenuOpen.value
 }
 
+/// Chuyen form chi tiet sang che do nhan ban.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleDuplicate() {
   isHeaderMenuOpen.value = false
   enterDuplicateMode()
 }
 
+/// Thiet lap form sang che do nhan ban va xoa ten, ma.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function enterDuplicateMode() {
   isDuplicateMode.value = true
   salaryCompositionName.value = ''
@@ -1339,6 +1448,9 @@ function enterDuplicateMode() {
   })
 }
 
+/// Mo luong xoa thanh phan luong tu form chi tiet.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleDelete() {
   isHeaderMenuOpen.value = false
   if (isSourceDefault.value) {
@@ -1349,11 +1461,18 @@ function handleDelete() {
   isDeleteConfirmModalOpen.value = true
 }
 
+/// Xac nhan xoa thanh phan luong dang chon.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function confirmDeleteSalaryComposition() {
   if (!currentId.value) return
   deleteSalaryCompositionMutation.mutate()
 }
 
+/// Dong dropdown cau hinh khi click ra ngoai.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleClickOutsideValueConfig(event) {
   if (!valueConfigRef.value?.contains(event.target)) {
     openedValueSelect.value = ''
@@ -1364,10 +1483,16 @@ function handleClickOutsideValueConfig(event) {
   }
 }
 
+/// Mo modal xac nhan thoat form khi co du lieu chua luu.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function openExitConfirmModal() {
   isExitConfirmModalOpen.value = true
 }
 
+/// Xu ly nut quay lai khoi form thanh phan luong.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleBack() {
   if (isFormDirty.value || !isEditMode.value) {
     openExitConfirmModal()
@@ -1377,6 +1502,9 @@ function handleBack() {
   confirmExitWithoutSave()
 }
 
+/// Xu ly nut huy bo tren form thanh phan luong.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function goToSalaryCompositionList() {
   if (isFormDirty.value) {
     openExitConfirmModal()
@@ -1386,10 +1514,17 @@ function goToSalaryCompositionList() {
   confirmExitWithoutSave()
 }
 
+/// Xac nhan thoat form ma khong luu du lieu.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function confirmExitWithoutSave() {
   emit('close')
 }
 
+/// Chuan hoa chuoi tieng Viet de so sanh khong dau.
+/// <param name="value">Gia tri can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function normalizeText(value) {
   return String(value)
     .normalize('NFD')

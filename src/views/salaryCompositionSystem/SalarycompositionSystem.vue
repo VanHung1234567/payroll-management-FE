@@ -19,14 +19,14 @@
     <h2 class="content-header__title">Danh mục thành phần lương của hệ thống</h2>
   </div>
 
-  <GridOptions v-model:search="searchKeyword" :bulk-mode="hasSelectedRows">
+  <MsGridOptions v-model:search="searchKeyword" :bulk-mode="hasSelectedRows">
     <template #options>
       <MsSelect
         v-model="selectedSalaryCompositionTypeId"
         label="Loại thành phần"
         :options="salaryCompositionTypeOptions"
-        label-key="typeName"
-        value-key="salaryCompositionTypeID"
+        label-key="label"
+        value-key="value"
         :menu-width="172"
       />
     </template>
@@ -56,8 +56,8 @@
         </MsButton>
       </div>
     </template>
-  </GridOptions>
-  <GridTable
+  </MsGridOptions>
+  <MsGridTable
     gridKey="salary_composition_system"
     :data-api="SalaryCompositionSystemAPI"
     key-expr="salaryCompositionSystemID"
@@ -80,7 +80,7 @@
     cancel-text="Hủy bỏ"
     @confirm="confirmCopyFromSystem"
   >
-    <span v-if="copyRows.length === 1">
+    <span v-if="isSingleCopyRow">
       Bạn có chắc chắn muốn đưa thành phần lương mặc định
       <strong>{{ copyTargetName }}</strong>
       vào danh sách sử dụng không?
@@ -93,19 +93,19 @@
 </template>
 
 <script setup>
-import GridOptions from '@/components/GridOptions.vue'
-import GridTable from '@/components/GridTable.vue'
 import MsButton from '@/components/MsButton.vue'
 import MsModal from '@/components/MsModal.vue'
 import MsTooltip from '@/components/MsTooltip.vue'
 import { path } from '@/utils/path'
 import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI'
 import SalaryCompositionSystemAPI from '@/apis/components/salaryCompositionSystem/SalaryCompositionSystem'
-import SalaryCompositionTypeAPI from '@/apis/components/salaryCompositionType/SalaryCompositionType'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { SALARY_COMPOSITION_TYPE_OPTIONS } from '@/utils/constants'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import MsSelect from '@/components/MsSelect.vue'
 import MsToast from '@/components/MsToast.vue'
+import MsGridTable from '@/components/MsGridTable.vue'
+import MsGridOptions from '@/components/MsGridOptions.vue'
 
 const selectedSalaryCompositionTypeId = ref(null)
 const searchKeyword = ref('')
@@ -121,20 +121,16 @@ const toast = ref({
 const queryClient = useQueryClient()
 let searchDebounceTimer = null
 
-const { data: salaryCompositionTypeResponse } = useQuery({
-  queryKey: ['salaryCompositionTypes'],
-  queryFn: () => SalaryCompositionTypeAPI.getAll(),
-})
-
 const salaryCompositionTypeOptions = computed(() => [
   {
-    typeName: 'Tất cả',
-    salaryCompositionTypeID: null,
+    label: 'Tất cả',
+    value: null,
   },
 
-  ...(salaryCompositionTypeResponse.value?.data?.data ?? []),
+  ...SALARY_COMPOSITION_TYPE_OPTIONS,
 ])
 const hasSelectedRows = computed(() => selectedRows.value.length > 0)
+const isSingleCopyRow = computed(() => copyRows.value.length === 1)
 const copyTargetName = computed(() => getSalaryCompositionSystemName(copyRows.value[0]))
 
 const copyFromSystemMutation = useMutation({
@@ -170,26 +166,41 @@ const salaryCompositionSystemFilters = computed(() => {
   if (!selectedSalaryCompositionTypeId.value) return {}
 
   return {
-    salaryCompositionTypeID: selectedSalaryCompositionTypeId.value,
+    salaryCompositionType: selectedSalaryCompositionTypeId.value,
   }
 })
 
+/// Bo chon cac dong dang chon tren grid.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function clearSelectedRows() {
   clearSelectionSignal.value += 1
 }
 
+/// Mo modal xac nhan dua thanh phan he thong vao danh sach su dung.
+/// <param name="rows">Danh sach dong du lieu can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function openCopyFromSystemModal(rows) {
-  const nextRows = rows.filter(Boolean)
+  const sourceRows = Array.isArray(rows) ? rows : (rows?.value ?? [rows])
+  const nextRows = sourceRows.filter((row) => Boolean(row && getSalaryCompositionSystemId(row)))
   if (!nextRows.length) return
   copyRows.value = nextRows
   isCopyConfirmModalOpen.value = true
 }
 
+/// Xac nhan dua thanh phan he thong da chon vao danh sach su dung.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function confirmCopyFromSystem() {
   if (!copyRows.value.length) return
   copyFromSystemMutation.mutate(copyRows.value)
 }
 
+/// Hien thi thong bao toast voi noi dung truyen vao.
+/// <param name="message">Noi dung thong bao.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function showToast(message) {
   toast.value.visible = false
   toast.value.message = message
@@ -198,13 +209,28 @@ function showToast(message) {
   })
 }
 
+/// Lay Id thanh phan luong he thong tu dong du lieu.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionSystemId(row) {
   return row?.salaryCompositionSystemID ?? row?.SalaryCompositionSystemID
 }
 
+/// Lay ten thanh phan luong he thong tu dong du lieu.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionSystemName(row) {
-  return row?.salaryCompositionSystemName ?? row?.SalaryCompositionName ?? ''
+  return (
+    row?.salaryCompositionSystemName ??
+    row?.SalaryCompositionSystemName ??
+    row?.salaryCompositionName ??
+    row?.SalaryCompositionName ??
+    ''
+  )
 }
+
 </script>
 
 <style scoped>

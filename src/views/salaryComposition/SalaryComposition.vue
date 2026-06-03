@@ -29,7 +29,7 @@
           </MsButton>
         </RouterLink>
         <div ref="addActionRef" class="container-action-add">
-          <MsButton border-radius="8px 0 0 8px" gap="4px" @click="openAddForm">
+          <MsButton border-radius="8px 0 0 8px" width="88px" gap="6px" @click="openAddForm">
             <div class="mi-plus-white"></div>
             <div class="action-add-text">Thêm</div>
           </MsButton>
@@ -53,7 +53,7 @@
       </div>
     </div>
 
-    <GridOptions v-model:search="searchKeyword" :bulk-mode="hasSelectedRows">
+    <MsGridOptions v-model:search="searchKeyword" :bulk-mode="hasSelectedRows">
       <template #options>
         <MsSelect v-model="selectedStatus" label="Trạng thái" :options="statusOptions" />
 
@@ -124,8 +124,8 @@
           </MsButton>
         </div>
       </template>
-    </GridOptions>
-    <GridTable
+    </MsGridOptions>
+    <MsGridTable
       :search="debouncedSearchKeyword"
       :filters="salaryCompositionFilters"
       :clear-selection-signal="clearSelectionSignal"
@@ -162,15 +162,15 @@
               <MsSelect
                 v-model="selectedSystemPickerTypeId"
                 label="Loại thành phần"
-                :options="salaryCompositionTypeOptions"
-                label-key="typeName"
-                value-key="salaryCompositionTypeID"
+                :options="normalizedSalaryCompositionTypeOptions"
+                label-key="label"
+                value-key="value"
                 :menu-width="210"
               />
             </div>
 
             <div class="system-picker-grid">
-              <GridTable
+              <MsGridTable
                 grid-key="salary_composition_system_picker"
                 config-grid-key="salary_composition_system"
                 :data-api="SalaryCompositionSystemAPI"
@@ -224,7 +224,16 @@
     cancel-text="Hủy bỏ"
     @confirm="confirmChangeStatus"
   >
-    {{ statusConfirmMessage }}
+    <template v-if="statusTargetRows.length === 1">
+      Bạn có chắc chắn muốn chuyển trạng thái thành phần lương
+      <strong>{{ statusTargetName }}</strong>
+      sang {{ nextStatusText }} không?
+    </template>
+
+    <template v-else>
+      Bạn có chắc chắn muốn chuyển trạng thái các thành phần lương đã chọn sang
+      {{ nextStatusText }} không?
+    </template>
   </MsModal>
   <MsModal
     v-model="isBulkDeleteConfirmModalOpen"
@@ -285,8 +294,6 @@
 </template>
 
 <script setup lang="ts">
-import GridOptions from '@/components/GridOptions.vue'
-import GridTable from '@/components/GridTable.vue'
 import FormSalaryComposition from '@/views/salaryComposition/FormSalaryComposition.vue'
 import MsButton from '@/components/MsButton.vue'
 import { path } from '@/utils/path'
@@ -295,12 +302,17 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import OrganizationAPI from '@/apis/components/organization/Organization.js'
 import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI'
 import SalaryCompositionSystemAPI from '@/apis/components/salaryCompositionSystem/SalaryCompositionSystem'
-import SalaryCompositionTypeAPI from '@/apis/components/salaryCompositionType/SalaryCompositionType'
+import {
+  SALARY_COMPOSITION_STATUS_OPTIONS,
+  SALARY_COMPOSITION_TYPE_OPTIONS,
+} from '@/utils/constants'
 import MsInput from '@/components/MsInput.vue'
 import MsModal from '@/components/MsModal.vue'
 import MsSelect from '@/components/MsSelect.vue'
 import MsToast from '@/components/MsToast.vue'
 import MsTreeSelect from '@/components/MsTreeSelect.vue'
+import MsGridTable from '@/components/MsGridTable.vue'
+import MsGridOptions from '@/components/MsGridOptions.vue'
 
 const selectedStatus = ref<number | string | null>(null)
 const selectedOrganizationIds = ref<string[]>([])
@@ -342,16 +354,6 @@ let systemPickerSearchDebounceTimer: number | null = null
 const { data: organizationResponse } = useQuery({
   queryKey: ['organizations'],
   queryFn: () => OrganizationAPI.getAll(),
-})
-
-const { data: salaryCompositionEnumResponse } = useQuery({
-  queryKey: ['salaryCompositionEnum'],
-  queryFn: () => SalaryCompositionAPI.enum(),
-})
-
-const { data: salaryCompositionTypeResponse } = useQuery({
-  queryKey: ['salaryCompositionTypes'],
-  queryFn: () => SalaryCompositionTypeAPI.getAll(),
 })
 
 const deleteSalaryCompositionMutation = useMutation({
@@ -399,19 +401,25 @@ const copyFromSystemMutation = useMutation({
 })
 
 const organizations = computed(() => organizationResponse.value?.data?.data ?? [])
-const salaryCompositionEnum = computed(() => salaryCompositionEnumResponse.value?.data ?? {})
 const statusOptions = computed(() => [
   { label: 'Tất cả', value: null },
-  ...(salaryCompositionEnum.value.statuses ?? []),
+  ...SALARY_COMPOSITION_STATUS_OPTIONS,
 ])
 const salaryCompositionTypeOptions = computed(() => [
   {
     typeName: 'Tất cả',
-    salaryCompositionTypeID: null,
+    value: null,
   },
 
-  ...(salaryCompositionTypeResponse.value?.data?.data ?? []),
+  ...SALARY_COMPOSITION_TYPE_OPTIONS,
 ])
+const normalizedSalaryCompositionTypeOptions = computed(() =>
+  salaryCompositionTypeOptions.value.map((option) => ({
+    ...option,
+    label: option.label,
+    value: option.value,
+  })),
+)
 const hasSelectedRows = computed(() => selectedRows.value.length > 0)
 const selectedHasActive = computed(() => selectedRows.value.some((row) => isActiveStatus(row)))
 const selectedHasInactive = computed(() => selectedRows.value.some((row) => !isActiveStatus(row)))
@@ -472,42 +480,73 @@ const systemPickerFilters = computed(() => {
   if (!selectedSystemPickerTypeId.value) return {}
 
   return {
-    salaryCompositionTypeID: selectedSystemPickerTypeId.value,
+    salaryCompositionType: selectedSystemPickerTypeId.value,
   }
 })
 
+/// Lay gia tri trang thai cua ban ghi.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getStatusValue(row: any) {
   return row?.status ?? row?.Status ?? row?.statusName ?? row?.StatusName
 }
 
+/// Kiem tra ban ghi dang o trang thai theo doi hay khong.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function isActiveStatus(row: any) {
   const value = getStatusValue(row)
   if (typeof value === 'string') return !value.toLowerCase().includes('ngừng')
   return Number(value) === 1
 }
 
+/// Bo chon cac dong dang chon tren grid.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function clearSelectedRows() {
   clearSelectionSignal.value += 1
 }
 
+/// Lay Id thanh phan luong tu dong du lieu.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionId(row: any) {
-  return row?.salaryCompositionID ?? row?.SalaryCompositionID ?? row?.id ?? row?.ID
+  return row?.salaryCompositionID ?? row?.SalaryCompositionID
 }
 
+/// Lay ten thanh phan luong tu dong du lieu.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionName(row: any) {
-  return row?.salaryCompositionName ?? row?.SalaryCompositionName ?? row?.name ?? row?.Name ?? ''
+  return row?.salaryCompositionName ?? row?.SalaryCompositionName ?? ''
 }
 
+/// Lay Id thanh phan luong he thong tu dong du lieu.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionSystemId(row: any) {
-  return row?.salaryCompositionSystemID ?? row?.SalaryCompositionSystemID ?? row?.id ?? row?.ID
+  return row?.salaryCompositionSystemID ?? row?.SalaryCompositionSystemID
 }
 
+/// Lay nguon tao cua thanh phan luong.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getCreatedSource(row: any) {
   return (
     row?.createdSource ?? row?.CreatedSource ?? row?.createdSourceName ?? row?.CreatedSourceName
   )
 }
 
+/// Kiem tra thanh phan luong co phai du lieu mac dinh cua he thong khong.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function isDefaultSourceRow(row: any) {
   const source = getCreatedSource(row)
   if (source === null || source === undefined || source === '') return false
@@ -532,13 +571,6 @@ const statusTargetName = computed(() => {
 const nextStatusText = computed(() =>
   Number(targetStatus.value) === 1 ? 'đang theo dõi' : 'ngừng theo dõi',
 )
-const statusConfirmMessage = computed(() => {
-  if (statusTargetRows.value.length !== 1) {
-    return `Bạn có chắc chắn muốn chuyển trạng thái các thành phần lương đã chọn sang ${nextStatusText.value} không?`
-  }
-
-  return `Bạn có chắc chắn muốn chuyển trạng thái thành phần lương ${statusTargetName.value} sang ${nextStatusText.value} không?`
-})
 const bulkDefaultRows = computed(() => bulkDeleteRows.value.filter(isDefaultSourceRow))
 const bulkDeletableRows = computed(() =>
   bulkDeleteRows.value.filter((row) => !isDefaultSourceRow(row)),
@@ -548,6 +580,9 @@ const bulkDefaultNames = computed(() =>
 )
 const hasBulkDeletableRows = computed(() => bulkDeletableRows.value.length > 0)
 
+/// Mo form them moi thanh phan luong.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function openAddForm() {
   formMode.value = 'add'
   editingSalaryCompositionId.value = null
@@ -555,6 +590,10 @@ function openAddForm() {
   isFormOpen.value = true
 }
 
+/// Mo form chi tiet de sua thanh phan luong.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function openEditForm(row: any) {
   const id = getSalaryCompositionId(row)
   if (!id) return
@@ -564,6 +603,10 @@ function openEditForm(row: any) {
   isFormOpen.value = true
 }
 
+/// Mo form nhan ban thanh phan luong tu dong dang chon.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function openDuplicateForm(row: any) {
   const id = getSalaryCompositionId(row)
   if (!id) return
@@ -573,6 +616,9 @@ function openDuplicateForm(row: any) {
   isFormOpen.value = true
 }
 
+/// Dong form thanh phan luong va quay lai danh sach.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function closeForm() {
   isFormOpen.value = false
   formMode.value = 'add'
@@ -580,14 +626,25 @@ function closeForm() {
   editingSalaryCompositionTitle.value = ''
 }
 
+/// Xu ly sau khi form them, sua hoac nhan ban luu thanh cong.
+/// <param name="action">Loai hanh dong vua luu.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleFormSaved(action = 'create') {
   showToast(action === 'update' ? 'Cập nhật thành phần lương thành công' : 'Thêm thành công')
 }
 
+/// Xu ly sau khi xoa thanh phan luong tu form chi tiet.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleFormDeleted() {
   showToast('Xóa thành công')
 }
 
+/// Hien thi thong bao toast voi noi dung truyen vao.
+/// <param name="message">Noi dung thong bao.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function showToast(message: string) {
   toast.value.visible = false
   toast.value.message = message
@@ -596,6 +653,10 @@ function showToast(message: string) {
   })
 }
 
+/// Mo modal xac nhan xoa thanh phan luong.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function openDeleteModal(row: any) {
   deleteTargetRow.value = row
   if (isDefaultSourceRow(row)) {
@@ -606,30 +667,47 @@ function openDeleteModal(row: any) {
   isDeleteConfirmModalOpen.value = true
 }
 
+/// Xac nhan xoa thanh phan luong dang chon.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function confirmDeleteSalaryComposition() {
   const id = getSalaryCompositionId(deleteTargetRow.value)
   if (!id) return
   deleteSalaryCompositionMutation.mutate(id)
 }
 
+/// Mo modal xac nhan xoa nhieu thanh phan luong.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function openBulkDeleteModal() {
   if (!selectedRows.value.length) return
   bulkDeleteRows.value = [...selectedRows.value]
   isBulkDeleteConfirmModalOpen.value = true
 }
 
+/// Xac nhan xoa cac thanh phan luong da chon.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function confirmBulkDeleteSalaryCompositions() {
   const ids = bulkDeletableRows.value.map(getSalaryCompositionId).filter(Boolean)
   if (!ids.length) return
   bulkDeleteSalaryCompositionMutation.mutate(ids)
 }
 
+/// Mo modal xac nhan chuyen trang thai mot thanh phan luong.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function openStatusModal(row: any) {
   statusTargetRows.value = [row]
   targetStatus.value = isActiveStatus(row) ? 0 : 1
   isStatusConfirmModalOpen.value = true
 }
 
+/// Mo modal xac nhan chuyen trang thai cac thanh phan luong da chon.
+/// <param name="status">Trang thai can chuyen.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function openBulkStatusModal(status: number) {
   const rows = selectedRows.value.filter((row) =>
     status === 1 ? !isActiveStatus(row) : isActiveStatus(row),
@@ -640,6 +718,9 @@ function openBulkStatusModal(status: number) {
   isStatusConfirmModalOpen.value = true
 }
 
+/// Xac nhan chuyen trang thai cac thanh phan luong dang chon.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function confirmChangeStatus() {
   if (targetStatus.value === null || !statusTargetRows.value.length) return
   changeStatusMutation.mutate({
@@ -648,10 +729,16 @@ function confirmChangeStatus() {
   })
 }
 
+/// Mo hoac dong menu them thanh phan luong.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function toggleAddMenu() {
   isAddMenuOpen.value = !isAddMenuOpen.value
 }
 
+/// Mo popup chon thanh phan luong mac dinh cua he thong.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 async function openSystemPicker() {
   isAddMenuOpen.value = false
   isSystemPickerOpen.value = true
@@ -660,6 +747,9 @@ async function openSystemPicker() {
   systemPickerSearchInputRef.value?.focus()
 }
 
+/// Yeu cau dong popup chon thanh phan he thong va kiem tra du lieu dang chon.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function requestCloseSystemPicker() {
   if (hasSystemPickerSelection.value) {
     isSystemPickerDiscardModalOpen.value = true
@@ -669,6 +759,9 @@ function requestCloseSystemPicker() {
   closeSystemPicker()
 }
 
+/// Dong popup chon thanh phan he thong va dat lai trang thai chon.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function closeSystemPicker() {
   isSystemPickerOpen.value = false
   isSystemPickerDiscardModalOpen.value = false
@@ -679,15 +772,25 @@ function closeSystemPicker() {
   systemPickerSelectedRows.value = []
 }
 
+/// Xac nhan thoat popup chon thanh phan he thong ma khong luu lua chon.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function confirmDiscardSystemPicker() {
   closeSystemPicker()
 }
 
+/// Xac nhan dua cac thanh phan he thong da chon vao danh sach su dung.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function confirmSystemPicker() {
   if (!hasSystemPickerSelection.value) return
   copyFromSystemMutation.mutate([...systemPickerSelectedRows.value])
 }
 
+/// Xu ly click ben ngoai de dong menu dang mo.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleDocumentMouseDown(event: MouseEvent) {
   const target = event.target as Node
   if (addActionRef.value && !addActionRef.value.contains(target)) {

@@ -7,10 +7,6 @@ class SalaryCompositionAPI extends BaseAPI {
     this.controller = 'SalaryComposition'
   }
 
-  enum() {
-    return api.get(`${this.controller}/enum`)
-  }
-
   detail(id) {
     return api.get(`${this.controller}/detail/${id}`)
   }

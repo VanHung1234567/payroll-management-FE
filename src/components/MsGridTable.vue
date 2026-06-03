@@ -214,10 +214,7 @@
             {{ token.text }}
           </span>
         </span>
-        <span
-          v-else
-          class="ms-table__cell-truncate"
-        >
+        <span v-else class="ms-table__cell-truncate">
           {{
             formatCellValue(
               getDisplayValue(data.data, data.column.dataField),
@@ -365,6 +362,10 @@ import SalaryCompositionSystemAPI from '@/apis/components/salaryCompositionSyste
 import MsModal from '@/components/MsModal.vue'
 import MsPagination from '@/components/MsPagination.vue'
 import { useGridTableStore } from '@/stores/gridTable.js'
+import {
+  SALARY_COMPOSITION_TYPE_OPTIONS,
+  SALARY_COMPOSITION_VALUE_TYPE_OPTIONS,
+} from '@/utils/constants'
 
 const props = defineProps({
   // Key định danh state paging/search và query data của grid.
@@ -510,6 +511,9 @@ const normalizedFilters = computed(() => {
 
 const hasActiveFilters = computed(() => Object.keys(normalizedFilters.value).length > 0)
 
+/// Lay thong tin phan trang, tim kiem, sap xep va bo loc de gui len API.
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getPagingPayload() {
   return {
     pageIndex: pageIndex.value,
@@ -528,6 +532,7 @@ const DB_SORT_FIELDS = new Set([
   'SalaryCompositionCode',
   'SalaryCompositionName',
   'OrganizationIDs',
+  'SalaryCompositionType',
   'SalaryCompositionTypeID',
   'Nature',
   'TaxType',
@@ -547,7 +552,8 @@ const DB_SORT_FIELDS = new Set([
 const SORT_FIELD_MAP = {
   OrganizationName: 'OrganizationNames',
   OrganizationNames: 'OrganizationNames',
-  TypeName: 'SalaryCompositionTypeID',
+  TypeName: 'SalaryCompositionType',
+  SalaryCompositionTypeID: 'SalaryCompositionType',
   NatureName: 'Nature',
   TaxTypeName: 'TaxType',
   ValueTypeName: 'ValueType',
@@ -555,7 +561,13 @@ const SORT_FIELD_MAP = {
   CreatedSourceName: 'CreatedSource',
   StatusName: 'Status',
 }
+const typeOptionTextMap = createOptionTextMap(SALARY_COMPOSITION_TYPE_OPTIONS)
+const valueTypeOptionTextMap = createOptionTextMap(SALARY_COMPOSITION_VALUE_TYPE_OPTIONS)
 
+/// Chuan hoa ten cot sap xep sang field backend cho phep sort.
+/// <param name="fieldName">Ten field can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function normalizeSortField(fieldName) {
   const pascalFieldName = toPascalCase(fieldName)
   const mappedFieldName = SORT_FIELD_MAP[pascalFieldName] || pascalFieldName
@@ -703,10 +715,18 @@ const isPageIndeterminate = computed(
   () => rows.value.some((row) => selectedKeys.value.has(getRowKey(row))) && !isAllPageChecked.value,
 )
 
+/// Chuan hoa du lieu tra ve tu API ve payload su dung trong man hinh.
+/// <param name="response">Response tra ve tu API.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function normalizeResponseData(response) {
   return response?.data?.data ?? response?.data ?? {}
 }
 
+/// Chuan hoa cau hinh cot tu backend sang cau hinh hien thi cua grid.
+/// <param name="column">Cau hinh cot can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function normalizeColumn(column) {
   const rawFieldName = column.fieldName || column.FieldName
 
@@ -727,6 +747,10 @@ function normalizeColumn(column) {
   }
 }
 
+/// Lay danh sach cot can hien thi icon ghim ban dau.
+/// <param name="columns">Danh sach cot can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getInitialPinnedIconFields(columns) {
   const fixedColumns = columns
     .filter((column) => column.isFixed)
@@ -737,24 +761,46 @@ function getInitialPinnedIconFields(columns) {
   return new Set([fixedColumns[fixedColumns.length - 1].fieldName])
 }
 
+/// Chuyen ten field sang dang camelCase.
+/// <param name="value">Gia tri can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function toCamelCase(value) {
   if (!value) return value
   return `${value[0].toLowerCase()}${value.slice(1)}`
 }
 
+/// Chuyen ten field sang dang PascalCase.
+/// <param name="value">Gia tri can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function toPascalCase(value) {
   if (!value) return value
   return `${value[0].toUpperCase()}${value.slice(1)}`
 }
 
+/// Lay khoa dinh danh cua dong du lieu.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getRowKey(row) {
   return row?.[props.keyExpr] ?? row?.[toPascalCase(props.keyExpr)]
 }
 
+/// Lay gia tri goc cua o du lieu theo ten field.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <param name="fieldName">Ten field can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getRawCellValue(row, fieldName) {
   return row?.[fieldName] ?? row?.[toPascalCase(fieldName)]
 }
 
+/// Lay gia tri hien thi cua o du lieu theo mapping frontend.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <param name="fieldName">Ten field can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getDisplayValue(row, fieldName) {
   const lowerField = String(fieldName || '').toLowerCase()
   const value = getRawCellValue(row, fieldName)
@@ -777,8 +823,16 @@ function getDisplayValue(row, fieldName) {
     )
   }
 
-  if (lowerField === 'salarycompositiontypeid') {
-    return row.typeName ?? row.TypeName ?? value
+  if (
+    lowerField === 'salarycompositiontype' ||
+    lowerField === 'salarycompositiontypeid' ||
+    lowerField === 'typename'
+  ) {
+    return (
+      row.typeName ??
+      row.TypeName ??
+      optionText(row.salaryCompositionType ?? row.SalaryCompositionType ?? value, typeOptionTextMap)
+    )
   }
 
   if (lowerField === 'nature' || lowerField === 'naturename') {
@@ -795,6 +849,10 @@ function getDisplayValue(row, fieldName) {
       2: 'Miễn thuế toàn phần',
       3: 'Miễn thuế một phần',
     })
+  }
+
+  if (lowerField === 'valuetype' || lowerField === 'valuetypename') {
+    return optionText(row.valueType ?? row.ValueType ?? value, valueTypeOptionTextMap)
   }
 
   if (lowerField === 'valuetype' || lowerField === 'valuetypename') {
@@ -824,10 +882,27 @@ function getDisplayValue(row, fieldName) {
   return value
 }
 
+/// Lay nhan hien thi tuong ung voi gia tri option.
+/// <param name="value">Gia tri can xu ly.</param>
+/// <param name="map">Map gia tri sang nhan hien thi.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function optionText(value, map) {
   return map[Number(value)] ?? value
 }
 
+/// Tao map tra cuu nhan option theo gia tri.
+/// <param name="options">Danh sach option can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
+function createOptionTextMap(options) {
+  return Object.fromEntries(options.map((option) => [Number(option.value), option.label]))
+}
+
+/// Kiem tra cong thuc gia tri co phai cau hinh tu dong cong tong khong.
+/// <param name="value">Gia tri can xu ly.</param>
+/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function isAutoSumValueFormula(value) {
   if (typeof value !== 'string') return false
 
@@ -838,6 +913,11 @@ function isAutoSumValueFormula(value) {
   }
 }
 
+/// Kiem tra o cong thuc gia tri co can to mau cong thuc khong.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <param name="fieldName">Ten field can xu ly.</param>
+/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function shouldHighlightValueFormula(row, fieldName) {
   if (String(fieldName || '').toLowerCase() !== 'valueformula') return false
 
@@ -845,6 +925,11 @@ function shouldHighlightValueFormula(row, fieldName) {
   return value !== null && value !== undefined && value !== '' && !isAutoSumValueFormula(value)
 }
 
+/// Tach cong thuc thanh cac token de hien thi mau trong grid.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <param name="fieldName">Ten field can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getFormulaTokens(row, fieldName) {
   const value = String(getRawCellValue(row, fieldName) ?? '')
   const parts = value.split(/([=+\-*/(),])/).filter((part) => part !== '')
@@ -863,10 +948,18 @@ function getFormulaTokens(row, fieldName) {
   })
 }
 
+/// Kiem tra dong du lieu da duoc chon hay chua.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function isRowChecked(row) {
   return selectedKeys.value.has(getRowKey(row))
 }
 
+/// Chon hoac bo chon mot dong du lieu.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function toggleRow(row) {
   const next = new Set(selectedKeys.value)
   const nextRows = new Map(selectedRowMap.value)
@@ -883,6 +976,9 @@ function toggleRow(row) {
   emitSelectionChange()
 }
 
+/// Chon hoac bo chon tat ca dong tren trang hien tai.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function toggleAllPageRows() {
   const next = new Set(selectedKeys.value)
   const nextRows = new Map(selectedRowMap.value)
@@ -904,6 +1000,9 @@ function toggleAllPageRows() {
   emitSelectionChange()
 }
 
+/// Xoa toan bo lua chon hien tai tren grid.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function clearSelection() {
   if (!selectedKeys.value.size) return
   selectedKeys.value = new Set()
@@ -911,25 +1010,43 @@ function clearSelection() {
   emitSelectionChange()
 }
 
+/// Lay danh sach dong dang duoc chon.
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getSelectedRows() {
   return [...selectedRowMap.value.values()]
 }
 
+/// Phat su kien thay doi danh sach dong duoc chon.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function emitSelectionChange() {
   const selectedRows = getSelectedRows()
   emit('selection-change', selectedRows)
   emit('update:selectedRows', selectedRows)
 }
 
+/// Xu ly su kien chuan bi context menu cua grid.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleContextMenuPreparing(event) {
   event.items = []
   event.cancel = true
 }
 
+/// Xu ly su kien chuan bi toolbar cua grid.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleToolbarPreparing(event) {
   event.toolbarOptions.items = []
 }
 
+/// Xu ly su kien sau khi dong du lieu duoc render.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleRowPrepared(event) {
   if (event.rowType !== 'data') return
   const rowElement = event.rowElement?.classList ? event.rowElement : event.rowElement?.[0]
@@ -947,6 +1064,11 @@ function handleRowPrepared(event) {
   rowElement.onmouseleave = scheduleHideRowActions
 }
 
+/// Hien thi cum nut thao tac noi cua dong du lieu.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <param name="rowElement">Phan tu DOM cua dong du lieu.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function showRowActions(row, rowElement) {
   clearActionHideTimer()
   if (activeActionRowElement.value && activeActionRowElement.value !== rowElement) {
@@ -959,6 +1081,9 @@ function showRowActions(row, rowElement) {
   updateFloatingActionTop()
 }
 
+/// Cap nhat vi tri top cua cum nut thao tac noi.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function updateFloatingActionTop() {
   if (!activeActionRowElement.value) return
 
@@ -969,17 +1094,26 @@ function updateFloatingActionTop() {
   floatingActionTop.value = rowRect.top - (containerRect?.top || 0)
 }
 
+/// Hen gio an cum nut thao tac noi.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function scheduleHideRowActions() {
   clearActionHideTimer()
   actionHideTimer.value = window.setTimeout(hideRowActions, 80)
 }
 
+/// Xoa bo dem thoi gian an cum nut thao tac noi.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function clearActionHideTimer() {
   if (!actionHideTimer.value) return
   window.clearTimeout(actionHideTimer.value)
   actionHideTimer.value = null
 }
 
+/// An cum nut thao tac noi cua dong du lieu.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function hideRowActions() {
   clearActionHideTimer()
   activeActionRowElement.value?.classList.remove('is-action-hover')
@@ -987,11 +1121,18 @@ function hideRowActions() {
   hoveredRow.value = null
 }
 
+/// Xu ly su kien cuon bang va an thao tac noi.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleTableScroll() {
   if (!hoveredRow.value) return
   updateFloatingActionTop()
 }
 
+/// Xu ly thay doi option cua DevExtreme grid.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleOptionChanged(event) {
   if (event.fullName?.includes('.width')) {
     handleColumnWidthChanged(event)
@@ -1004,6 +1145,10 @@ function handleOptionChanged(event) {
   }
 }
 
+/// Xu ly thay doi do rong cot va luu cau hinh.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleColumnWidthChanged(event) {
   const match = event.fullName.match(/columns\[(\d+)\]\.width/)
   if (!match) return
@@ -1020,6 +1165,11 @@ function handleColumnWidthChanged(event) {
   queueColumnWidthPersist(column, nextWidth)
 }
 
+/// Dua thay doi do rong cot vao hang doi luu cau hinh.
+/// <param name="column">Cau hinh cot can xu ly.</param>
+/// <param name="width">Do rong cot can luu.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function queueColumnWidthPersist(column, width) {
   pendingResizePersist.value = { column, width }
 
@@ -1037,6 +1187,10 @@ function queueColumnWidthPersist(column, width) {
   }, 350)
 }
 
+/// Dua thay doi thu tu cot vao hang doi luu cau hinh.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function queueColumnOrderPersist(event) {
   if (!isGridReady.value || suppressOrderPersist.value) return
   if (event.fullName?.includes('.fixed') || event.fullName?.includes('.fixedPosition')) return
@@ -1050,6 +1204,10 @@ function queueColumnOrderPersist(event) {
   }, 250)
 }
 
+/// Luu thu tu cot hien tai len backend.
+/// <param name="component">Instance grid can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function persistColumnOrder(component) {
   if (suppressOrderPersist.value) return
 
@@ -1079,6 +1237,11 @@ function persistColumnOrder(component) {
   })
 }
 
+/// Mo menu cau hinh o header cot.
+/// <param name="data">Du lieu truyen vao ham.</param>
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function openHeaderMenu(data, event) {
   const column = configColumns.value.find((item) => item.fieldName === data.column.dataField)
   if (!column) return
@@ -1092,6 +1255,10 @@ function openHeaderMenu(data, event) {
   headerMenu.isOpen = true
 }
 
+/// Ap dung trang thai sap xep cho cot dang chon.
+/// <param name="nextSort">Trang thai sap xep can ap dung.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function applySort(nextSort) {
   if (!nextSort) {
     sort.value = ''
@@ -1110,6 +1277,10 @@ function applySort(nextSort) {
   headerMenu.isOpen = false
 }
 
+/// Lay chieu sap xep dang ap dung cho header cot.
+/// <param name="fieldName">Ten field can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getHeaderSortDirection(fieldName) {
   const column = configColumns.value.find((item) => item.fieldName === fieldName)
   if (!column?.apiSortField || !sort.value) return ''
@@ -1118,10 +1289,18 @@ function getHeaderSortDirection(fieldName) {
   return ''
 }
 
+/// Kiem tra cot co dang hien thi icon ghim hay khong.
+/// <param name="fieldName">Ten field can xu ly.</param>
+/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function isPinnedIconColumn(fieldName) {
   return pinnedIconFields.value.has(fieldName)
 }
 
+/// Ghim hoac bo ghim cot dang chon.
+/// <param name="fieldName">Ten field can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function togglePin(fieldName) {
   const column = configColumns.value.find((item) => item.fieldName === fieldName)
   if (!column) return
@@ -1169,6 +1348,9 @@ function togglePin(fieldName) {
   headerMenu.isOpen = false
 }
 
+/// Dong bo trang thai cot co dinh voi cau hinh grid.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function syncFixedColumns() {
   suppressOrderPersist.value = true
   if (suppressOrderPersistTimer) {
@@ -1200,12 +1382,22 @@ function syncFixedColumns() {
   return changedColumns
 }
 
+/// Dua thay doi cau hinh cot vao hang doi luu.
+/// <param name="column">Cau hinh cot can xu ly.</param>
+/// <param name="patch">Phan cau hinh cot can cap nhat.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function enqueuePersistColumn(column, patch) {
   persistQueue = persistQueue.catch(() => {}).then(() => persistColumn(column, patch))
 
   return persistQueue
 }
 
+/// Luu cau hinh cot len backend.
+/// <param name="column">Cau hinh cot can xu ly.</param>
+/// <param name="patch">Phan cau hinh cot can cap nhat.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function persistColumn(column, patch) {
   if (!column.gridConfigID) return
 
@@ -1225,6 +1417,11 @@ function persistColumn(column, patch) {
   })
 }
 
+/// Dinh dang gia tri o truoc khi hien thi.
+/// <param name="value">Gia tri can xu ly.</param>
+/// <param name="fieldName">Ten field can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function formatCellValue(value, fieldName = '') {
   if (String(fieldName || '').toLowerCase() === 'normformula') return ''
   if (value === null || value === undefined || value === '') return '-'
@@ -1232,26 +1429,46 @@ function formatCellValue(value, fieldName = '') {
   return value
 }
 
+/// Kiem tra field co phai cot trang thai khong.
+/// <param name="fieldName">Ten field can xu ly.</param>
+/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function isStatusColumn(fieldName) {
   // Bảng salary composition hiện không có cột Status/StatusName trong database.
   // Không tự render badge cho field ảo StatusName để tránh hiển thị sai dữ liệu.
   return ['status'].includes(String(fieldName || '').toLowerCase())
 }
 
+/// Lay gia tri trang thai cua ban ghi.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getStatusValue(row) {
   return row?.status ?? row?.Status ?? row?.statusName ?? row?.StatusName
 }
 
+/// Kiem tra ban ghi dang o trang thai theo doi hay khong.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function isActiveStatus(row) {
   const value = getStatusValue(row)
   if (typeof value === 'string') return !value.toLowerCase().includes('ngừng')
   return Number(value) === 1
 }
 
+/// Lay nhan hien thi trang thai cua ban ghi.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Du lieu sau khi xu ly.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function getStatusText(row) {
   return isActiveStatus(row) ? 'Đang theo dõi' : 'Ngừng theo dõi'
 }
 
+/// Lay class CSS hien thi trang thai cua ban ghi.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function statusClass(row) {
   return [
     'ms-status-badge',
@@ -1259,6 +1476,10 @@ function statusClass(row) {
   ]
 }
 
+/// Xu ly click ngoai vung dang mo de dong menu noi.
+/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function handleDocumentClick(event) {
   if (
     !event.target?.closest?.('.ms-table__menu') &&
