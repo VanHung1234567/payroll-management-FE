@@ -53,7 +53,11 @@
       </div>
     </div>
 
-    <MsGridOptions v-model:search="searchKeyword" :bulk-mode="hasSelectedRows">
+    <MsGridOptions
+      v-model:search="searchKeyword"
+      grid-key="salary_composition"
+      :bulk-mode="hasSelectedRows"
+    >
       <template #options>
         <MsSelect v-model="selectedStatus" label="Trạng thái" :options="statusOptions" />
 
@@ -126,6 +130,7 @@
       </template>
     </MsGridOptions>
     <MsGridTable
+      grid-key="salary_composition"
       :search="debouncedSearchKeyword"
       :filters="salaryCompositionFilters"
       :clear-selection-signal="clearSelectionSignal"
@@ -359,7 +364,7 @@ const { data: organizationResponse } = useQuery({
 const deleteSalaryCompositionMutation = useMutation({
   mutationFn: (id: string | number) => SalaryCompositionAPI.delete(id),
   onSuccess: () => {
-    queryClient.invalidateQueries()
+    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
     clearSelectedRows()
     showToast('Xóa thành công')
   },
@@ -368,7 +373,7 @@ const deleteSalaryCompositionMutation = useMutation({
 const bulkDeleteSalaryCompositionMutation = useMutation({
   mutationFn: (ids: Array<string | number>) => SalaryCompositionAPI.bulkDelete({ ids }),
   onSuccess: () => {
-    queryClient.invalidateQueries()
+    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
     clearSelectedRows()
     bulkDeleteRows.value = []
     showToast('Xóa thành công')
@@ -382,7 +387,7 @@ const changeStatusMutation = useMutation({
       status,
     }),
   onSuccess: () => {
-    queryClient.invalidateQueries()
+    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
     clearSelectedRows()
     showToast('Cập nhật trạng thái thành công')
   },
@@ -394,7 +399,8 @@ const copyFromSystemMutation = useMutation({
       salaryCompositionSystemIDs: rows.map(getSalaryCompositionSystemId).filter(Boolean),
     }),
   onSuccess: () => {
-    queryClient.invalidateQueries()
+    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
     closeSystemPicker()
     showToast('Thêm thành công')
   },

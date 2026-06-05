@@ -1,6 +1,7 @@
 <template>
   <div ref="tableContainerRef" class="ms-table-container" @scroll.capture="handleTableScroll">
     <DxDataGrid
+      ref="dataGridRef"
       class="ms-table"
       :data-source="tableRows"
       :key-expr="keyExpr"
@@ -346,7 +347,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import {
   DxColumn,
@@ -476,6 +477,7 @@ const selectedRowMap = ref(new Map())
 const configColumns = ref([])
 const pinDialogVisible = ref(false)
 const tableContainerRef = ref(null)
+const dataGridRef = ref(null)
 const hoveredRow = ref(null)
 const floatingActionTop = ref(0)
 const actionHideTimer = ref(null)
@@ -626,8 +628,12 @@ watch(
   rawConfigColumns,
   (columns) => {
     if (!columns.length) return
+    const shouldApplyOrderDirectly = isGridReady.value
     configColumns.value = columns.map(normalizeColumn)
     pinnedIconFields.value = getInitialPinnedIconFields(configColumns.value)
+    if (shouldApplyOrderDirectly) {
+      applyColumnOrderToGrid()
+    }
     window.setTimeout(() => {
       isGridReady.value = true
     }, 0)
@@ -702,6 +708,42 @@ const displayColumns = computed(() =>
     .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0)),
 )
 
+/// Tam dung luu thu tu cot khi dang dong bo tu cau hinh backend vao grid.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (05/06/2026)
+function suppressOrderPersistTemporarily() {
+  suppressOrderPersist.value = true
+  if (suppressOrderPersistTimer) {
+    window.clearTimeout(suppressOrderPersistTimer)
+  }
+
+  suppressOrderPersistTimer = window.setTimeout(() => {
+    suppressOrderPersist.value = false
+    suppressOrderPersistTimer = null
+  }, 300)
+}
+
+/// Cap nhat thu tu cot truc tiep tren instance de tranh remount grid khi chi doi SortOrder.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (05/06/2026)
+async function applyColumnOrderToGrid() {
+  await nextTick()
+
+  const rawGridInstance = dataGridRef.value?.instance
+  const gridInstance = typeof rawGridInstance === 'function' ? rawGridInstance() : rawGridInstance
+  if (!gridInstance) return
+
+  suppressOrderPersistTemporarily()
+  gridInstance.beginUpdate()
+  try {
+    displayColumns.value.forEach((column, index) => {
+      gridInstance.columnOption(column.fieldName, 'visibleIndex', index + 1)
+    })
+  } finally {
+    gridInstance.endUpdate()
+  }
+}
+
 const headerMenuStyle = computed(() => ({
   left: `${headerMenu.left}px`,
   top: `${headerMenu.top}px`,
@@ -739,12 +781,21 @@ function normalizeColumn(column) {
     fieldName: toCamelCase(rawFieldName),
     caption: column.caption || column.Caption,
     width: Math.max(Number(column.width || column.Width || 200), 200),
-    visible: column.visible ?? column.Visible ?? true,
+    visible: normalizeBoolean(column.visible ?? column.Visible ?? true),
     isFixed: Boolean(column.isFixed ?? column.IsFixed),
     fixedPosition: column.fixedPosition || column.FixedPosition || null,
     allowSorting: column.allowSorting ?? column.AllowSorting ?? true,
     sortOrder: column.sortOrder ?? column.SortOrder,
   }
+}
+
+/// Chuan hoa gia tri boolean tu backend.
+/// <param name="value">Gia tri can xu ly.</param>
+/// <returns>Gia tri boolean.</returns>
+/// CREATED BY: VVHung (05/06/2026)
+function normalizeBoolean(value) {
+  if (typeof value === 'string') return value.toLowerCase() === 'true' || value === '1'
+  return Boolean(value)
 }
 
 /// Lay danh sach cot can hien thi icon ghim ban dau.

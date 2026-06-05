@@ -180,6 +180,10 @@ const searchText = ref('')
 const shouldFilterSearch = ref(false)
 const suppressNextSearchWatch = ref(false)
 
+/// Chuan hoa gia tri kich thuoc CSS sang don vi px khi nhan vao dang number.
+/// <param name="value">Gia tri kich thuoc can chuan hoa.</param>
+/// <returns>Gia tri kich thuoc hop le cho CSS.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : value)
 
 const selectStyle = computed(() => ({
@@ -201,10 +205,34 @@ const menuClass = computed(() => ({
   'ms-select__menu--top': props.placement === 'top',
 }))
 
+/// Lay label hien thi cua mot option.
+/// <param name="option">Option can lay label.</param>
+/// <returns>Label cua option.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const getOptionLabel = (option) => option?.[props.labelKey] ?? ''
+
+/// Lay gia tri model cua mot option.
+/// <param name="option">Option can lay gia tri.</param>
+/// <returns>Gia tri cua option.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const getOptionValue = (option) => option?.[props.valueKey] ?? null
+
+/// Lay ma code cua option neu component duoc cau hinh codeKey.
+/// <param name="option">Option can lay code.</param>
+/// <returns>Code cua option hoac chuoi rong.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const getOptionCode = (option) => (props.codeKey ? (option?.[props.codeKey] ?? '') : '')
+
+/// Kiem tra option co code de hien thi dang Label (CODE) hay khong.
+/// <param name="option">Option can kiem tra.</param>
+/// <returns>true neu option co code, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const hasOptionCode = (option) => Boolean(getOptionCode(option))
+
+/// Tao chuoi tim kiem tu label va code cua option.
+/// <param name="option">Option can tao chuoi tim kiem.</param>
+/// <returns>Chuoi tim kiem da chuan hoa.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const getOptionSearchText = (option) =>
   `${getOptionLabel(option)} ${getOptionCode(option)}`.trim().toLowerCase()
 
@@ -225,12 +253,21 @@ const filteredOptions = computed(() => {
 
 const isInvalid = computed(() => Boolean(props.errorMessage && (!props.meta || props.meta.touched)))
 
+/// Kiem tra option co dang duoc chon hay khong.
+/// <param name="option">Option can kiem tra.</param>
+/// <returns>true neu option dang duoc chon, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const isSelected = (option) => getOptionValue(option) === props.modelValue
 
+/// Mo hoac dong dropdown khi click trigger.
+/// CREATED BY: VVHung (03/06/2026)
 const toggleDropdown = () => {
   if (!props.disabled) isOpen.value = !isOpen.value
 }
 
+/// Chon option, cap nhat v-model va phat su kien change.
+/// <param name="option">Option duoc chon.</param>
+/// CREATED BY: VVHung (03/06/2026)
 const selectOption = (option) => {
   const value = getOptionValue(option)
   emit('update:modelValue', value)
@@ -238,12 +275,18 @@ const selectOption = (option) => {
   closeDropdown()
 }
 
+/// Dong dropdown va reset trang thai tim kiem.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const closeDropdown = () => {
   isOpen.value = false
   searchText.value = ''
   shouldFilterSearch.value = false
 }
 
+/// Xu ly click ben ngoai select de dong dropdown va phat blur.
+/// <param name="event">Su kien click tren document.</param>
+/// CREATED BY: VVHung (03/06/2026)
 const handleClickOutside = (event) => {
   if (selectRef.value && !selectRef.value.contains(event.target)) {
     const wasOpen = isOpen.value

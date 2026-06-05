@@ -19,7 +19,11 @@
     <h2 class="content-header__title">Danh mục thành phần lương của hệ thống</h2>
   </div>
 
-  <MsGridOptions v-model:search="searchKeyword" :bulk-mode="hasSelectedRows">
+  <MsGridOptions
+    v-model:search="searchKeyword"
+    grid-key="salary_composition_system"
+    :bulk-mode="hasSelectedRows"
+  >
     <template #options>
       <MsSelect
         v-model="selectedSalaryCompositionTypeId"
@@ -58,7 +62,7 @@
     </template>
   </MsGridOptions>
   <MsGridTable
-    gridKey="salary_composition_system"
+    grid-key="salary_composition_system"
     :data-api="SalaryCompositionSystemAPI"
     key-expr="salaryCompositionSystemID"
     :search="debouncedSearchKeyword"
@@ -139,7 +143,8 @@ const copyFromSystemMutation = useMutation({
       salaryCompositionSystemIDs: rows.map(getSalaryCompositionSystemId).filter(Boolean),
     }),
   onSuccess: () => {
-    queryClient.invalidateQueries()
+    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
     clearSelectedRows()
     copyRows.value = []
     showToast('Thêm thành công')

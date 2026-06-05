@@ -113,11 +113,19 @@ const pageSizeSelectOptions = computed(() =>
   })),
 )
 
+/// Chuyen den trang duoc yeu cau va gioi han trong khoang hop le.
+/// <param name="page">So trang can chuyen den.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function goToPage(page) {
   const nextPage = Math.min(Math.max(page, 1), totalPages.value)
   emit('update:pageIndex', nextPage)
 }
 
+/// Doi so dong moi trang va dua ve trang dau tien.
+/// <param name="size">So dong moi trang duoc chon.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function selectPageSize(size) {
   emit('update:pageSize', Number(size))
   emit('update:pageIndex', 1)

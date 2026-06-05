@@ -10,6 +10,10 @@ class GRIDCONFIGAPI extends BaseAPI {
   getGridKey(gridKey) {
     return api.get(`${this.controller}/GridKey/${gridKey}`)
   }
+
+  saveConfig(payload) {
+    return api.post(`${this.controller}/save-config`, payload)
+  }
 }
 
 export default new GRIDCONFIGAPI()

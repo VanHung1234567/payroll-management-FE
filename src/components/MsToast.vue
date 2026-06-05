@@ -72,12 +72,18 @@ const containerClass = computed(() => `ms-toast-container--${props.position}`)
 const messageClass = computed(() => `ms-toast-message--${normalizedType.value}`)
 const iconClass = computed(() => `ms-icon-${normalizedType.value}-circle`)
 
+/// Xoa timer tu dong dong toast dang chay.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function clearTimer() {
   if (!timer.value) return
   window.clearTimeout(timer.value)
   timer.value = null
 }
 
+/// Khoi tao timer tu dong dong toast theo thoi gian cau hinh.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function startTimer() {
   clearTimer()
   if (!props.autoClose || props.duration <= 0) return
@@ -87,6 +93,9 @@ function startTimer() {
   }, props.duration)
 }
 
+/// Dong toast va phat su kien close cho component cha.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 function close() {
   clearTimer()
   emit('update:modelValue', false)

@@ -799,7 +799,8 @@ const { data: salaryCompositionDetailResponse } = useQuery({
 const createSalaryCompositionMutation = useMutation({
   mutationFn: (payload) => SalaryCompositionAPI.post(payload),
   onSuccess: () => {
-    queryClient.invalidateQueries()
+    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
     if (isSaveAndAddMode.value) {
       showSuccessToast()
       resetForm()
@@ -813,7 +814,8 @@ const createSalaryCompositionMutation = useMutation({
 const updateSalaryCompositionMutation = useMutation({
   mutationFn: (payload) => SalaryCompositionAPI.put(currentId.value, payload),
   onSuccess: () => {
-    queryClient.invalidateQueries()
+    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
     emit('saved', 'update')
     emit('close')
   },
@@ -822,7 +824,8 @@ const updateSalaryCompositionMutation = useMutation({
 const deleteSalaryCompositionMutation = useMutation({
   mutationFn: () => SalaryCompositionAPI.delete(currentId.value),
   onSuccess: () => {
-    queryClient.invalidateQueries()
+    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
     emit('deleted')
     emit('close')
   },
@@ -1232,7 +1235,6 @@ const errorFieldRefs = {
 }
 
 /// Focus vao truong loi dau tien tren form.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function focusFirstError() {
   const firstErrorField = [
@@ -1251,7 +1253,6 @@ function focusFirstError() {
 }
 
 /// Hien thi toast thong bao luu thanh cong.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function showSuccessToast() {
   toast.visible = false
@@ -1262,7 +1263,6 @@ function showSuccessToast() {
 
 /// Xoa loi validate cua mot truong.
 /// <param name="field">Ten truong can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function clearFormError(field) {
   delete formErrors[field]
@@ -1271,7 +1271,6 @@ function clearFormError(field) {
 /// Gan hoac xoa loi validate cua mot truong.
 /// <param name="field">Ten truong can xu ly.</param>
 /// <param name="message">Noi dung thong bao.</param>
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function setFieldError(field, message) {
   if (message) {
@@ -1284,7 +1283,6 @@ function setFieldError(field, message) {
 
 /// Validate mot truong du lieu tren form.
 /// <param name="field">Ten truong can xu ly.</param>
-/// <returns>true neu hop le, nguoc lai false.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 async function validateField(field) {
   try {
@@ -1322,7 +1320,6 @@ async function validateForm() {
 
 /// Xu ly nhap ten thanh phan va tu sinh ma khi chua sua thu cong.
 /// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function handleSalaryCompositionNameInput(event) {
   const value = event.target.value
@@ -1339,7 +1336,6 @@ function handleSalaryCompositionNameInput(event) {
 
 /// Xu ly nhap ma thanh phan va ngat lien ket tu sinh ma.
 /// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function handleSalaryCompositionCodeInput(event) {
   isSalaryCompositionCodeManual.value = true
@@ -1350,14 +1346,12 @@ function handleSalaryCompositionCodeInput(event) {
 }
 
 /// Validate don vi ap dung khi nguoi dung thay doi lua chon.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function handleOrganizationChange() {
   validateField('organizationIDs')
 }
 
 /// Validate va luu thanh phan luong.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 async function handleSave() {
   isSaveAndAddMode.value = false
@@ -1371,7 +1365,6 @@ async function handleSave() {
 }
 
 /// Validate, luu thanh phan luong va mo lai form them moi.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 async function handleSaveAndAdd() {
   isSaveAndAddMode.value = true
@@ -1381,7 +1374,6 @@ async function handleSaveAndAdd() {
 
 /// Mo hoac dong dropdown cau hinh gia tri tu dong.
 /// <param name="name">Ten dropdown can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function toggleValueSelect(name) {
   if (selectedValueMode.value === 'formula') return
@@ -1390,7 +1382,6 @@ function toggleValueSelect(name) {
 
 /// Chon pham vi tu dong cong tong gia tri.
 /// <param name="value">Gia tri can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function selectAggregationScope(value) {
   selectedAggregationScopeValue.value = value
@@ -1399,7 +1390,6 @@ function selectAggregationScope(value) {
 
 /// Chon kieu tinh thue cua thanh phan thu nhap.
 /// <param name="value">Gia tri can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function selectTaxType(value) {
   if (isNatureOptionDisabled.value) return
@@ -1407,7 +1397,6 @@ function selectTaxType(value) {
 }
 
 /// Bat hoac tat lua chon giam tru khi tinh thue.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function toggleTaxReduction() {
   if (isNatureOptionDisabled.value) return
@@ -1415,14 +1404,12 @@ function toggleTaxReduction() {
 }
 
 /// Mo hoac dong menu chuc nang tren header form.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function toggleHeaderMenu() {
   isHeaderMenuOpen.value = !isHeaderMenuOpen.value
 }
 
 /// Chuyen form chi tiet sang che do nhan ban.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function handleDuplicate() {
   isHeaderMenuOpen.value = false
@@ -1430,7 +1417,6 @@ function handleDuplicate() {
 }
 
 /// Thiet lap form sang che do nhan ban va xoa ten, ma.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function enterDuplicateMode() {
   isDuplicateMode.value = true
@@ -1449,7 +1435,6 @@ function enterDuplicateMode() {
 }
 
 /// Mo luong xoa thanh phan luong tu form chi tiet.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function handleDelete() {
   isHeaderMenuOpen.value = false
@@ -1462,7 +1447,6 @@ function handleDelete() {
 }
 
 /// Xac nhan xoa thanh phan luong dang chon.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function confirmDeleteSalaryComposition() {
   if (!currentId.value) return
@@ -1471,7 +1455,6 @@ function confirmDeleteSalaryComposition() {
 
 /// Dong dropdown cau hinh khi click ra ngoai.
 /// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function handleClickOutsideValueConfig(event) {
   if (!valueConfigRef.value?.contains(event.target)) {
@@ -1484,14 +1467,12 @@ function handleClickOutsideValueConfig(event) {
 }
 
 /// Mo modal xac nhan thoat form khi co du lieu chua luu.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function openExitConfirmModal() {
   isExitConfirmModalOpen.value = true
 }
 
 /// Xu ly nut quay lai khoi form thanh phan luong.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function handleBack() {
   if (isFormDirty.value || !isEditMode.value) {
@@ -1503,7 +1484,6 @@ function handleBack() {
 }
 
 /// Xu ly nut huy bo tren form thanh phan luong.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function goToSalaryCompositionList() {
   if (isFormDirty.value) {
@@ -1515,7 +1495,6 @@ function goToSalaryCompositionList() {
 }
 
 /// Xac nhan thoat form ma khong luu du lieu.
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function confirmExitWithoutSave() {
   emit('close')
@@ -1523,7 +1502,6 @@ function confirmExitWithoutSave() {
 
 /// Chuan hoa chuoi tieng Viet de so sanh khong dau.
 /// <param name="value">Gia tri can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function normalizeText(value) {
   return String(value)

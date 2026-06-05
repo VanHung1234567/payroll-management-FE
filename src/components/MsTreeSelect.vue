@@ -133,6 +133,10 @@ const TreeNode = defineComponent({
   },
   emits: ['toggle-check', 'toggle-expand'],
   setup(props, { emit }) {
+    /// Render mot node trong cay va cac node con cua no.
+    /// <param name="node">Node can render.</param>
+    /// <returns>VNode cua node trong tree select.</returns>
+    /// CREATED BY: VVHung (03/06/2026)
     const renderNode = (node) => {
       const id = props.getId(node.raw)
       const checked = props.isChecked(id)
@@ -302,8 +306,22 @@ const selectedValues = computed(() => props.modelValue)
 const selectedSet = computed(() => new Set(props.modelValue))
 const isInvalid = computed(() => Boolean(props.errorMessage && (!props.meta || props.meta.touched)))
 
+/// Lay id cua option theo idKey.
+/// <param name="option">Option can lay id.</param>
+/// <returns>Id cua option.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const getId = (option) => option?.[props.idKey]
+
+/// Lay parent id cua option theo parentKey.
+/// <param name="option">Option can lay parent id.</param>
+/// <returns>Parent id cua option.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const getParentId = (option) => option?.[props.parentKey]
+
+/// Lay label hien thi cua option theo labelKey.
+/// <param name="option">Option can lay label.</param>
+/// <returns>Label cua option.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const getLabel = (option) => option?.[props.labelKey] ?? ''
 
 const optionMap = computed(() => {
@@ -351,6 +369,10 @@ const hiddenSelectedCount = computed(() =>
   Math.max(selectedDisplayOptions.value.length - visibleSelectedOptions.value.length, 0),
 )
 
+/// Build danh sach phang thanh cau truc cay.
+/// <param name="options">Danh sach option phang.</param>
+/// <returns>Danh sach node goc cua cay.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const buildTree = (options) => {
   const nodeMap = new Map()
   const roots = []
@@ -386,6 +408,11 @@ const buildTree = (options) => {
   return roots
 }
 
+/// Loc cay theo tu khoa nhung van giu cac node cha cua ket qua khop.
+/// <param name="nodes">Danh sach node can loc.</param>
+/// <param name="keyword">Tu khoa tim kiem.</param>
+/// <returns>Danh sach node sau khi loc.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const filterTree = (nodes, keyword) =>
   nodes
     .map((node) => {
@@ -399,14 +426,27 @@ const filterTree = (nodes, keyword) =>
     })
     .filter(Boolean)
 
+/// Lay id cua node hien tai va tat ca node con.
+/// <param name="node">Node can lay danh sach id.</param>
+/// <returns>Danh sach id cua node va cac node con.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const getDescendantIds = (node) => [
   getId(node.raw),
   ...node.children.flatMap((child) => getDescendantIds(child)),
 ]
 
+/// Lay cac option con truc tiep theo parent id.
+/// <param name="parentId">Id cua node cha.</param>
+/// <returns>Danh sach option con truc tiep.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const getChildrenByParent = (parentId) =>
   props.options.filter((option) => getParentId(option) === parentId)
 
+/// Cap nhat trang thai chon cua cac node cha sau khi node con thay doi.
+/// <param name="set">Tap id dang duoc chon.</param>
+/// <param name="optionId">Id cua option vua thay doi.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const updateAncestors = (set, optionId) => {
   let parentId = parentMap.value.get(optionId)
 
@@ -425,6 +465,10 @@ const updateAncestors = (set, optionId) => {
   }
 }
 
+/// Chon hoac bo chon node va toan bo node con cua no.
+/// <param name="node">Node duoc click.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const toggleCheck = (node) => {
   const next = new Set(selectedSet.value)
   const ids = getDescendantIds(node)
@@ -443,6 +487,10 @@ const toggleCheck = (node) => {
   searchText.value = ''
 }
 
+/// Xoa mot tag da chon khoi tree select.
+/// <param name="option">Option can xoa khoi danh sach chon.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const removeOption = (option) => {
   const node = findNode(tree.value, getId(option))
   if (node) {
@@ -453,15 +501,27 @@ const removeOption = (option) => {
   }
 }
 
+/// Xoa tat ca option dang chon.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const clearSelected = () => {
   updateValue([])
 }
 
+/// Cap nhat v-model va phat su kien change.
+/// <param name="value">Danh sach id moi.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const updateValue = (value) => {
   emit('update:modelValue', value)
   emit('change', value)
 }
 
+/// Tim node trong cay theo id.
+/// <param name="nodes">Danh sach node can tim.</param>
+/// <param name="id">Id cua node can tim.</param>
+/// <returns>Node tim thay hoac null.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const findNode = (nodes, id) => {
   for (const node of nodes) {
     if (getId(node.raw) === id) return node
@@ -471,6 +531,10 @@ const findNode = (nodes, id) => {
   return null
 }
 
+/// Kiem tra option co node cha dang duoc chon hay khong de an tag trung lap.
+/// <param name="id">Id cua option can kiem tra.</param>
+/// <returns>true neu co node cha dang chon, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const hasSelectedAncestor = (id) => {
   let parentId = parentMap.value.get(id)
   while (parentId) {
@@ -480,9 +544,22 @@ const hasSelectedAncestor = (id) => {
   return false
 }
 
+/// Kiem tra id co dang duoc chon hay khong.
+/// <param name="id">Id can kiem tra.</param>
+/// <returns>true neu id dang duoc chon, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const isChecked = (id) => selectedSet.value.has(id)
+
+/// Kiem tra node co dang mo rong hay khong.
+/// <param name="id">Id cua node can kiem tra.</param>
+/// <returns>true neu node dang mo rong, nguoc lai false.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const isExpanded = (id) => expandedKeys.value.has(id)
 
+/// Mo hoac thu gon mot node trong cay.
+/// <param name="id">Id cua node can doi trang thai mo rong.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const toggleExpand = (id) => {
   const next = new Set(expandedKeys.value)
   if (next.has(id)) {
@@ -493,14 +570,24 @@ const toggleExpand = (id) => {
   expandedKeys.value = next
 }
 
+/// Mo dropdown tree select.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const openDropdown = () => {
   isOpen.value = true
 }
 
+/// Mo hoac dong dropdown tree select.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value
 }
 
+/// Xu ly click ben ngoai tree select de dong dropdown.
+/// <param name="event">Su kien click tren document.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const handleClickOutside = (event) => {
   if (selectRef.value && !selectRef.value.contains(event.target)) {
     isOpen.value = false

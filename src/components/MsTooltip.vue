@@ -116,6 +116,10 @@ const props = defineProps({
 
 const emit = defineEmits(['show', 'hide'])
 
+/// Chuan hoa gia tri kich thuoc CSS sang don vi px khi nhan vao dang number.
+/// <param name="value">Gia tri kich thuoc can chuan hoa.</param>
+/// <returns>Gia tri kich thuoc hop le cho CSS.</returns>
+/// CREATED BY: VVHung (03/06/2026)
 const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : value)
 
 const rootClass = computed(() => [
@@ -144,10 +148,14 @@ const rootStyle = computed(() => ({
   '--ms-tooltip-line-height': normalizeCssSize(props.lineHeight),
 }))
 
+/// Phat su kien hien tooltip khi hover vao trigger.
+/// CREATED BY: VVHung (03/06/2026)
 const handleShow = () => {
   if (!props.disabled) emit('show')
 }
 
+/// Phat su kien an tooltip khi roi chuot khoi trigger.
+/// CREATED BY: VVHung (03/06/2026)
 const handleHide = () => {
   if (!props.disabled) emit('hide')
 }
