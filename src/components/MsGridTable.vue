@@ -444,6 +444,11 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  // Danh sach don vi phang de hien thi cot don vi theo cay, an con khi cha da duoc chon.
+  organizationOptions: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits([
@@ -686,6 +691,16 @@ const tableRows = computed(() => {
     __msSelected: selectedKeys.value.has(getRowKey(row)),
   }))
 })
+const organizationOptionMap = computed(() => {
+  const map = new Map()
+  props.organizationOptions.forEach((organization) => {
+    const id = normalizeId(getOrganizationId(organization))
+    if (id) {
+      map.set(id, organization)
+    }
+  })
+  return map
+})
 
 watch(
   [isLoading, rows],
@@ -864,8 +879,13 @@ function getDisplayValue(row, fieldName) {
     return isAutoSumValueFormula(value) ? '-' : value
   }
 
-  if (lowerField === 'organizationid' || lowerField === 'organizationids') {
-    return (
+  if (
+    lowerField === 'organizationid' ||
+    lowerField === 'organizationids' ||
+    lowerField === 'organizationname' ||
+    lowerField === 'organizationnames'
+  ) {
+    return formatOrganizationDisplay(row, value) || (
       row.organizationNames ??
       row.OrganizationNames ??
       row.organizationName ??
@@ -931,6 +951,110 @@ function getDisplayValue(row, fieldName) {
   }
 
   return value
+}
+
+/// Chuan hoa id ve string de so sanh an toan.
+/// <param name="id">Id can chuan hoa.</param>
+/// <returns>Id dang string.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function normalizeId(id) {
+  return id === null || id === undefined ? '' : String(id).trim()
+}
+
+/// Lay id don vi tu option.
+/// <param name="organization">Don vi can xu ly.</param>
+/// <returns>Id don vi.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function getOrganizationId(organization) {
+  return (
+    organization?.organizationID ??
+    organization?.OrganizationID ??
+    organization?.id ??
+    organization?.ID ??
+    null
+  )
+}
+
+/// Lay id cha cua don vi tu option.
+/// <param name="organization">Don vi can xu ly.</param>
+/// <returns>Id don vi cha.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function getOrganizationParentId(organization) {
+  return (
+    organization?.parentID ??
+    organization?.ParentID ??
+    organization?.parentId ??
+    organization?.ParentId ??
+    null
+  )
+}
+
+/// Lay ten hien thi cua don vi tu option.
+/// <param name="organization">Don vi can xu ly.</param>
+/// <returns>Ten don vi.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function getOrganizationLabel(organization) {
+  return (
+    organization?.organizationName ??
+    organization?.OrganizationName ??
+    organization?.name ??
+    organization?.Name ??
+    ''
+  )
+}
+
+/// Tach danh sach id dang string tu cell du lieu.
+/// <param name="value">Gia tri cell can tach.</param>
+/// <returns>Danh sach id.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function splitIds(value) {
+  if (Array.isArray(value)) return value.map(normalizeId).filter(Boolean)
+  return String(value ?? '')
+    .split(/[;,]/)
+    .map(normalizeId)
+    .filter(Boolean)
+}
+
+/// Kiem tra mot id co cha dang nam trong tap da chon hay khong.
+/// <param name="id">Id can kiem tra.</param>
+/// <param name="selectedIdSet">Tap id dang chon.</param>
+/// <returns>true neu co cha dang chon.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function hasSelectedOrganizationAncestor(id, selectedIdSet) {
+  let parentId = normalizeId(getOrganizationParentId(organizationOptionMap.value.get(id)))
+
+  while (parentId) {
+    if (selectedIdSet.has(parentId)) return true
+    parentId = normalizeId(getOrganizationParentId(organizationOptionMap.value.get(parentId)))
+  }
+
+  return false
+}
+
+/// Hien thi ten don vi theo cay: neu cha da duoc chon thi khong hien cac con.
+/// <param name="row">Dong du lieu can xu ly.</param>
+/// <param name="fallbackValue">Gia tri fallback khi khong co options.</param>
+/// <returns>Chuoi ten don vi hien thi.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function formatOrganizationDisplay(row, fallbackValue) {
+  if (!props.organizationOptions.length) return ''
+
+  const ids = splitIds(
+    row.organizationIDs ??
+      row.OrganizationIDs ??
+      row.organizationID ??
+      row.OrganizationID ??
+      fallbackValue,
+  )
+  if (!ids.length) return ''
+
+  const selectedIdSet = new Set(ids)
+  const labels = ids
+    .filter((id) => !hasSelectedOrganizationAncestor(id, selectedIdSet))
+    .map((id) => getOrganizationLabel(organizationOptionMap.value.get(id)))
+    .filter(Boolean)
+
+  return labels.join(', ')
 }
 
 /// Lay nhan hien thi tuong ung voi gia tri option.

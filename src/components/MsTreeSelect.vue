@@ -290,7 +290,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue', 'change'])
+const emit = defineEmits(['update:modelValue', 'change', 'blur'])
 
 const selectRef = ref(null)
 const inputRef = ref(null)
@@ -303,20 +303,21 @@ const normalizedWidth = computed(() =>
   typeof props.width === 'number' ? `${props.width}px` : props.width,
 )
 const selectedValues = computed(() => props.modelValue)
-const selectedSet = computed(() => new Set(props.modelValue))
+const normalizeId = (id) => (id === null || id === undefined ? '' : String(id))
+const selectedSet = computed(() => new Set(props.modelValue.map((id) => normalizeId(id))))
 const isInvalid = computed(() => Boolean(props.errorMessage && (!props.meta || props.meta.touched)))
 
 /// Lay id cua option theo idKey.
 /// <param name="option">Option can lay id.</param>
 /// <returns>Id cua option.</returns>
 /// CREATED BY: VVHung (03/06/2026)
-const getId = (option) => option?.[props.idKey]
+const getId = (option) => normalizeId(option?.[props.idKey])
 
 /// Lay parent id cua option theo parentKey.
 /// <param name="option">Option can lay parent id.</param>
 /// <returns>Parent id cua option.</returns>
 /// CREATED BY: VVHung (03/06/2026)
-const getParentId = (option) => option?.[props.parentKey]
+const getParentId = (option) => normalizeId(option?.[props.parentKey])
 
 /// Lay label hien thi cua option theo labelKey.
 /// <param name="option">Option can lay label.</param>
@@ -335,7 +336,8 @@ const optionMap = computed(() => {
 const parentMap = computed(() => {
   const map = new Map()
   props.options.forEach((option) => {
-    map.set(getId(option), getParentId(option))
+    const parentId = getParentId(option)
+    map.set(getId(option), parentId || null)
   })
   return map
 })
@@ -351,7 +353,7 @@ const filteredTree = computed(() => {
 
 const selectedDisplayOptions = computed(() =>
   selectedValues.value
-    .map((id) => optionMap.value.get(id))
+    .map((id) => optionMap.value.get(normalizeId(id)))
     .filter(Boolean)
     .filter((option) => !hasSelectedAncestor(getId(option))),
 )
@@ -440,7 +442,7 @@ const getDescendantIds = (node) => [
 /// <returns>Danh sach option con truc tiep.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 const getChildrenByParent = (parentId) =>
-  props.options.filter((option) => getParentId(option) === parentId)
+  props.options.filter((option) => getParentId(option) === normalizeId(parentId))
 
 /// Cap nhat trang thai chon cua cac node cha sau khi node con thay doi.
 /// <param name="set">Tap id dang duoc chon.</param>
@@ -590,7 +592,11 @@ const toggleDropdown = () => {
 /// CREATED BY: VVHung (03/06/2026)
 const handleClickOutside = (event) => {
   if (selectRef.value && !selectRef.value.contains(event.target)) {
+    const wasOpen = isOpen.value
     isOpen.value = false
+    if (wasOpen) {
+      emit('blur', event)
+    }
   }
 }
 

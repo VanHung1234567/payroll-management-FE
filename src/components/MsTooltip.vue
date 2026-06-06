@@ -193,7 +193,7 @@ const handleHide = () => {
 
 .ms-tooltip-wrapper__trigger {
   position: relative;
-  z-index: 1;
+  z-index: 6;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -201,7 +201,7 @@ const handleHide = () => {
 
 .ms-tooltip-wrapper__bubble {
   position: absolute;
-  z-index: 20;
+  z-index: 261;
   width: max-content;
   max-width: 420px;
   padding: 8px 12px;

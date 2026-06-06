@@ -19,6 +19,7 @@
     </div>
     <div v-if="isEditMode" class="form-header-actions flex items-center font-weight-500">
       <MsButton
+        v-if="!isQuickEditMode"
         background-color="#FFFFFF"
         border-color="#D5D7DA"
         color="#101828"
@@ -32,8 +33,31 @@
       >
         Hủy bỏ
       </MsButton>
-      <MsButton width="80px" margin="0 8px 0 0" :disabled="isSaving" @click="handleSave">
+      <MsButton
+        v-if="!isQuickEditMode"
+        width="80px"
+        margin="0 8px 0 0"
+        :disabled="isSaving"
+        @click="handleSave"
+      >
         Lưu
+      </MsButton>
+      <MsButton
+        v-if="isQuickEditMode"
+        background-color="#FFFFFF"
+        border-color="#D5D7DA"
+        color="#101828"
+        hover-background-color="#E9EAEB"
+        hover-border-color="#D5D7DA"
+        active-background-color="#D5D7DA"
+        active-border-color="#D5D7DA"
+        width="80px"
+        margin="0 8px 0 0"
+        gap="6px"
+        @click="enterFullEditMode"
+      >
+        <span class="mi-edit"></span>
+        Sửa
       </MsButton>
       <div ref="headerMenuRef" class="form-more-action">
         <MsTooltip
@@ -76,7 +100,7 @@
     <div class="salarycomposition-form">
       <div class="salarycomposition-form-scroll">
         <div class="salarycomposition-container">
-          <div class="w-full">
+          <div v-if="!isQuickEditMode" class="w-full">
             <div class="ms-row">
               <MsInput
                 ref="salaryCompositionNameInputRef"
@@ -179,7 +203,6 @@
                     v-for="option in taxTypeOptions"
                     :key="option.value"
                     class="ms-radio-wrapper"
-                    :class="{ 'is-disabled': isNatureOptionDisabled }"
                   >
                     <span class="ms-radio-item" @click="selectTaxType(option.value)">
                       <span
@@ -205,7 +228,6 @@
                 <label
                   v-else-if="isDeductionNature"
                   class="ms-check-wrapper ml-16"
-                  :class="{ 'is-disabled': isNatureOptionDisabled }"
                 >
                   <button
                     type="button"
@@ -573,6 +595,869 @@
               </div>
             </div>
           </div>
+          <div v-else class="w-full quick-edit-form">
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Tên thành phần</p>
+                  <span class="requied">*</span>
+                </label>
+              </div>
+              <div
+                class="quick-field quick-field--large"
+                :class="{ 'is-editing': quickEditingField === 'salaryCompositionName' }"
+              >
+                <template v-if="quickEditingField === 'salaryCompositionName'">
+                  <MsInput
+                    ref="quickSalaryCompositionNameInputRef"
+                    v-model="salaryCompositionName"
+                    width="766px"
+                    :error-message="formErrors.salaryCompositionName"
+                    @input="handleSalaryCompositionNameInput"
+                    @blur="validateField('salaryCompositionName')"
+                  />
+                  <div class="quick-field__actions">
+                    <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--save"
+                        :disabled="isSaving"
+                        @click="saveQuickField('salaryCompositionName')"
+                      >
+                        <span class="mi-circle-check-2-green"></span>
+                      </button>
+                    </MsTooltip>
+                    <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--cancel"
+                        :disabled="isSaving"
+                        @click="cancelQuickEdit"
+                      >
+                        <span class="mi-circle-close"></span>
+                      </button>
+                    </MsTooltip>
+                  </div>
+                </template>
+                <template v-else>
+                  <p class="quick-field__text">{{ salaryCompositionName }}</p>
+                  <MsTooltip content="Sửa" placement="bottom" hover-size="36px">
+                    <button
+                      type="button"
+                      class="quick-field__edit"
+                      @click="startQuickEdit('salaryCompositionName')"
+                    >
+                      <span class="mi-edit"></span>
+                    </button>
+                  </MsTooltip>
+                </template>
+              </div>
+            </div>
+
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Mã thành phần</p>
+                  <span class="requied">*</span>
+                </label>
+              </div>
+              <div class="quick-field quick-field--large quick-field--lock-hover">
+                <p class="quick-field__text">{{ salaryCompositionCode }}</p>
+                <span class="quick-field__lock"><span class="mi-lock"></span></span>
+              </div>
+            </div>
+
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Đơn vị áp dụng</p>
+                  <span class="requied">*</span>
+                </label>
+              </div>
+              <div
+                class="quick-field quick-field--large"
+                :class="{ 'is-editing': quickEditingField === 'organizationIDs' }"
+              >
+                <template v-if="quickEditingField === 'organizationIDs'">
+                  <MsTreeSelect
+                    ref="quickOrganizationTreeRef"
+                    v-model="selectedOrganizationIds"
+                    :options="organizations"
+                    id-key="organizationID"
+                    parent-key="parentID"
+                    label-key="organizationName"
+                    placeholder="Chọn đơn vị"
+                    width="766px"
+                    :show-inactive-option="false"
+                    :error-message="formErrors.organizationIDs"
+                    @change="handleOrganizationChange"
+                    @blur="validateField('organizationIDs')"
+                  />
+                  <div class="quick-field__actions">
+                    <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--save"
+                        :disabled="isSaving"
+                        @click="saveQuickField('organizationIDs')"
+                      >
+                        <span class="mi-circle-check-2-green"></span>
+                      </button>
+                    </MsTooltip>
+                    <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--cancel"
+                        :disabled="isSaving"
+                        @click="cancelQuickEdit"
+                      >
+                        <span class="mi-circle-close"></span>
+                      </button>
+                    </MsTooltip>
+                  </div>
+                </template>
+                <template v-else>
+                  <p class="quick-field__text">{{ selectedOrganizationLabel }}</p>
+                  <MsTooltip content="Sửa" placement="bottom" hover-size="36px">
+                    <button
+                      type="button"
+                      class="quick-field__edit"
+                      @click="startQuickEdit('organizationIDs')"
+                    >
+                      <span class="mi-edit"></span>
+                    </button>
+                  </MsTooltip>
+                </template>
+              </div>
+            </div>
+
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Loại thành phần</p>
+                  <span class="requied">*</span>
+                </label>
+              </div>
+              <div
+                class="quick-field quick-field--compact"
+                :class="{
+                  'is-editing': quickEditingField === 'salaryCompositionType',
+                  'is-locked': isSourceDefault,
+                }"
+              >
+                <template v-if="quickEditingField === 'salaryCompositionType'">
+                  <MsSelect
+                    ref="quickSalaryCompositionTypeSelectRef"
+                    v-model="selectedSalaryCompositionTypeId"
+                    :options="salaryCompositionTypeOptions"
+                    searchable
+                    variant="form"
+                    width="243px"
+                    menu-width="243px"
+                    trigger-padding="4px 8px 4px 8px"
+                    :letter-spacing="0"
+                    label-key="label"
+                    value-key="value"
+                    :error-message="formErrors.salaryCompositionType"
+                    @change="validateField('salaryCompositionType')"
+                    @blur="validateField('salaryCompositionType')"
+                  />
+                  <div class="quick-field__actions">
+                    <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--save"
+                        :disabled="isSaving"
+                        @click="saveQuickField('salaryCompositionType')"
+                      >
+                        <span class="mi-circle-check-2-green"></span>
+                      </button>
+                    </MsTooltip>
+                    <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--cancel"
+                        :disabled="isSaving"
+                        @click="cancelQuickEdit"
+                      >
+                        <span class="mi-circle-close"></span>
+                      </button>
+                    </MsTooltip>
+                  </div>
+                </template>
+                <template v-else>
+                  <p class="quick-field__text">{{ selectedSalaryCompositionTypeLabel }}</p>
+                  <MsTooltip v-if="!isSourceDefault" content="Sửa" placement="bottom" hover-size="36px">
+                    <button
+                      type="button"
+                      class="quick-field__edit"
+                      @click="startQuickEdit('salaryCompositionType')"
+                    >
+                      <span class="mi-edit"></span>
+                    </button>
+                  </MsTooltip>
+                </template>
+              </div>
+            </div>
+
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Tính chất</p>
+                  <span class="requied">*</span>
+                </label>
+              </div>
+              <div class="quick-nature-line">
+                <div
+                  class="quick-field quick-field--compact"
+                  :class="{
+                    'is-editing': quickEditingField === 'nature',
+                    'is-locked': isSourceDefault,
+                  }"
+                >
+                  <template v-if="quickEditingField === 'nature'">
+                    <MsSelect
+                      ref="quickNatureSelectRef"
+                      v-model="selectedNature"
+                      searchable
+                      variant="form"
+                      width="243px"
+                      menu-width="243px"
+                      trigger-padding="4px 8px 4px 8px"
+                      :letter-spacing="0"
+                      :options="natureOptions"
+                      :error-message="formErrors.nature"
+                      @change="validateField('nature')"
+                      @blur="validateField('nature')"
+                    />
+                    <div class="quick-field__actions">
+                      <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                        <button
+                          type="button"
+                          class="quick-icon-button quick-icon-button--save"
+                          :disabled="isSaving"
+                          @click="saveQuickField('nature')"
+                        >
+                          <span class="mi-circle-check-2-green"></span>
+                        </button>
+                      </MsTooltip>
+                      <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                        <button
+                          type="button"
+                          class="quick-icon-button quick-icon-button--cancel"
+                          :disabled="isSaving"
+                          @click="cancelQuickEdit"
+                        >
+                          <span class="mi-circle-close"></span>
+                        </button>
+                      </MsTooltip>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <p class="quick-field__text">{{ selectedNatureLabel }}</p>
+                    <MsTooltip v-if="!isSourceDefault" content="Sửa" placement="bottom" hover-size="36px">
+                      <button type="button" class="quick-field__edit" @click="startQuickEdit('nature')">
+                        <span class="mi-edit"></span>
+                      </button>
+                    </MsTooltip>
+                  </template>
+                </div>
+                <div v-if="isIncomeNature" class="flex ml-16">
+                  <label
+                    v-for="option in taxTypeOptions"
+                    :key="option.value"
+                    class="ms-radio-wrapper"
+                  >
+                    <span class="ms-radio-item" @click="selectTaxTypeQuick(option.value)">
+                      <span
+                        class="ms-radio-item__icon"
+                        :class="{
+                          'ms-radio-item__icon--checked': selectedTaxType === option.value,
+                        }"
+                      >
+                        <svg
+                          v-if="selectedTaxType === option.value"
+                          viewBox="0 0 16 16"
+                          class="ms-radio-item__circle"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle cx="8" cy="8" r="6" fill="currentColor"></circle>
+                        </svg>
+                      </span>
+                      <span class="ms-radio-item__label">{{ option.label }}</span>
+                    </span>
+                  </label>
+                </div>
+                <label
+                  v-else-if="isDeductionNature"
+                  class="ms-check-wrapper ml-16"
+                >
+                  <button
+                    type="button"
+                    class="ms-check-item__icon"
+                    :class="{ 'is-checked': isTaxReduction }"
+                    @click="toggleTaxReductionQuick"
+                  >
+                    <svg
+                      v-if="isTaxReduction"
+                      viewBox="0 0 16 16"
+                      class="ms-check-item__mark"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M3 8L6 11L13 4"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <span class="ms-check-item__label">Giảm trừ khi tính thuế</span>
+                </label>
+              </div>
+            </div>
+
+            <div v-if="isNormVisible" class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Định mức</p>
+                </label>
+              </div>
+              <div
+                class="quick-field quick-field--large"
+                :class="{ 'is-editing': quickEditingField === 'normFormula' }"
+              >
+                <template v-if="quickEditingField === 'normFormula'">
+                  <MsFormula
+                    ref="quickNormFormulaRef"
+                    v-model="normFormula"
+                    width="766px"
+                    :parameters="salaryCompositionParameters"
+                  />
+                  <div class="quick-field__actions">
+                    <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--save"
+                        :disabled="isSaving"
+                        @click="saveQuickField('normFormula')"
+                      >
+                        <span class="mi-circle-check-2-green"></span>
+                      </button>
+                    </MsTooltip>
+                    <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--cancel"
+                        :disabled="isSaving"
+                        @click="cancelQuickEdit"
+                      >
+                        <span class="mi-circle-close"></span>
+                      </button>
+                    </MsTooltip>
+                  </div>
+                </template>
+                <template v-else>
+                  <p class="quick-field__text">{{ normFormula }}</p>
+                  <MsTooltip content="Sửa" placement="bottom" hover-size="36px">
+                    <button type="button" class="quick-field__edit" @click="startQuickEdit('normFormula')">
+                      <span class="mi-edit"></span>
+                    </button>
+                  </MsTooltip>
+                </template>
+              </div>
+            </div>
+
+            <div v-if="isNormVisible" class="ms-row">
+              <div class="w-200"></div>
+              <div class="flex items-center formula-limit-row">
+                <label class="ms-check-wrapper">
+                  <button
+                    type="button"
+                    class="ms-check-item__icon"
+                    :class="{ 'is-checked': isAllowOverNormValue }"
+                    @click="toggleAllowOverNormQuick"
+                  >
+                    <svg
+                      v-if="isAllowOverNormValue"
+                      viewBox="0 0 16 16"
+                      class="ms-check-item__mark"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M3 8L6 11L13 4"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <span class="ms-check-item__label">Cho phép giá trị tính vượt quá định mức</span>
+                </label>
+                <MsTooltip
+                  placement="bottom"
+                  align="center"
+                  offset="8px"
+                  hover-size="36px"
+                  hover-background="#0000001a"
+                  tooltip-class="formula-limit-tooltip"
+                >
+                  <div class="container-icon"><span class="mi-circle-infor"></span></div>
+                  <template #tooltip>
+                    Nếu không tích chọn thì khi tính giá trị của thành phần lương này mà số tiền
+                    vượt quá định mức thì chương trình sẽ tự động lấy tối đa bằng định mức đã nhập
+                  </template>
+                </MsTooltip>
+              </div>
+            </div>
+
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Kiểu giá trị</p>
+                </label>
+              </div>
+              <div
+                class="quick-field quick-field--compact"
+                :class="{
+                  'is-editing': quickEditingField === 'valueType',
+                  'is-locked': isSourceDefault,
+                  'quick-field--lock-hover': showQuickValueTypeLock,
+                }"
+              >
+                <template v-if="quickEditingField === 'valueType'">
+                  <MsSelect
+                    ref="quickValueTypeSelectRef"
+                    v-model="selectedValueType"
+                    searchable
+                    variant="form"
+                    width="243px"
+                    menu-width="243px"
+                    trigger-padding="4px 8px 4px 8px"
+                    :letter-spacing="0"
+                    :options="valueTypeOptions"
+                  />
+                  <div class="quick-field__actions">
+                    <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--save"
+                        :disabled="isSaving"
+                        @click="saveQuickField('valueType')"
+                      >
+                        <span class="mi-circle-check-2-green"></span>
+                      </button>
+                    </MsTooltip>
+                    <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--cancel"
+                        :disabled="isSaving"
+                        @click="cancelQuickEdit"
+                      >
+                        <span class="mi-circle-close"></span>
+                      </button>
+                    </MsTooltip>
+                  </div>
+                </template>
+                <template v-else>
+                  <p class="quick-field__text">{{ selectedValueTypeLabel }}</p>
+                  <MsTooltip
+                    v-if="canQuickEditValueType"
+                    content="Sửa"
+                    placement="bottom"
+                    hover-size="36px"
+                  >
+                    <button type="button" class="quick-field__edit" @click="startQuickEdit('valueType')">
+                      <span class="mi-edit"></span>
+                    </button>
+                  </MsTooltip>
+                  <span v-else-if="showQuickValueTypeLock" class="quick-field__lock">
+                    <span class="mi-lock"></span>
+                  </span>
+                </template>
+              </div>
+            </div>
+
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Giá trị</p>
+                </label>
+              </div>
+              <div
+                class="quick-value"
+                :class="{
+                  'is-editing': isQuickValueConfigEditing || isQuickValueFormulaEditing,
+                }"
+              >
+                <div class="quick-value__content">
+                  <div v-if="isAutoValueConfigVisible" class="quick-value__config">
+                    <label
+                      class="ms-radio-wrapper value-config__radio"
+                    >
+                      <span class="ms-radio-item" @click="selectValueModeQuick('auto')">
+                        <span
+                          class="ms-radio-item__icon"
+                          :class="{
+                            'ms-radio-item__icon--checked': selectedValueMode === 'auto',
+                          }"
+                        >
+                          <svg
+                            v-if="selectedValueMode === 'auto'"
+                            viewBox="0 0 16 16"
+                            class="ms-radio-item__circle"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <circle cx="8" cy="8" r="6" fill="currentColor"></circle>
+                          </svg>
+                        </span>
+                        <span class="ms-radio-item__label">
+                          Tự động cộng tổng giá trị của các nhân viên
+                        </span>
+                      </span>
+                    </label>
+
+                    <div class="value-config__selects">
+                      <div
+                        class="value-combobox"
+                        :class="{ 'is-open': openedValueSelect === 'scope' }"
+                      >
+                        <button
+                          type="button"
+                          class="value-combobox__trigger"
+                          :disabled="isQuickValueConfigDisabled || selectedValueMode === 'formula'"
+                          @click="toggleValueSelect('scope')"
+                        >
+                          <span class="value-combobox__value">{{
+                            selectedAggregationScope.label
+                          }}</span>
+                          <MsTooltip
+                            placement="top"
+                            align="center"
+                            offset="8px"
+                            hover-size="24px"
+                            hover-background="#00000000"
+                            tooltip-class="value-config-tooltip"
+                          >
+                            <span class="mi-circle-infor-blue"></span>
+                            <template #tooltip>
+                              <span v-if="selectedAggregationScope.value === 'subordinate'">
+                                Tá»± Ä‘á»™ng tÃ­nh báº±ng tá»•ng giÃ¡ trá»‹
+                                <b></b>
+                                cá»§a táº¥t cáº£ nhÃ¢n viÃªn dÆ°á»›i quyá»n (thuá»™c quyá»n quáº£n lÃ½ trá»±c tiáº¿p hoáº·c
+                                giÃ¡n tiáº¿p)<br />
+                                VÃ­ dá»¥: Quáº£n lÃ½ kinh doanh A lÃ  quáº£n lÃ½ trá»±c tiáº¿p cá»§a 3 nhÃ¢n viÃªn B, C,
+                                D. GiÃ¡m Ä‘á»‘c kinh doanh E lÃ  quáº£n lÃ½ trá»±c tiáº¿p cá»§a A. Khi thiáº¿t láº­p:<br />
+                                Doanh sá»‘ nhÃ³m báº±ng tá»•ng giÃ¡ trá»‹ Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a táº¥t cáº£ nhÃ¢n viÃªn
+                                dÆ°á»›i quyá»n<br />
+                                + Doanh sá»‘ nhÃ³m cá»§a Quáº£n lÃ½ kinh doanh A = Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a B +
+                                Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a C + Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a D<br />
+                                + Doanh sá»‘ nhÃ³m cá»§a GiÃ¡m Ä‘á»‘c kinh doanh E = Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a A +
+                                Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a B + Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a C + Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a
+                                D
+                              </span>
+                              <span v-else>{{ selectedAggregationScope.tooltip }}</span>
+                            </template>
+                          </MsTooltip>
+                          <span class="value-combobox__chevron"></span>
+                        </button>
+                        <div v-if="openedValueSelect === 'scope'" class="value-combobox__menu">
+                          <button
+                            v-for="option in aggregationScopeOptions"
+                            :key="option.value"
+                            type="button"
+                            class="value-combobox__item"
+                            :class="{ 'is-active': selectedAggregationScopeValue === option.value }"
+                            @click="selectAggregationScope(option.value)"
+                          >
+                            <span class="value-combobox__item-label">{{ option.label }}</span>
+                            <MsTooltip
+                              placement="top"
+                              align="center"
+                              offset="8px"
+                              hover-size="24px"
+                              hover-background="#00000000"
+                              tooltip-class="value-config-tooltip"
+                            >
+                              <span class="mi-circle-infor-blue"></span>
+                              <template #tooltip>
+                                <span v-if="option.value === 'subordinate'">
+                                  Tá»± Ä‘á»™ng tÃ­nh báº±ng tá»•ng giÃ¡ trá»‹ cá»§a táº¥t cáº£ nhÃ¢n viÃªn dÆ°á»›i quyá»n
+                                  (thuá»™c quyá»n quáº£n lÃ½ trá»±c tiáº¿p hoáº·c giÃ¡n tiáº¿p)<br />
+                                  VÃ­ dá»¥: Quáº£n lÃ½ kinh doanh A lÃ  quáº£n lÃ½ trá»±c tiáº¿p cá»§a 3 nhÃ¢n viÃªn B,
+                                  C, D. GiÃ¡m Ä‘á»‘c kinh doanh E lÃ  quáº£n lÃ½ trá»±c tiáº¿p cá»§a A. Khi thiáº¿t
+                                  láº­p:<br />
+                                  Doanh sá»‘ nhÃ³m báº±ng tá»•ng giÃ¡ trá»‹ Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a táº¥t cáº£ nhÃ¢n
+                                  viÃªn dÆ°á»›i quyá»n<br />
+                                  + Doanh sá»‘ nhÃ³m cá»§a Quáº£n lÃ½ kinh doanh A = Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a B +
+                                  Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a C + Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a D<br />
+                                  + Doanh sá»‘ nhÃ³m cá»§a GiÃ¡m Ä‘á»‘c kinh doanh E = Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a A +
+                                  Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a B + Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a C + Doanh sá»‘ cÃ¡ nhÃ¢n
+                                  cá»§a D
+                                </span>
+                                <span v-else>{{ option.tooltip }}</span>
+                              </template>
+                            </MsTooltip>
+                          </button>
+                        </div>
+                      </div>
+                      <MsSelect
+                        v-if="isOrganizationStructureScope"
+                        v-model="selectedOrganizationLevel"
+                        variant="form"
+                        width="150px"
+                        menu-width="150px"
+                        trigger-padding="4px 8px 4px 8px"
+                        :letter-spacing="0"
+                        :options="organizationLevelOptions"
+                        :disabled="isQuickValueConfigDisabled || selectedValueMode === 'formula'"
+                      />
+                      <MsSelect
+                        v-if="shouldShowQuickAggregateSelect"
+                        v-model="selectedAggregateSalaryCompositionCode"
+                        searchable
+                        variant="form"
+                        width="490px"
+                        menu-width="490px"
+                        placeholder="Chọn thành phần lương để cộng giá trị"
+                        trigger-padding="4px 8px 4px 8px"
+                        :letter-spacing="0"
+                        :options="salaryCompositionValueOptions"
+                        label-key="name"
+                        value-key="code"
+                        code-key="code"
+                        :disabled="isQuickValueConfigDisabled || selectedValueMode === 'formula'"
+                      />
+                    </div>
+
+                    <label
+                      class="ms-radio-wrapper value-config__radio"
+                    >
+                      <span class="ms-radio-item" @click="selectValueModeQuick('formula')">
+                        <span
+                          class="ms-radio-item__icon"
+                          :class="{
+                            'ms-radio-item__icon--checked': selectedValueMode === 'formula',
+                          }"
+                        >
+                          <svg
+                            v-if="selectedValueMode === 'formula'"
+                            viewBox="0 0 16 16"
+                            class="ms-radio-item__circle"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <circle cx="8" cy="8" r="6" fill="currentColor"></circle>
+                          </svg>
+                        </span>
+                        <span class="ms-radio-item__label">Tính theo công thức tự đặt</span>
+                      </span>
+                    </label>
+                  </div>
+
+                  <div v-if="isValueFormulaVisible" class="quick-value__formula-row">
+                    <template v-if="isQuickValueFormulaEditing">
+                      <MsFormula
+                        ref="quickValueFormulaRef"
+                        v-model="valueFormula"
+                        width="766px"
+                        :parameters="salaryCompositionParameters"
+                        show-agent-button
+                      />
+                      <div class="quick-value__actions">
+                        <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                          <button
+                            type="button"
+                            class="quick-icon-button quick-icon-button--save"
+                            :disabled="isSaving"
+                            @click="saveQuickField('valueFormula')"
+                          >
+                            <span class="mi-circle-check-2-green"></span>
+                          </button>
+                        </MsTooltip>
+                        <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                          <button
+                            type="button"
+                            class="quick-icon-button quick-icon-button--cancel"
+                            :disabled="isSaving"
+                            @click="cancelQuickEdit"
+                          >
+                            <span class="mi-circle-close"></span>
+                          </button>
+                        </MsTooltip>
+                      </div>
+                    </template>
+                    <template v-else>
+                      <div class="quick-value__formula">
+                        <span
+                          v-for="(token, index) in getFormulaDisplayTokens(valueFormula)"
+                          :key="`${token.text}-${index}`"
+                          :class="`quick-value__formula-token quick-value__formula-token--${token.type}`"
+                        >
+                          {{ token.text }}
+                        </span>
+                      </div>
+                      <MsTooltip content="Sửa" placement="bottom" hover-size="36px">
+                        <button
+                          type="button"
+                          class="quick-value__edit quick-value__edit--formula"
+                          @click="startQuickEdit('valueFormula')"
+                        >
+                          <span class="mi-edit"></span>
+                        </button>
+                      </MsTooltip>
+                    </template>
+                  </div>
+                </div>
+                <div v-if="isQuickValueConfigEditing" class="quick-value__actions">
+                  <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                    <button
+                      type="button"
+                      class="quick-icon-button quick-icon-button--save"
+                      :disabled="isSaving"
+                      @click="saveQuickField('valueConfig')"
+                    >
+                      <span class="mi-circle-check-2-green"></span>
+                    </button>
+                  </MsTooltip>
+                  <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                    <button
+                      type="button"
+                      class="quick-icon-button quick-icon-button--cancel"
+                      :disabled="isSaving"
+                      @click="cancelQuickEdit"
+                    >
+                      <span class="mi-circle-close"></span>
+                    </button>
+                  </MsTooltip>
+                </div>
+                <MsTooltip
+                  v-else-if="isAutoValueConfigVisible && !isQuickValueFormulaEditing"
+                  content="Sửa"
+                  placement="bottom"
+                  hover-size="36px"
+                >
+                  <button type="button" class="quick-value__edit" @click="startQuickEdit('valueConfig')">
+                    <span class="mi-edit"></span>
+                  </button>
+                </MsTooltip>
+              </div>
+            </div>
+
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Mô tả</p>
+                </label>
+              </div>
+              <div
+                class="quick-field quick-field--large quick-field--textarea"
+                :class="{ 'is-editing': quickEditingField === 'description' }"
+              >
+                <template v-if="quickEditingField === 'description'">
+                  <textarea
+                    ref="quickDescriptionTextareaRef"
+                    v-model="description"
+                    class="quick-textarea"
+                  ></textarea>
+                  <div class="quick-field__actions">
+                    <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--save"
+                        :disabled="isSaving"
+                        @click="saveQuickField('description')"
+                      >
+                        <span class="mi-circle-check-2-green"></span>
+                      </button>
+                    </MsTooltip>
+                    <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                      <button
+                        type="button"
+                        class="quick-icon-button quick-icon-button--cancel"
+                        :disabled="isSaving"
+                        @click="cancelQuickEdit"
+                      >
+                        <span class="mi-circle-close"></span>
+                      </button>
+                    </MsTooltip>
+                  </div>
+                </template>
+                <template v-else>
+                  <p class="quick-field__text">{{ description }}</p>
+                  <MsTooltip content="Sửa" placement="bottom" hover-size="36px">
+                    <button type="button" class="quick-field__edit" @click="startQuickEdit('description')">
+                      <span class="mi-edit"></span>
+                    </button>
+                  </MsTooltip>
+                </template>
+              </div>
+            </div>
+
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Hiển thị trên phiếu lương</p>
+                </label>
+              </div>
+              <div class="flex items-center quick-payslip">
+                <label
+                  v-for="option in displayOnPayslipOptions"
+                  :key="option.value"
+                  class="ms-radio-wrapper"
+                >
+                  <span class="ms-radio-item" @click="selectDisplayOnPayslipQuick(option.value)">
+                    <span
+                      class="ms-radio-item__icon"
+                      :class="{
+                        'ms-radio-item__icon--checked': selectedDisplayOnPayslip === option.value,
+                      }"
+                    >
+                      <svg
+                        v-if="selectedDisplayOnPayslip === option.value"
+                        viewBox="0 0 16 16"
+                        class="ms-radio-item__circle"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <circle cx="8" cy="8" r="6" fill="currentColor"></circle>
+                      </svg>
+                    </span>
+                    <span class="ms-radio-item__label">{{ option.label }}</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Nguồn tạo</p>
+                </label>
+              </div>
+              <div class="quick-field quick-field--compact quick-field--readonly">
+                <p class="quick-field__text">{{ sourceName }}</p>
+              </div>
+            </div>
+
+            <div class="ms-row">
+              <div class="w-200">
+                <label>
+                  <p>Trạng thái</p>
+                </label>
+              </div>
+              <div class="quick-field quick-field--compact quick-field--readonly">
+                <p class="quick-field__text">{{ selectedStatusLabel }}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div v-if="!isEditMode" class="insert-action-footer">
@@ -637,7 +1522,7 @@
   >
     Đây là thành phần lương mặc định của hệ thống nên không thể xóa. Vui lòng kiểm tra lại.
   </MsModal>
-  <MsToast v-model="toast.visible" type="success" message="Thêm thành công" />
+  <MsToast v-model="toast.visible" type="success" :message="toast.message" />
 </template>
 
 <script setup>
@@ -683,6 +1568,14 @@ const salaryCompositionCodeInputRef = ref(null)
 const organizationTreeRef = ref(null)
 const salaryCompositionTypeSelectRef = ref(null)
 const natureSelectRef = ref(null)
+const quickSalaryCompositionNameInputRef = ref(null)
+const quickDescriptionTextareaRef = ref(null)
+const quickOrganizationTreeRef = ref(null)
+const quickSalaryCompositionTypeSelectRef = ref(null)
+const quickNatureSelectRef = ref(null)
+const quickValueTypeSelectRef = ref(null)
+const quickNormFormulaRef = ref(null)
+const quickValueFormulaRef = ref(null)
 const headerMenuRef = ref(null)
 const salaryCompositionName = ref('')
 const salaryCompositionCode = ref('')
@@ -711,24 +1604,32 @@ const isDeleteConfirmModalOpen = ref(false)
 const isDefaultDeleteModalOpen = ref(false)
 const isHeaderMenuOpen = ref(false)
 const isDuplicateMode = ref(false)
+const isQuickEditModeValue = ref(false)
+const quickEditingField = ref('')
+const quickEditSnapshot = ref('')
 const initialFormSnapshot = ref('')
+const formLoadedTitle = ref('')
 const isTaxReduction = ref(false)
 const isAllowOverNormValue = ref(false)
 const isSaveAndAddMode = ref(false)
 const toast = reactive({
   visible: false,
+  message: 'Thêm thành công',
 })
 const currentId = computed(() => props.salaryCompositionId ?? null)
 const isDetailSourceMode = computed(
   () => ['edit', 'duplicate'].includes(props.mode) && Boolean(currentId.value),
 )
 const isEditMode = computed(() => isDetailSourceMode.value && !isDuplicateMode.value)
+const isQuickEditMode = computed(() => isEditMode.value && isQuickEditModeValue.value)
 const validationCurrentId = computed(() => (isEditMode.value ? currentId.value : null))
 const isFormDirty = computed(
   () => Boolean(initialFormSnapshot.value) && getFormSnapshot() !== initialFormSnapshot.value,
 )
 const formTitle = computed(() =>
-  isEditMode.value ? props.initialTitle || 'Chi tiết thành phần' : 'Thêm thành phần',
+  isEditMode.value
+    ? formLoadedTitle.value || props.initialTitle || 'Chi tiết thành phần'
+    : 'Thêm thành phần',
 )
 const deleteSalaryCompositionName = computed(
   () => props.initialTitle || salaryCompositionName.value || 'thành phần lương',
@@ -821,6 +1722,18 @@ const updateSalaryCompositionMutation = useMutation({
   },
 })
 
+const quickUpdateSalaryCompositionMutation = useMutation({
+  mutationFn: (payload) => SalaryCompositionAPI.patch(currentId.value, payload),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionDetail', currentId.value] })
+    quickEditingField.value = ''
+    setInitialFormSnapshot()
+    showSuccessToast('Cập nhật thành phần lương thành công')
+  },
+})
+
 const deleteSalaryCompositionMutation = useMutation({
   mutationFn: () => SalaryCompositionAPI.delete(currentId.value),
   onSuccess: () => {
@@ -868,8 +1781,44 @@ const isCodeDisabled = computed(
   () => isEditMode.value && (Number(selectedStatus.value) === 1 || isSourceDefault.value),
 )
 const isNatureOptionDisabled = computed(() => isSourceDefault.value)
+const isQuickFieldLocked = computed(() => Boolean(quickEditingField.value))
+const canQuickEditValueType = computed(() => !isSourceDefault.value && !isValueTypeLocked.value)
+const showQuickValueTypeLock = computed(() => !isSourceDefault.value && isValueTypeLocked.value)
+const isQuickValueConfigEditing = computed(() => quickEditingField.value === 'valueConfig')
+const isQuickValueFormulaEditing = computed(() => quickEditingField.value === 'valueFormula')
+const isQuickValueConfigDisabled = computed(
+  () => !isQuickValueConfigEditing.value || isSourceDefault.value,
+)
 const selectedValueTypeLabel = computed(() =>
   getOptionLabel(valueTypeOptions.value.find((option) => option.value === selectedValueType.value)),
+)
+const selectedSalaryCompositionTypeLabel = computed(() =>
+  getOptionLabel(
+    salaryCompositionTypeOptions.value.find(
+      (option) => Number(option.value) === Number(selectedSalaryCompositionTypeId.value),
+    ),
+  ),
+)
+const selectedNatureLabel = computed(() =>
+  getOptionLabel(
+    natureOptions.value.find((option) => Number(option.value) === Number(selectedNature.value)),
+  ),
+)
+const selectedOrganizationLabel = computed(() => {
+  const selectedIdSet = new Set(selectedOrganizationIds.value.map((id) => String(id)))
+  return organizations.value
+    .filter((organization) => {
+      const id = String(getOrganizationId(organization))
+      return selectedIdSet.has(id) && !hasSelectedOrganizationAncestor(id, selectedIdSet)
+    })
+    .map((organization) => getOrganizationLabel(organization))
+    .filter(Boolean)
+    .join(', ')
+})
+const selectedStatusLabel = computed(
+  () =>
+    statusOptions.find((option) => Number(option.value) === Number(selectedStatus.value))?.label ??
+    '',
 )
 
 isDuplicateMode.value = props.mode === 'duplicate'
@@ -888,6 +1837,13 @@ const selectedAggregationScope = computed(
 )
 const isOrganizationStructureScope = computed(
   () => selectedAggregationScopeValue.value === 'organizationStructure',
+)
+const shouldShowQuickAggregateSelect = computed(
+  () =>
+    selectedValueMode.value === 'auto' &&
+    (isOrganizationStructureScope.value ||
+      isQuickValueConfigEditing.value ||
+      Boolean(selectedAggregateSalaryCompositionCode.value)),
 )
 const salaryCompositionValueOptions = computed(() =>
   salaryCompositionParameters.value.map((item) => {
@@ -910,7 +1866,8 @@ const currencyValueType = computed(
 const isSaving = computed(
   () =>
     createSalaryCompositionMutation.isPending.value ||
-    updateSalaryCompositionMutation.isPending.value,
+    updateSalaryCompositionMutation.isPending.value ||
+    quickUpdateSalaryCompositionMutation.isPending.value,
 )
 
 /// Lay nhan hien thi cua option.
@@ -935,6 +1892,37 @@ function getOrganizationId(organization) {
 /// CREATED BY: VVHung (03/06/2026)
 function getOrganizationParentId(organization) {
   return organization?.parentID ?? organization?.ParentID ?? organization?.parentId ?? null
+}
+
+/// Lay ten hien thi cua don vi.
+/// <param name="organization">Du lieu don vi can xu ly.</param>
+/// <returns>Ten don vi.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function getOrganizationLabel(organization) {
+  return organization?.organizationName ?? organization?.OrganizationName ?? ''
+}
+
+/// Kiem tra don vi co cha dang duoc chon khong de khong hien lap lai ten con.
+/// <param name="id">Id don vi can kiem tra.</param>
+/// <param name="selectedIdSet">Tap id dang chon.</param>
+/// <returns>true neu co cha dang duoc chon.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function hasSelectedOrganizationAncestor(id, selectedIdSet) {
+  const organizationMap = new Map(
+    organizations.value.map((organization) => [
+      String(getOrganizationId(organization)),
+      organization,
+    ]),
+  )
+  let parentId = getOrganizationParentId(organizationMap.get(String(id)))
+
+  while (parentId !== null && parentId !== undefined && parentId !== '') {
+    const normalizedParentId = String(parentId)
+    if (selectedIdSet.has(normalizedParentId)) return true
+    parentId = getOrganizationParentId(organizationMap.get(normalizedParentId))
+  }
+
+  return false
 }
 
 /// Lay Id don vi goc gan nhat de tu chon khi mo form.
@@ -1013,6 +2001,39 @@ function getFormSnapshot() {
   })
 }
 
+/// Khoi phuc du lieu form tu snapshot.
+/// <param name="snapshot">Snapshot dang JSON cua form.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function restoreFormSnapshot(snapshot) {
+  if (!snapshot) return
+
+  try {
+    const data = JSON.parse(snapshot)
+    salaryCompositionName.value = data.salaryCompositionName ?? ''
+    salaryCompositionCode.value = data.salaryCompositionCode ?? ''
+    selectedNature.value = data.selectedNature ?? 1
+    selectedSalaryCompositionTypeId.value = data.selectedSalaryCompositionTypeId ?? null
+    selectedOrganizationIds.value = data.selectedOrganizationIds ?? []
+    normFormula.value = data.normFormula ?? ''
+    valueFormula.value = data.valueFormula ?? ''
+    description.value = data.description ?? ''
+    selectedTaxType.value = data.selectedTaxType ?? 1
+    selectedValueType.value = data.selectedValueType ?? null
+    selectedValueMode.value = data.selectedValueMode ?? 'formula'
+    selectedAggregationScopeValue.value = data.selectedAggregationScopeValue ?? 'sameOrganization'
+    selectedOrganizationLevel.value = data.selectedOrganizationLevel ?? 1
+    selectedAggregateSalaryCompositionCode.value =
+      data.selectedAggregateSalaryCompositionCode ?? null
+    selectedDisplayOnPayslip.value = data.selectedDisplayOnPayslip ?? 1
+    selectedStatus.value = data.selectedStatus ?? 1
+    isTaxReduction.value = Boolean(data.isTaxReduction)
+    isAllowOverNormValue.value = Boolean(data.isAllowOverNormValue)
+  } catch {
+    // Snapshot loi thi bo qua de tranh lam hong form dang hien thi.
+  }
+}
+
 /// Thiet lap snapshot ban dau cua form.
 /// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
@@ -1055,6 +2076,27 @@ function getValueFormulaPayload() {
   }
 
   return valueFormula.value ?? ''
+}
+
+/// Tach cong thuc thanh cac token de hien thi mau trong sua nhanh.
+/// <param name="value">Chuoi cong thuc can xu ly.</param>
+/// <returns>Danh sach token hien thi.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function getFormulaDisplayTokens(value) {
+  const parts = String(value ?? '').split(/([=+\-*/(),])/).filter((part) => part !== '')
+
+  return parts.map((text, index) => {
+    if (/^[=+\-*/(),]$/.test(text)) {
+      return { text, type: 'operator' }
+    }
+
+    const nextToken = parts[index + 1] ?? ''
+    if (/^[A-Z][A-Z0-9_]*$/.test(text) && nextToken === '(' && !text.includes('_')) {
+      return { text, type: 'function' }
+    }
+
+    return { text, type: 'parameter' }
+  })
 }
 
 /// Tao payload thanh phan luong de them hoac cap nhat.
@@ -1126,6 +2168,7 @@ function setFormValueFromDetail(detail) {
   if (!detail || !Object.keys(detail).length) return
 
   salaryCompositionName.value = detail.salaryCompositionName ?? detail.SalaryCompositionName ?? ''
+  formLoadedTitle.value = salaryCompositionName.value || props.initialTitle
   salaryCompositionCode.value = detail.salaryCompositionCode ?? detail.SalaryCompositionCode ?? ''
   selectedOrganizationIds.value = String(detail.organizationIDs ?? detail.OrganizationIDs ?? '')
     .split(';')
@@ -1252,10 +2295,12 @@ function focusFirstError() {
   })
 }
 
-/// Hien thi toast thong bao luu thanh cong.
+/// Hien thi toast thong bao thanh cong.
+/// <param name="message">Noi dung toast.</param>
 /// CREATED BY: VVHung (03/06/2026)
-function showSuccessToast() {
+function showSuccessToast(message = 'Thêm thành công') {
   toast.visible = false
+  toast.message = message
   nextTick(() => {
     toast.visible = true
   })
@@ -1372,6 +2417,175 @@ async function handleSaveAndAdd() {
   createSalaryCompositionMutation.mutate(buildSalaryCompositionPayload())
 }
 
+/// Chuyen form sang che do sua nhanh.
+/// CREATED BY: VVHung (06/06/2026)
+function enterQuickEditMode() {
+  if (!isEditMode.value) return
+  restoreFormSnapshot(initialFormSnapshot.value)
+  setFormErrors({ inner: [] })
+  quickEditingField.value = ''
+  quickEditSnapshot.value = ''
+  isQuickEditModeValue.value = true
+  setInitialFormSnapshot()
+}
+
+/// Chuyen tu sua nhanh ve che do sua day du.
+/// CREATED BY: VVHung (06/06/2026)
+function enterFullEditMode() {
+  if (!isEditMode.value) return
+  if (quickEditingField.value) {
+    restoreFormSnapshot(quickEditSnapshot.value)
+  }
+  quickEditingField.value = ''
+  quickEditSnapshot.value = ''
+  isQuickEditModeValue.value = false
+}
+
+/// Bat dau sua nhanh mot truong.
+/// <param name="field">Ten truong can sua nhanh.</param>
+/// CREATED BY: VVHung (06/06/2026)
+function startQuickEdit(field) {
+  if (!isQuickEditMode.value || isSaving.value) return
+  if (quickEditingField.value && quickEditingField.value !== field) return
+  if (field === 'valueType' && !canQuickEditValueType.value) return
+  quickEditingField.value = field
+  quickEditSnapshot.value = getFormSnapshot()
+
+  nextTick(() => {
+    if (field === 'salaryCompositionName') {
+      quickSalaryCompositionNameInputRef.value?.focus?.()
+    }
+    if (field === 'organizationIDs') {
+      quickOrganizationTreeRef.value?.focus?.()
+    }
+    if (field === 'salaryCompositionType') {
+      quickSalaryCompositionTypeSelectRef.value?.focus?.()
+    }
+    if (field === 'nature') {
+      quickNatureSelectRef.value?.focus?.()
+    }
+    if (field === 'valueType') {
+      quickValueTypeSelectRef.value?.focus?.()
+    }
+    if (field === 'normFormula') {
+      quickNormFormulaRef.value?.focus?.()
+    }
+    if (field === 'valueFormula') {
+      quickValueFormulaRef.value?.focus?.()
+    }
+    if (field === 'description') {
+      quickDescriptionTextareaRef.value?.focus?.()
+    }
+  })
+}
+
+/// Huy thay doi cua truong dang sua nhanh.
+/// CREATED BY: VVHung (06/06/2026)
+function cancelQuickEdit() {
+  restoreFormSnapshot(quickEditSnapshot.value)
+  quickEditingField.value = ''
+  quickEditSnapshot.value = ''
+}
+
+/// Lay payload PATCH theo truong dang sua nhanh.
+/// <param name="field">Ten truong can tao payload.</param>
+/// <returns>Payload gui len API.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+function buildQuickPatchPayload(field) {
+  const payloadMap = {
+    salaryCompositionName: () => ({ salaryCompositionName: salaryCompositionName.value }),
+    organizationIDs: () => ({ organizationIDs: selectedOrganizationIds.value.join(';') }),
+    salaryCompositionType: () => ({
+      salaryCompositionType: selectedSalaryCompositionTypeId.value,
+    }),
+    nature: () => ({
+      nature: selectedNature.value,
+      taxType: isIncomeNature.value ? selectedTaxType.value : null,
+      isTaxReduction: isDeductionNature.value ? isTaxReduction.value : null,
+    }),
+    valueType: () => ({ valueType: selectedValueType.value }),
+    valueConfig: () => ({ valueFormula: getValueFormulaPayload() }),
+    normFormula: () => ({
+      normFormula: isNormVisible.value ? normFormula.value : '',
+      allowOverNorm: isNormVisible.value ? isAllowOverNormValue.value : false,
+    }),
+    valueFormula: () => ({ valueFormula: getValueFormulaPayload() }),
+    description: () => ({ description: description.value }),
+    payslipDisplayType: () => ({ payslipDisplayType: selectedDisplayOnPayslip.value }),
+  }
+
+  return payloadMap[field]?.() ?? {}
+}
+
+/// Validate truong dang sua nhanh neu can.
+/// <param name="field">Ten truong can validate.</param>
+/// <returns>true neu hop le.</returns>
+/// CREATED BY: VVHung (06/06/2026)
+async function validateQuickField(field) {
+  const validateFieldMap = {
+    salaryCompositionName: 'salaryCompositionName',
+    organizationIDs: 'organizationIDs',
+    salaryCompositionType: 'salaryCompositionType',
+    nature: 'nature',
+  }
+  const formField = validateFieldMap[field]
+  if (!formField) return true
+
+  return validateField(formField)
+}
+
+/// Luu nhanh mot truong bang API PATCH.
+/// <param name="field">Ten truong can luu nhanh.</param>
+/// CREATED BY: VVHung (06/06/2026)
+async function saveQuickField(field = quickEditingField.value) {
+  if (!field || isSaving.value || !currentId.value) return
+  if (!(await validateQuickField(field))) return
+
+  quickUpdateSalaryCompositionMutation.mutate(buildQuickPatchPayload(field))
+}
+
+/// Chon va tu dong luu cau hinh hien thi tren phieu luong trong sua nhanh.
+/// <param name="value">Gia tri lua chon.</param>
+/// CREATED BY: VVHung (06/06/2026)
+function selectDisplayOnPayslipQuick(value) {
+  if (selectedDisplayOnPayslip.value === value || isSaving.value) return
+  selectedDisplayOnPayslip.value = value
+  saveQuickField('payslipDisplayType')
+}
+
+/// Chon kieu tinh thue va tu dong luu trong che do sua nhanh.
+/// <param name="value">Gia tri lua chon.</param>
+/// CREATED BY: VVHung (06/06/2026)
+function selectTaxTypeQuick(value) {
+  if (selectedTaxType.value === value || isSaving.value) return
+  selectedTaxType.value = value
+  saveQuickField('nature')
+}
+
+/// Bat/tat giam tru tinh thue va tu dong luu trong che do sua nhanh.
+/// CREATED BY: VVHung (06/06/2026)
+function toggleTaxReductionQuick() {
+  if (isSaving.value) return
+  isTaxReduction.value = !isTaxReduction.value
+  saveQuickField('nature')
+}
+
+/// Bat/tat cho phep vuot dinh muc va tu dong luu trong che do sua nhanh.
+/// CREATED BY: VVHung (06/06/2026)
+function toggleAllowOverNormQuick() {
+  if (isSaving.value) return
+  isAllowOverNormValue.value = !isAllowOverNormValue.value
+  saveQuickField('normFormula')
+}
+
+/// Chon che do gia tri trong sua nhanh neu cum gia tri dang mo sua.
+/// <param name="value">Che do gia tri.</param>
+/// CREATED BY: VVHung (06/06/2026)
+function selectValueModeQuick(value) {
+  if (isQuickValueConfigDisabled.value) return
+  selectedValueMode.value = value
+}
+
 /// Mo hoac dong dropdown cau hinh gia tri tu dong.
 /// <param name="name">Ten dropdown can xu ly.</param>
 /// CREATED BY: VVHung (03/06/2026)
@@ -1486,6 +2700,11 @@ function handleBack() {
 /// Xu ly nut huy bo tren form thanh phan luong.
 /// CREATED BY: VVHung (03/06/2026)
 function goToSalaryCompositionList() {
+  if (isEditMode.value) {
+    enterQuickEditMode()
+    return
+  }
+
   if (isFormDirty.value) {
     openExitConfirmModal()
     return
@@ -2081,6 +3300,290 @@ label {
   color: #d8d8da;
 }
 
+.quick-edit-form .ms-row {
+  min-height: 36px;
+}
+
+.quick-header-edit-tooltip {
+  margin-right: 8px;
+}
+
+.quick-field {
+  position: relative;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #101828;
+  border-bottom: 1px solid #e3e5ee;
+  box-sizing: border-box;
+}
+
+.quick-field--large {
+  width: 838px;
+}
+
+.quick-field--compact {
+  width: 315px;
+}
+
+.quick-field.is-locked {
+  background: #e8eaef;
+}
+
+.quick-field.is-editing {
+  align-items: flex-start;
+  gap: 4px;
+  border-bottom-color: transparent;
+}
+
+.quick-field__text {
+  min-width: 0;
+  width: 100%;
+  min-height: 35px;
+  margin: 0;
+  padding-left: 8px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  color: #101828;
+  font-size: 13px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.quick-field--textarea .quick-field__text {
+  min-height: 36px;
+  white-space: normal;
+}
+
+.quick-field__edit,
+.quick-value__edit {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.quick-field:hover .quick-field__edit,
+.quick-value:hover .quick-value__edit {
+  opacity: 1;
+}
+
+.quick-field__edit:hover,
+.quick-value__edit:hover,
+.quick-icon-button--cancel:hover {
+  background: #0000001a;
+}
+
+.quick-field__lock {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.quick-field--lock-hover .quick-field__lock {
+  opacity: 0;
+}
+
+.quick-field--lock-hover:hover .quick-field__lock {
+  opacity: 1;
+}
+
+.quick-nature-line {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+}
+
+.quick-field__actions,
+.quick-value__actions {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.quick-icon-button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.quick-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.quick-icon-button--save {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.quick-icon-button--save:hover {
+  background: #eafbf2;
+}
+
+.quick-icon-button--cancel {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.quick-field :deep(.ms-input),
+.quick-field :deep(.ms-input__field-wrap) {
+  flex-shrink: 0;
+}
+
+.quick-field :deep(.ms-input__control) {
+  height: 36px;
+}
+
+.quick-field :deep(.ms-tree-select) {
+  flex-shrink: 0;
+}
+
+.quick-edit-form :deep(.ms-select__trigger) {
+  padding-left: 8px;
+}
+
+.quick-textarea {
+  width: 766px;
+  height: 78px;
+  min-height: 78px;
+  padding: 6px 8px 8px 12px;
+  border: 1px solid #d5d7da;
+  border-radius: 8px;
+  outline: none;
+  resize: vertical;
+  color: #101828;
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
+  caret-color: #0e9a62;
+}
+
+.quick-textarea:hover,
+.quick-textarea:focus {
+  border-color: #0e9a62;
+}
+
+.quick-value {
+  position: relative;
+  width: 838px;
+  min-height: 36px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.quick-value__content {
+  width: 838px;
+  min-height: 36px;
+}
+
+.quick-value.is-editing .quick-value__content {
+  border-bottom-color: transparent;
+}
+
+.quick-value__config {
+  min-height: 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  color: #101828;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.quick-value__formula-row {
+  width: 838px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e3e5ee;
+  box-sizing: border-box;
+}
+
+.quick-value__formula-row:has(.dx-widget),
+.quick-value__formula-row:has(.quick-value__actions) {
+  border-bottom-color: transparent;
+}
+
+.quick-value__formula {
+  min-height: 36px;
+  min-width: 0;
+  flex: 1;
+  padding-left: 8px;
+  display: flex;
+  align-items: center;
+  color: #0075ff;
+  box-sizing: border-box;
+}
+
+.quick-value__formula-token--parameter {
+  color: #1570ef;
+}
+
+.quick-value__formula-token--function {
+  color: #000;
+}
+
+.quick-value__formula-token--operator {
+  color: #f04438;
+}
+
+.quick-value__edit--formula {
+  opacity: 0;
+}
+
+.quick-value__formula-row:hover .quick-value__edit--formula {
+  opacity: 1;
+}
+
+.quick-value__disabled-select {
+  position: relative;
+  width: 315px;
+  height: 32px;
+  padding: 4px 32px 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #d5d7da;
+  border-radius: 8px;
+  background: #f5f5f5;
+  color: #101828;
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
+  cursor: not-allowed;
+  box-sizing: border-box;
+}
+
+.quick-payslip {
+  min-height: 36px;
+}
+
 .mi-arrow-left {
   width: 14px;
   display: inline-block;
@@ -2146,4 +3649,60 @@ label {
   -webkit-mask-repeat: no-repeat;
   background-color: #ff6161;
 }
+
+.mi-edit {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+  flex-shrink: 0;
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
+  -webkit-mask-position: -82px -3px;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #6e737a;
+}
+
+.mi-lock {
+  width: 14px;
+  height: 18px;
+  display: inline-block;
+  flex-shrink: 0;
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
+  -webkit-mask-position: -3px -21px;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #6e737a;
+}
+
+.mi-circle-check-2-green {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: #0e9a62;
+}
+
+.mi-circle-check-2-green::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 7px;
+  height: 4px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg);
+}
+
+.mi-circle-close{
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  flex-shrink: 0;
+  -webkit-mask-image: url('../../assets/images/ICON.svg');
+  -webkit-mask-position: -201px -41px;
+  -webkit-mask-repeat: no-repeat;
+  background-color: #6e737a;
+}
+
 </style>

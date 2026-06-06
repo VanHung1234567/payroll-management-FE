@@ -133,6 +133,7 @@
       grid-key="salary_composition"
       :search="debouncedSearchKeyword"
       :filters="salaryCompositionFilters"
+      :organization-options="organizations"
       :clear-selection-signal="clearSelectionSignal"
       @row-edit="openEditForm"
       @row-active="openStatusModal"

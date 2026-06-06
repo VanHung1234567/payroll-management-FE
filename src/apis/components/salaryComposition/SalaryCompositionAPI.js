@@ -11,6 +11,10 @@ class SalaryCompositionAPI extends BaseAPI {
     return api.get(`${this.controller}/detail/${id}`)
   }
 
+  patch(id, payload) {
+    return api.patch(`${this.controller}/${id}`, payload)
+  }
+
   updateBulkStatus(payload) {
     return api.patch(`${this.controller}/update-bulk-status`, payload)
   }

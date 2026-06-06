@@ -282,6 +282,12 @@ function handleBlur() {
   }, 120)
 }
 
+defineExpose({
+  focus: () => {
+    formulaRef.value?.querySelector?.('.prism-editor__textarea')?.focus?.()
+  },
+})
+
 function insertFunction(formula) {
   insertText(formula.insertText)
 }

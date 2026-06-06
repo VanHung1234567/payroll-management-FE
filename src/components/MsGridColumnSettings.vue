@@ -271,7 +271,7 @@ function normalizeBoolean(value) {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 80;
+  z-index: 310;
   width: 415px;
   padding: 16px;
   border-radius: 12px;

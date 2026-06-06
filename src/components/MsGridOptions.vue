@@ -256,7 +256,7 @@ function normalizeBoolean(value: any) {
   padding: 12px 16px;
   background-color: #fff;
   position: relative;
-  z-index: 6;
+  z-index: 260;
   height: 56px;
   border-radius: 8px 8px 0 0;
 }
