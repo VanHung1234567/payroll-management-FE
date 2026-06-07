@@ -32,8 +32,9 @@
             hover-border-color="#D5D7DA"
             active-background-color="#D5D7DA"
             active-border-color="#D5D7DA"
+            @click.stop="emit('toggle-filter')"
           >
-            <div class="mi-filter"></div>
+            <div :class="filterButtonActive ? 'ms-icon-filter-fill' : 'mi-filter'"></div>
           </MsButton>
         </MsTooltip>
 
@@ -99,13 +100,24 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // True khi bo loc nang cao dang co dieu kien ap dung.
+  filterActive: {
+    type: Boolean,
+    default: false,
+  },
+  // True khi panel bo loc dang mo.
+  filterOpen: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['update:search'])
+const emit = defineEmits(['update:search', 'toggle-filter'])
 const queryClient = useQueryClient()
 const isColumnSettingsOpen = ref(false)
 const settingRef = ref<HTMLElement | null>(null)
 const gridConfigQueryKey = computed(() => ['grid-config', props.gridKey])
+const filterButtonActive = computed(() => props.filterActive)
 
 const { data: gridConfigResponse } = useQuery({
   queryKey: gridConfigQueryKey,
@@ -283,9 +295,40 @@ function normalizeBoolean(value: any) {
   width: 20px;
   height: 20px;
   -webkit-mask-image: url('../assets/images/ICON.svg');
+  mask-image: url('../assets/images/ICON.svg');
   -webkit-mask-position: -20px 0px;
+  mask-position: -20px 0px;
   -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
   background-color: #6e737a;
+}
+
+.ms-icon-filter-fill {
+  width: 20px;
+  height: 20px;
+  -webkit-mask-image: url('../assets/images/Filter_fill.svg');
+  mask-image: url('../assets/images/Filter_fill.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background-color: #0e9a62;
+}
+
+.ms-icon-filter-fill {
+  width: 20px;
+  height: 20px;
+  -webkit-mask-image: url('../assets/images/Filter_fill.svg');
+  mask-image: url('../assets/images/Filter_fill.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background-color: #0e9a62;
 }
 
 .mi-setting {

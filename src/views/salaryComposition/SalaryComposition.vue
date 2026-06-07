@@ -53,94 +53,131 @@
       </div>
     </div>
 
-    <MsGridOptions
-      v-model:search="searchKeyword"
-      grid-key="salary_composition"
-      :bulk-mode="hasSelectedRows"
-    >
-      <template #options>
-        <MsSelect v-model="selectedStatus" label="Trạng thái" :options="statusOptions" />
+    <div class="salary-grid-layout" :class="{ 'has-filter-panel': isAdvancedFilterOpen }">
+      <div class="salary-grid-main">
+        <MsGridOptions
+          v-model:search="searchKeyword"
+          grid-key="salary_composition"
+          :bulk-mode="hasSelectedRows"
+          :filter-active="hasAppliedAdvancedFilters"
+          :filter-open="isAdvancedFilterOpen"
+          @toggle-filter="toggleAdvancedFilter"
+        >
+          <template #options>
+            <MsSelect v-model="selectedStatus" label="Trạng thái" :options="statusOptions" />
 
-        <MsTreeSelect
-          v-model="selectedOrganizationIds"
-          :options="organizations"
-          id-key="organizationID"
-          parent-key="parentID"
-          label-key="organizationName"
-          placeholder="Tất cả đơn vị"
-        />
-      </template>
-      <template #bulk-actions>
-        <div class="bulk-actions">
-          <div class="bulk-actions__count">
-            <span>Đã chọn</span>
-            <strong>{{ selectedRows.length }}</strong>
-          </div>
-          <button type="button" class="bulk-actions__clear" @click="clearSelectedRows">
-            Bỏ chọn
-          </button>
-          <MsButton
-            v-if="selectedHasActive"
-            background-color="#ffffff"
-            border-color="#FF9900"
-            color="#FF9900"
-            hover-background-color="#FEF0C7"
-            hover-border-color="#DC6803"
-            active-background-color="#FEDF89"
-            active-border-color="#B54708"
-            gap="4px"
-            padding="0 12px"
-            @click="openBulkStatusModal(0)"
+            <MsTreeSelect
+              v-model="selectedOrganizationIds"
+              :options="organizations"
+              id-key="organizationID"
+              parent-key="parentID"
+              label-key="organizationName"
+              placeholder="Tất cả đơn vị"
+            />
+          </template>
+          <template #bulk-actions>
+            <div class="bulk-actions">
+              <div class="bulk-actions__count">
+                <span>Đã chọn</span>
+                <strong>{{ selectedRows.length }}</strong>
+              </div>
+              <button type="button" class="bulk-actions__clear" @click="clearSelectedRows">
+                Bỏ chọn
+              </button>
+              <MsButton
+                v-if="selectedHasActive"
+                background-color="#ffffff"
+                border-color="#FF9900"
+                color="#FF9900"
+                hover-background-color="#FEF0C7"
+                hover-border-color="#DC6803"
+                active-background-color="#FEDF89"
+                active-border-color="#B54708"
+                gap="4px"
+                padding="0 12px"
+                @click="openBulkStatusModal(0)"
+              >
+                <span class="mi-circle-orange"></span>
+                <span class="button-action-text">Ngừng theo dõi</span>
+              </MsButton>
+              <MsButton
+                v-if="selectedHasInactive"
+                background-color="#ffffff"
+                border-color="#34B057"
+                color="#34B057"
+                hover-background-color="#A8D9C8"
+                hover-border-color="#0A724B"
+                active-background-color="#7CC7AE"
+                active-border-color="#0B5A3D"
+                gap="4px"
+                padding="0 12px"
+                @click="openBulkStatusModal(1)"
+              >
+                <span class="mi-circle-check-green"></span>
+                <span class="button-action-text">Đang theo dõi</span>
+              </MsButton>
+              <MsButton
+                background-color="#ffffff"
+                border-color="#F04438"
+                color="#F04438"
+                hover-background-color="#FEE4E2"
+                hover-border-color="#D92D20"
+                active-background-color="#FECDCA"
+                active-border-color="#B42318"
+                gap="4px"
+                padding="0 12px"
+                @click="openBulkDeleteModal"
+              >
+                <span class="mi-trash-red"></span>
+                <span class="button-action-text">Xóa</span>
+              </MsButton>
+            </div>
+          </template>
+        </MsGridOptions>
+
+        <div v-if="appliedAdvancedFilterTags.length" class="advanced-filter-tags">
+          <span
+            v-for="tag in appliedAdvancedFilterTags"
+            :key="tag.fieldName"
+            class="advanced-filter-tag"
           >
-            <span class="mi-circle-orange"></span>
-            <span class="button-action-text">Ngừng theo dõi</span>
-          </MsButton>
-          <MsButton
-            v-if="selectedHasInactive"
-            background-color="#ffffff"
-            border-color="#34B057"
-            color="#34B057"
-            hover-background-color="#A8D9C8"
-            hover-border-color="#0A724B"
-            active-background-color="#7CC7AE"
-            active-border-color="#0B5A3D"
-            gap="4px"
-            padding="0 12px"
-            @click="openBulkStatusModal(1)"
-          >
-            <span class="mi-circle-check-green"></span>
-            <span class="button-action-text">Đang theo dõi</span>
-          </MsButton>
-          <MsButton
-            background-color="#ffffff"
-            border-color="#F04438"
-            color="#F04438"
-            hover-background-color="#FEE4E2"
-            hover-border-color="#D92D20"
-            active-background-color="#FECDCA"
-            active-border-color="#B42318"
-            gap="4px"
-            padding="0 12px"
-            @click="openBulkDeleteModal"
-          >
-            <span class="mi-trash-red"></span>
-            <span class="button-action-text">Xóa</span>
-          </MsButton>
+            <span class="advanced-filter-tag__field">{{ tag.label }}</span>
+            <span class="advanced-filter-tag__operator">{{ tag.operatorLabel }}</span>
+            <span v-if="tag.valueLabel" class="advanced-filter-tag__value">{{
+              tag.valueLabel
+            }}</span>
+            <button
+              type="button"
+              class="advanced-filter-tag__close"
+              @click="removeAdvancedFilter(tag.fieldName)"
+            >
+              <span class="mi-tag-close"></span>
+            </button>
+          </span>
         </div>
-      </template>
-    </MsGridOptions>
-    <MsGridTable
-      grid-key="salary_composition"
-      :search="debouncedSearchKeyword"
-      :filters="salaryCompositionFilters"
-      :organization-options="organizations"
-      :clear-selection-signal="clearSelectionSignal"
-      @row-edit="openEditForm"
-      @row-active="openStatusModal"
-      @row-copy="openDuplicateForm"
-      @row-delete="openDeleteModal"
-      @selection-change="selectedRows = $event"
-    />
+
+        <MsGridTable
+          grid-key="salary_composition"
+          :search="debouncedSearchKeyword"
+          :filters="salaryCompositionFilters"
+          :organization-options="organizations"
+          :clear-selection-signal="clearSelectionSignal"
+          @row-edit="openEditForm"
+          @row-active="openStatusModal"
+          @row-copy="openDuplicateForm"
+          @row-delete="openDeleteModal"
+          @selection-change="selectedRows = $event"
+        />
+      </div>
+
+      <MsGridAdvancedFilter
+        v-model="isAdvancedFilterOpen"
+        :fields="advancedFilterFields"
+        :filters="advancedFilters"
+        @apply="applyAdvancedFilters"
+        @clear="clearAdvancedFilters"
+      />
+    </div>
 
     <Teleport to="body">
       <div v-if="isSystemPickerOpen" class="ms-popup-overlay">
@@ -309,14 +346,17 @@ import OrganizationAPI from '@/apis/components/organization/Organization.js'
 import SalaryCompositionAPI from '@/apis/components/salaryComposition/SalaryCompositionAPI'
 import SalaryCompositionSystemAPI from '@/apis/components/salaryCompositionSystem/SalaryCompositionSystem'
 import {
+  SALARY_COMPOSITION_NATURE_OPTIONS,
   SALARY_COMPOSITION_STATUS_OPTIONS,
   SALARY_COMPOSITION_TYPE_OPTIONS,
+  SALARY_COMPOSITION_VALUE_TYPE_OPTIONS,
 } from '@/utils/constants'
 import MsInput from '@/components/MsInput.vue'
 import MsModal from '@/components/MsModal.vue'
 import MsSelect from '@/components/MsSelect.vue'
 import MsToast from '@/components/MsToast.vue'
 import MsTreeSelect from '@/components/MsTreeSelect.vue'
+import MsGridAdvancedFilter from '@/components/MsGridAdvancedFilter.vue'
 import MsGridTable from '@/components/MsGridTable.vue'
 import MsGridOptions from '@/components/MsGridOptions.vue'
 
@@ -326,6 +366,8 @@ const searchKeyword = ref('')
 const debouncedSearchKeyword = ref('')
 const selectedRows = ref<any[]>([])
 const clearSelectionSignal = ref(0)
+const isAdvancedFilterOpen = ref(false)
+const advancedFilters = ref<any[]>([])
 const isAddMenuOpen = ref(false)
 const addActionRef = ref<HTMLElement | null>(null)
 const isSystemPickerOpen = ref(false)
@@ -432,6 +474,92 @@ const selectedHasActive = computed(() => selectedRows.value.some((row) => isActi
 const selectedHasInactive = computed(() => selectedRows.value.some((row) => !isActiveStatus(row)))
 const hasSystemPickerSelection = computed(() => systemPickerSelectedRows.value.length > 0)
 const isCopyingFromSystem = computed(() => copyFromSystemMutation.isPending.value)
+const hasAppliedAdvancedFilters = computed(() => advancedFilters.value.length > 0)
+const taxTypeOptions = [
+  { value: 1, label: 'Chịu thuế' },
+  { value: 2, label: 'Miễn thuế toàn phần' },
+  { value: 3, label: 'Miễn thuế một phần' },
+]
+const booleanOptions = [
+  { value: 1, label: 'Có' },
+  { value: 0, label: 'Không' },
+]
+const createdSourceOptions = [
+  { value: 1, label: 'Tự thêm' },
+  { value: 2, label: 'Mặc định' },
+]
+const payslipDisplayTypeOptions = [
+  { value: 1, label: 'Có' },
+  { value: 2, label: 'Không' },
+  { value: 3, label: 'Chỉ hiển thị nếu giá trị khác 0' },
+]
+const toAdvancedFilterOptions = (options: any[]) =>
+  options.map((option) => ({
+    ...option,
+    value: option.value === null || option.value === undefined ? '' : String(option.value),
+  }))
+const advancedFilterFields = computed(() => [
+  { fieldName: 'SalaryCompositionCode', label: 'Mã thành phần', type: 'text' },
+  { fieldName: 'SalaryCompositionName', label: 'Tên thành phần', type: 'text' },
+  {
+    fieldName: 'SalaryCompositionType',
+    label: 'Loại thành phần',
+    type: 'enum',
+    options: toAdvancedFilterOptions(SALARY_COMPOSITION_TYPE_OPTIONS),
+  },
+  {
+    fieldName: 'Nature',
+    label: 'Tính chất',
+    type: 'enum',
+    options: toAdvancedFilterOptions(SALARY_COMPOSITION_NATURE_OPTIONS),
+  },
+  { fieldName: 'TaxType', label: 'Chịu thuế', type: 'enum', options: toAdvancedFilterOptions(taxTypeOptions) },
+  {
+    fieldName: 'IsTaxReduction',
+    label: 'Giảm trừ khi tính thuế',
+    type: 'enum',
+    options: toAdvancedFilterOptions(booleanOptions),
+  },
+  { fieldName: 'NormFormula', label: 'Định mức', type: 'text' },
+  {
+    fieldName: 'ValueType',
+    label: 'Kiểu giá trị',
+    type: 'enum',
+    options: toAdvancedFilterOptions(SALARY_COMPOSITION_VALUE_TYPE_OPTIONS),
+  },
+  { fieldName: 'ValueFormula', label: 'Giá trị', type: 'text' },
+  { fieldName: 'Description', label: 'Mô tả', type: 'text' },
+  { fieldName: 'CreatedSource', label: 'Nguồn tạo', type: 'enum', options: toAdvancedFilterOptions(createdSourceOptions) },
+  {
+    fieldName: 'PayslipDisplayType',
+    label: 'Hiển thị trên phiếu lương',
+    type: 'enum',
+    options: toAdvancedFilterOptions(payslipDisplayTypeOptions),
+  },
+])
+const operatorLabelMap: Record<string, string> = {
+  contains: 'Chứa',
+  notContains: 'Không chứa',
+  equals: 'Bằng',
+  notEquals: 'Khác',
+  startsWith: 'Bắt đầu bằng',
+  endsWith: 'Kết thúc bằng',
+  empty: 'Trống',
+  notEmpty: 'Không trống',
+}
+const appliedAdvancedFilterTags = computed(() =>
+  advancedFilters.value.map((filter) => {
+    const field = advancedFilterFields.value.find((item) => item.fieldName === filter.fieldName)
+    const valueOption = field?.options?.find((option) => option.value === filter.value)
+
+    return {
+      fieldName: filter.fieldName,
+      label: field?.label || filter.fieldName,
+      operatorLabel: operatorLabelMap[filter.operator] || filter.operator,
+      valueLabel: valueOption?.label ?? (filter.value === '' ? '' : String(filter.value)),
+    }
+  }),
+)
 
 watch(searchKeyword, (value) => {
   if (searchDebounceTimer) {
@@ -470,7 +598,7 @@ onBeforeUnmount(() => {
 })
 
 const salaryCompositionFilters = computed(() => {
-  const filters: Record<string, string | number> = {}
+  const filters: Record<string, any> = {}
 
   if (selectedStatus.value !== null && selectedStatus.value !== '') {
     filters.status = Number(selectedStatus.value)
@@ -478,6 +606,10 @@ const salaryCompositionFilters = computed(() => {
 
   if (selectedOrganizationIds.value.length) {
     filters.organizationIDs = selectedOrganizationIds.value.join(';')
+  }
+
+  if (advancedFilters.value.length) {
+    filters.advancedFilters = advancedFilters.value
   }
 
   return filters
@@ -514,6 +646,39 @@ function isActiveStatus(row: any) {
 /// CREATED BY: VVHung (03/06/2026)
 function clearSelectedRows() {
   clearSelectionSignal.value += 1
+}
+
+/// Mo hoac dong panel bo loc nang cao.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
+function toggleAdvancedFilter() {
+  isAdvancedFilterOpen.value = !isAdvancedFilterOpen.value
+}
+
+/// Ap dung danh sach dieu kien bo loc nang cao vao grid.
+/// <param name="filters">Danh sach dieu kien da chon.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
+function applyAdvancedFilters(filters: any[]) {
+  advancedFilters.value = filters
+  clearSelectedRows()
+}
+
+/// Xoa toan bo bo loc nang cao.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
+function clearAdvancedFilters() {
+  advancedFilters.value = []
+  clearSelectedRows()
+}
+
+/// Xoa mot dieu kien bo loc nang cao theo field.
+/// <param name="fieldName">Ten field can xoa bo loc.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (03/06/2026)
+function removeAdvancedFilter(fieldName: string) {
+  advancedFilters.value = advancedFilters.value.filter((filter) => filter.fieldName !== fieldName)
+  clearSelectedRows()
 }
 
 /// Lay Id thanh phan luong tu dong du lieu.
@@ -825,6 +990,101 @@ function handleDocumentMouseDown(event: MouseEvent) {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.salary-grid-layout {
+  min-height: 520px;
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.salary-grid-main {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.salary-grid-main :deep(.ms-table-container) {
+  flex: 1;
+  min-height: 0;
+}
+
+.advanced-filter-tags {
+  min-height: 36px;
+  padding: 0px 16px 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #fff;
+  scrollbar-width: thin;
+}
+
+.advanced-filter-tags::-webkit-scrollbar {
+  height: 6px;
+}
+
+.advanced-filter-tags::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: #d5d7da;
+}
+
+.advanced-filter-tag {
+  height: 24px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #101828;
+  font-size: 13px;
+  line-height: 18px;
+  cursor: default;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.advanced-filter-tag__field {
+  color: #717680;
+}
+
+.advanced-filter-tag__operator {
+  color: #0e9a62;
+  font-weight: 600;
+}
+
+.advanced-filter-tag__value {
+  color: #101828;
+}
+
+.advanced-filter-tag__close {
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mi-tag-close {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  flex-shrink: 0;
+  background-color: #5e5e5e;
+  -webkit-mask-image: url('../../assets/images/ICON_4.svg');
+  mask-image: url('../../assets/images/ICON_4.svg');
+  -webkit-mask-position: -442px -56px;
+  mask-position: -442px -56px;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 .system-category-text {

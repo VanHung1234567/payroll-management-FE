@@ -348,7 +348,7 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import {
   DxColumn,
   DxColumnFixing,
@@ -480,6 +480,7 @@ const sort = ref('')
 const selectedKeys = ref(new Set())
 const selectedRowMap = ref(new Map())
 const configColumns = ref([])
+const queryClient = useQueryClient()
 const pinDialogVisible = ref(false)
 const tableContainerRef = ref(null)
 const dataGridRef = ref(null)
@@ -1563,9 +1564,84 @@ function syncFixedColumns() {
 /// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function enqueuePersistColumn(column, patch) {
+  updateGridConfigCache(column, patch)
   persistQueue = persistQueue.catch(() => {}).then(() => persistColumn(column, patch))
 
   return persistQueue
+}
+
+/// Cap nhat cache cau hinh cot de popup tuy chinh cot hien thi ngay thu tu moi.
+/// <param name="column">Cot can cap nhat.</param>
+/// <param name="patch">Phan cau hinh thay doi.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (07/06/2026)
+function updateGridConfigCache(column, patch = {}) {
+  const targetFieldName = column.apiFieldName || column.fieldName
+  if (!targetFieldName) return
+
+  queryClient.setQueryData(gridConfigQueryKey.value, (oldData) => {
+    const payload = normalizeResponseData(oldData)
+    const currentColumns = getGridConfigColumns(payload)
+    if (!currentColumns.length) return oldData
+
+    const nextColumns = currentColumns.map((item) => {
+      const fieldName = item.fieldName || item.FieldName
+      if (fieldName !== targetFieldName) return item
+
+      const nextVisible = patch.Visible ?? patch.visible ?? column.visible
+      const nextWidth = patch.Width ?? patch.width ?? column.width
+      const nextIsFixed = patch.IsFixed ?? patch.isFixed ?? column.isFixed
+      const nextFixedPosition = patch.FixedPosition ?? patch.fixedPosition ?? column.fixedPosition
+      const nextSortOrder = patch.SortOrder ?? patch.sortOrder ?? column.sortOrder
+
+      return {
+        ...item,
+        width: nextWidth,
+        Width: nextWidth,
+        visible: nextVisible,
+        Visible: nextVisible,
+        isFixed: nextIsFixed,
+        IsFixed: nextIsFixed,
+        fixedPosition: nextFixedPosition,
+        FixedPosition: nextFixedPosition,
+        sortOrder: nextSortOrder,
+        SortOrder: nextSortOrder,
+      }
+    })
+
+    return replaceGridConfigColumns(oldData, nextColumns)
+  })
+}
+
+/// Lay mang cot tu payload cau hinh grid.
+/// <param name="payload">Payload cau hinh grid.</param>
+/// <returns>Danh sach cot.</returns>
+/// CREATED BY: VVHung (07/06/2026)
+function getGridConfigColumns(payload) {
+  if (Array.isArray(payload)) return payload
+  if (Array.isArray(payload?.data)) return payload.data
+  return []
+}
+
+/// Thay mang cot vao dung shape response hien tai cua vue-query.
+/// <param name="oldData">Du lieu cache cu.</param>
+/// <param name="nextColumns">Danh sach cot moi.</param>
+/// <returns>Du lieu cache moi.</returns>
+/// CREATED BY: VVHung (07/06/2026)
+function replaceGridConfigColumns(oldData, nextColumns) {
+  if (Array.isArray(oldData)) return nextColumns
+  if (Array.isArray(oldData?.data)) return { ...oldData, data: nextColumns }
+  if (Array.isArray(oldData?.data?.data)) {
+    return {
+      ...oldData,
+      data: {
+        ...oldData.data,
+        data: nextColumns,
+      },
+    }
+  }
+
+  return oldData
 }
 
 /// Luu cau hinh cot len backend.

@@ -408,7 +408,6 @@ function normalizeBoolean(value) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
   color: #d5d7da;
   font-size: 13px;
   font-style: italic;
