@@ -225,10 +225,7 @@
                     </span>
                   </label>
                 </div>
-                <label
-                  v-else-if="isDeductionNature"
-                  class="ms-check-wrapper ml-16"
-                >
+                <label v-else-if="isDeductionNature" class="ms-check-wrapper ml-16">
                   <button
                     type="button"
                     class="ms-check-item__icon"
@@ -617,7 +614,7 @@
                     @blur="validateField('salaryCompositionName')"
                   />
                   <div class="quick-field__actions">
-                    <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                    <MsTooltip content="Lưu" placement="bottom" offset="4px" hover-size="32px">
                       <button
                         type="button"
                         class="quick-icon-button quick-icon-button--save"
@@ -627,7 +624,7 @@
                         <span class="mi-circle-check-2-green"></span>
                       </button>
                     </MsTooltip>
-                    <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                    <MsTooltip content="Hủy bỏ" placement="bottom" offset="4px" hover-size="36px">
                       <button
                         type="button"
                         class="quick-icon-button quick-icon-button--cancel"
@@ -641,7 +638,7 @@
                 </template>
                 <template v-else>
                   <p class="quick-field__text">{{ salaryCompositionName }}</p>
-                  <MsTooltip content="Sửa" placement="bottom" hover-size="36px">
+                  <MsTooltip content="Sửa" placement="bottom" offset="4px" hover-size="36px">
                     <button
                       type="button"
                       class="quick-field__edit"
@@ -694,7 +691,7 @@
                     @blur="validateField('organizationIDs')"
                   />
                   <div class="quick-field__actions">
-                    <MsTooltip content="Lưu" placement="bottom" hover-size="32px">
+                    <MsTooltip content="Lưu" placement="bottom" offset="4px" hover-size="32px">
                       <button
                         type="button"
                         class="quick-icon-button quick-icon-button--save"
@@ -704,7 +701,7 @@
                         <span class="mi-circle-check-2-green"></span>
                       </button>
                     </MsTooltip>
-                    <MsTooltip content="Hủy bỏ" placement="bottom" hover-size="36px">
+                    <MsTooltip content="Hủy bỏ" placement="bottom" offset="4px" hover-size="36px">
                       <button
                         type="button"
                         class="quick-icon-button quick-icon-button--cancel"
@@ -718,7 +715,7 @@
                 </template>
                 <template v-else>
                   <p class="quick-field__text">{{ selectedOrganizationLabel }}</p>
-                  <MsTooltip content="Sửa" placement="bottom" hover-size="36px">
+                  <MsTooltip content="Sửa" placement="bottom" offset="4px" hover-size="36px">
                     <button
                       type="button"
                       class="quick-field__edit"
@@ -787,7 +784,12 @@
                 </template>
                 <template v-else>
                   <p class="quick-field__text">{{ selectedSalaryCompositionTypeLabel }}</p>
-                  <MsTooltip v-if="!isSourceDefault" content="Sửa" placement="bottom" hover-size="36px">
+                  <MsTooltip
+                    v-if="!isSourceDefault"
+                    content="Sửa"
+                    placement="bottom"
+                    hover-size="36px"
+                  >
                     <button
                       type="button"
                       class="quick-field__edit"
@@ -855,8 +857,17 @@
                   </template>
                   <template v-else>
                     <p class="quick-field__text">{{ selectedNatureLabel }}</p>
-                    <MsTooltip v-if="!isSourceDefault" content="Sửa" placement="bottom" hover-size="36px">
-                      <button type="button" class="quick-field__edit" @click="startQuickEdit('nature')">
+                    <MsTooltip
+                      v-if="!isSourceDefault"
+                      content="Sửa"
+                      placement="bottom"
+                      hover-size="36px"
+                    >
+                      <button
+                        type="button"
+                        class="quick-field__edit"
+                        @click="startQuickEdit('nature')"
+                      >
                         <span class="mi-edit"></span>
                       </button>
                     </MsTooltip>
@@ -889,10 +900,7 @@
                     </span>
                   </label>
                 </div>
-                <label
-                  v-else-if="isDeductionNature"
-                  class="ms-check-wrapper ml-16"
-                >
+                <label v-else-if="isDeductionNature" class="ms-check-wrapper ml-16">
                   <button
                     type="button"
                     class="ms-check-item__icon"
@@ -963,7 +971,11 @@
                 <template v-else>
                   <p class="quick-field__text">{{ normFormula }}</p>
                   <MsTooltip content="Sửa" placement="bottom" hover-size="36px">
-                    <button type="button" class="quick-field__edit" @click="startQuickEdit('normFormula')">
+                    <button
+                      type="button"
+                      class="quick-field__edit"
+                      @click="startQuickEdit('normFormula')"
+                    >
                       <span class="mi-edit"></span>
                     </button>
                   </MsTooltip>
@@ -1073,7 +1085,11 @@
                     placement="bottom"
                     hover-size="36px"
                   >
-                    <button type="button" class="quick-field__edit" @click="startQuickEdit('valueType')">
+                    <button
+                      type="button"
+                      class="quick-field__edit"
+                      @click="startQuickEdit('valueType')"
+                    >
                       <span class="mi-edit"></span>
                     </button>
                   </MsTooltip>
@@ -1091,6 +1107,7 @@
                 </label>
               </div>
               <div
+                ref="valueConfigRef"
                 class="quick-value"
                 :class="{
                   'is-editing': isQuickValueConfigEditing || isQuickValueFormulaEditing,
@@ -1100,6 +1117,7 @@
                   <div v-if="isAutoValueConfigVisible" class="quick-value__config">
                     <label
                       class="ms-radio-wrapper value-config__radio"
+                      :class="{ 'is-disabled': isQuickValueConfigDisabled }"
                     >
                       <span class="ms-radio-item" @click="selectValueModeQuick('auto')">
                         <span
@@ -1148,22 +1166,28 @@
                           >
                             <span class="mi-circle-infor-blue"></span>
                             <template #tooltip>
-                              <span v-if="selectedAggregationScope.value === 'subordinate'">
-                                Tá»± Ä‘á»™ng tÃ­nh báº±ng tá»•ng giÃ¡ trá»‹
-                                <b></b>
-                                cá»§a táº¥t cáº£ nhÃ¢n viÃªn dÆ°á»›i quyá»n (thuá»™c quyá»n quáº£n lÃ½ trá»±c tiáº¿p hoáº·c
-                                giÃ¡n tiáº¿p)<br />
-                                VÃ­ dá»¥: Quáº£n lÃ½ kinh doanh A lÃ  quáº£n lÃ½ trá»±c tiáº¿p cá»§a 3 nhÃ¢n viÃªn B, C,
-                                D. GiÃ¡m Ä‘á»‘c kinh doanh E lÃ  quáº£n lÃ½ trá»±c tiáº¿p cá»§a A. Khi thiáº¿t láº­p:<br />
-                                Doanh sá»‘ nhÃ³m báº±ng tá»•ng giÃ¡ trá»‹ Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a táº¥t cáº£ nhÃ¢n viÃªn
-                                dÆ°á»›i quyá»n<br />
-                                + Doanh sá»‘ nhÃ³m cá»§a Quáº£n lÃ½ kinh doanh A = Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a B +
-                                Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a C + Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a D<br />
-                                + Doanh sá»‘ nhÃ³m cá»§a GiÃ¡m Ä‘á»‘c kinh doanh E = Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a A +
-                                Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a B + Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a C + Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a
-                                D
-                              </span>
-                              <span v-else>{{ selectedAggregationScope.tooltip }}</span>
+                              <span
+                                v-html="getAggregationScopeTooltipHtml(selectedAggregationScope)"
+                              ></span>
+                              <template v-if="false">
+                                <span v-if="selectedAggregationScope.value === 'subordinate'">
+                                  Tự động tính bằng tổng giá trị
+                                  <b></b>
+                                  của tất cả nhân viên dưới quyền (thuộc quyền quản lý trực tiếp
+                                  hoặc gián tiếp)<br />
+                                  Ví dụ: Quản lý kinh doanh A là quản lý trực tiếp của 3 nhân viên
+                                  B, C, D. Giám đốc kinh doanh E là quản lý trực tiếp của A. Khi
+                                  thiết lập:<br />
+                                  Doanh số nhóm bằng tổng giá trị Doanh số cá nhân của tất cả nhân
+                                  viên dưới quyền<br />
+                                  + Doanh số nhóm của Quản lý kinh doanh A = Doanh số cá nhân của B
+                                  + Doanh số cá nhân của C + Doanh số cá nhân của D<br />
+                                  + Doanh số nhóm của Giám đốc kinh doanh E = Doanh số cá nhân của A
+                                  + Doanh số cá nhân của B + Doanh số cá nhân của C + Doanh số cá
+                                  nhân của D
+                                </span>
+                                <span v-else>{{ selectedAggregationScope.tooltip }}</span>
+                              </template>
                             </template>
                           </MsTooltip>
                           <span class="value-combobox__chevron"></span>
@@ -1188,21 +1212,26 @@
                             >
                               <span class="mi-circle-infor-blue"></span>
                               <template #tooltip>
-                                <span v-if="option.value === 'subordinate'">
-                                  Tá»± Ä‘á»™ng tÃ­nh báº±ng tá»•ng giÃ¡ trá»‹ cá»§a táº¥t cáº£ nhÃ¢n viÃªn dÆ°á»›i quyá»n
-                                  (thuá»™c quyá»n quáº£n lÃ½ trá»±c tiáº¿p hoáº·c giÃ¡n tiáº¿p)<br />
-                                  VÃ­ dá»¥: Quáº£n lÃ½ kinh doanh A lÃ  quáº£n lÃ½ trá»±c tiáº¿p cá»§a 3 nhÃ¢n viÃªn B,
-                                  C, D. GiÃ¡m Ä‘á»‘c kinh doanh E lÃ  quáº£n lÃ½ trá»±c tiáº¿p cá»§a A. Khi thiáº¿t
-                                  láº­p:<br />
-                                  Doanh sá»‘ nhÃ³m báº±ng tá»•ng giÃ¡ trá»‹ Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a táº¥t cáº£ nhÃ¢n
-                                  viÃªn dÆ°á»›i quyá»n<br />
-                                  + Doanh sá»‘ nhÃ³m cá»§a Quáº£n lÃ½ kinh doanh A = Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a B +
-                                  Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a C + Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a D<br />
-                                  + Doanh sá»‘ nhÃ³m cá»§a GiÃ¡m Ä‘á»‘c kinh doanh E = Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a A +
-                                  Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a B + Doanh sá»‘ cÃ¡ nhÃ¢n cá»§a C + Doanh sá»‘ cÃ¡ nhÃ¢n
-                                  cá»§a D
-                                </span>
-                                <span v-else>{{ option.tooltip }}</span>
+                                <span v-html="getAggregationScopeTooltipHtml(option)"></span>
+                                <template v-if="false">
+                                  <span v-if="option.value === 'subordinate'">
+                                    Tự động tính bằng tổng giá trị
+                                    <b></b>
+                                    của tất cả nhân viên dưới quyền (thuộc quyền quản lý trực tiếp
+                                    hoặc gián tiếp)<br />
+                                    Ví dụ: Quản lý kinh doanh A là quản lý trực tiếp của 3 nhân viên
+                                    B, C, D. Giám đốc kinh doanh E là quản lý trực tiếp của A. Khi
+                                    thiết lập:<br />
+                                    Doanh số nhóm bằng tổng giá trị Doanh số cá nhân của tất cả nhân
+                                    viên dưới quyền<br />
+                                    + Doanh số nhóm của Quản lý kinh doanh A = Doanh số cá nhân của
+                                    B + Doanh số cá nhân của C + Doanh số cá nhân của D<br />
+                                    + Doanh số nhóm của Giám đốc kinh doanh E = Doanh số cá nhân của
+                                    A + Doanh số cá nhân của B + Doanh số cá nhân của C + Doanh số
+                                    cá nhân của D
+                                  </span>
+                                  <span v-else>{{ option.tooltip }}</span>
+                                </template>
                               </template>
                             </MsTooltip>
                           </button>
@@ -1239,6 +1268,7 @@
 
                     <label
                       class="ms-radio-wrapper value-config__radio"
+                      :class="{ 'is-disabled': isQuickValueConfigDisabled }"
                     >
                       <span class="ms-radio-item" @click="selectValueModeQuick('formula')">
                         <span
@@ -1344,7 +1374,11 @@
                   placement="bottom"
                   hover-size="36px"
                 >
-                  <button type="button" class="quick-value__edit" @click="startQuickEdit('valueConfig')">
+                  <button
+                    type="button"
+                    class="quick-value__edit"
+                    @click="startQuickEdit('valueConfig')"
+                  >
                     <span class="mi-edit"></span>
                   </button>
                 </MsTooltip>
@@ -1393,7 +1427,11 @@
                 <template v-else>
                   <p class="quick-field__text">{{ description }}</p>
                   <MsTooltip content="Sửa" placement="bottom" hover-size="36px">
-                    <button type="button" class="quick-field__edit" @click="startQuickEdit('description')">
+                    <button
+                      type="button"
+                      class="quick-field__edit"
+                      @click="startQuickEdit('description')"
+                    >
                       <span class="mi-edit"></span>
                     </button>
                   </MsTooltip>
@@ -1659,6 +1697,25 @@ const aggregationScopeOptions = [
       'Tự động tính bằng tổng giá trị của các nhân viên thuộc cơ cấu tổ chức (theo cấp thiết lập)',
   },
 ]
+
+/// Lay noi dung tooltip cua combobox pham vi cong tong gia tri.
+/// <param name="option">Option pham vi can hien thi tooltip.</param>
+/// <returns>Noi dung tooltip dang HTML.</returns>
+/// CREATED BY: VVHung (07/06/2026)
+function getAggregationScopeTooltipHtml(option) {
+  if (option?.value !== 'subordinate') {
+    return option?.tooltip ?? ''
+  }
+
+  return [
+    'Tự động tính bằng tổng giá trị của tất cả nhân viên dưới quyền (thuộc quyền quản lý trực tiếp hoặc gián tiếp)',
+    'Ví dụ: Quản lý kinh doanh A là quản lý trực tiếp của 3 nhân viên B, C, D. Giám đốc kinh doanh E là quản lý trực tiếp của A. Khi thiết lập:',
+    'Doanh số nhóm bằng tổng giá trị Doanh số cá nhân của tất cả nhân viên dưới quyền',
+    '+ Doanh số nhóm của Quản lý kinh doanh A = Doanh số cá nhân của B + Doanh số cá nhân của C + Doanh số cá nhân của D',
+    '+ Doanh số nhóm của Giám đốc kinh doanh E = Doanh số cá nhân của A + Doanh số cá nhân của B + Doanh số cá nhân của C + Doanh số cá nhân của D',
+  ].join('<br />')
+}
+
 const organizationLevelOptions = [
   { value: 1, label: 'Cấp 1' },
   { value: 2, label: 'Cấp 2' },
@@ -2083,7 +2140,9 @@ function getValueFormulaPayload() {
 /// <returns>Danh sach token hien thi.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function getFormulaDisplayTokens(value) {
-  const parts = String(value ?? '').split(/([=+\-*/(),])/).filter((part) => part !== '')
+  const parts = String(value ?? '')
+    .split(/([=+\-*/(),])/)
+    .filter((part) => part !== '')
 
   return parts.map((text, index) => {
     if (/^[=+\-*/(),]$/.test(text)) {
@@ -2591,6 +2650,7 @@ function selectValueModeQuick(value) {
 /// CREATED BY: VVHung (03/06/2026)
 function toggleValueSelect(name) {
   if (selectedValueMode.value === 'formula') return
+  if (isQuickEditMode.value && isQuickValueConfigDisabled.value) return
   openedValueSelect.value = openedValueSelect.value === name ? '' : name
 }
 
@@ -2598,6 +2658,7 @@ function toggleValueSelect(name) {
 /// <param name="value">Gia tri can xu ly.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function selectAggregationScope(value) {
+  if (isQuickEditMode.value && isQuickValueConfigDisabled.value) return
   selectedAggregationScopeValue.value = value
   openedValueSelect.value = ''
 }
@@ -3153,7 +3214,8 @@ label {
   gap: 10px;
 }
 
-.value-config :deep(.value-config-tooltip) {
+.value-config :deep(.value-config-tooltip),
+.quick-value :deep(.value-config-tooltip) {
   max-width: 630px;
   padding: 8px 12px;
   border-radius: 8px;
@@ -3435,19 +3497,25 @@ label {
 }
 
 .quick-icon-button--save {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
 }
 
 .quick-icon-button--save:hover {
-  background: #eafbf2;
+  background: #0000001a;
 }
 
 .quick-icon-button--cancel {
   width: 36px;
   height: 36px;
   border-radius: 50%;
+}
+
+.quick-edit-form :deep(.ms-tooltip-wrapper:has(.quick-icon-button)),
+.quick-edit-form :deep(.ms-tooltip-wrapper:has(.quick-field__edit)),
+.quick-edit-form :deep(.ms-tooltip-wrapper:has(.quick-value__edit)) {
+  --ms-tooltip-offset: 4px !important;
 }
 
 .quick-field :deep(.ms-input),
@@ -3673,28 +3741,12 @@ label {
 }
 
 .mi-circle-check-2-green {
-  position: relative;
   width: 16px;
   height: 16px;
-  display: inline-block;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background-color: #0e9a62;
+  background: url('../../assets/images/ICON.svg') -302px -62px no-repeat;
 }
 
-.mi-circle-check-2-green::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 4px;
-  width: 7px;
-  height: 4px;
-  border-left: 2px solid #fff;
-  border-bottom: 2px solid #fff;
-  transform: rotate(-45deg);
-}
-
-.mi-circle-close{
+.mi-circle-close {
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -3704,5 +3756,4 @@ label {
   -webkit-mask-repeat: no-repeat;
   background-color: #6e737a;
 }
-
 </style>
