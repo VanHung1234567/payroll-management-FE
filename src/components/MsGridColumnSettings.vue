@@ -40,6 +40,7 @@
                 type="button"
                 class="ms-column-settings__checkbox"
                 :class="{ 'is-checked': column.visible }"
+                :disabled="isLastVisibleColumn(column)"
                 @click.stop="toggleColumn(column)"
             >
               <svg
@@ -76,6 +77,7 @@
                 type="button"
                 class="ms-column-settings__checkbox"
                 :class="{ 'is-checked': column.visible }"
+                :disabled="isLastVisibleColumn(column)"
                 @click.stop="toggleColumn(column)"
             >
               <svg
@@ -106,7 +108,7 @@
     </div>
 
     <div class="ms-column-settings__footer">
-      <MsButton width="80px" :disabled="saving" @click="saveColumns">Lưu</MsButton>
+      <MsButton width="80px" :disabled="!canSaveColumns" @click="saveColumns">Lưu</MsButton>
     </div>
   </div>
 </template>
@@ -153,9 +155,34 @@ const debouncedKeyword = ref('')
 const draftColumns = ref([])
 const searchInputRef = ref(null)
 let searchTimer = null
+const DEFAULT_COLUMN_ORDER = [
+  'SalaryCompositionCode',
+  'SalaryCompositionName',
+  'OrganizationNames',
+  'OrganizationIDs',
+  'SalaryCompositionType',
+  'SalaryCompositionTypeID',
+  'Nature',
+  'TaxType',
+  'IsTaxReduction',
+  'NormFormula',
+  'AllowOverNorm',
+  'ValueType',
+  'ValueFormula',
+  'Description',
+  'PayslipDisplayType',
+  'CreatedSource',
+  'Status',
+]
 
 const defaultHiddenFieldSet = computed(
   () => new Set(props.defaultHiddenFields.map((fieldName) => normalizeFieldName(fieldName))),
+)
+const defaultOrderMap = computed(
+  () =>
+    new Map(
+      DEFAULT_COLUMN_ORDER.map((fieldName, index) => [normalizeFieldName(fieldName), index + 1]),
+    ),
 )
 const filteredColumns = computed(() => {
   const keywordText = debouncedKeyword.value.trim().toLowerCase()
@@ -169,6 +196,10 @@ const filteredColumns = computed(() => {
     )
   })
 })
+const visibleDraftColumnCount = computed(
+  () => draftColumns.value.filter((column) => column.visible).length,
+)
+const canSaveColumns = computed(() => !props.saving && visibleDraftColumnCount.value > 0)
 
 watch(
   () => props.modelValue,
@@ -232,15 +263,23 @@ function resetSearch() {
 }
 
 function toggleColumn(column) {
+  if (column.visible && visibleDraftColumnCount.value <= 1) return
   column.visible = !column.visible
 }
 
+function isLastVisibleColumn(column) {
+  return column.visible && visibleDraftColumnCount.value <= 1
+}
+
 function resetDefaultColumns() {
-  draftColumns.value.forEach((column) => {
-    column.visible = !defaultHiddenFieldSet.value.has(
-      normalizeFieldName(column.apiFieldName || column.fieldName),
-    )
-  })
+  draftColumns.value = draftColumns.value
+    .map((column) => ({
+      ...column,
+      visible: !defaultHiddenFieldSet.value.has(
+        normalizeFieldName(column.apiFieldName || column.fieldName),
+      ),
+    }))
+    .sort((left, right) => getDefaultSortOrder(left) - getDefaultSortOrder(right))
   syncSortOrder()
   emit('save', draftColumns.value)
 }
@@ -252,12 +291,18 @@ function syncSortOrder() {
 }
 
 function saveColumns() {
+  if (!canSaveColumns.value) return
   syncSortOrder()
   emit('save', draftColumns.value)
 }
 
 function normalizeFieldName(fieldName) {
   return String(fieldName || '').toLowerCase()
+}
+
+function getDefaultSortOrder(column) {
+  const fieldName = normalizeFieldName(column.apiFieldName || column.fieldName)
+  return defaultOrderMap.value.get(fieldName) ?? Number(column.sortOrder || 999)
 }
 
 function normalizeBoolean(value) {
@@ -393,6 +438,10 @@ function normalizeBoolean(value) {
 .ms-column-settings__checkbox.is-checked {
   border-color: #0e9a62;
   background: #0e9a62;
+}
+
+.ms-column-settings__checkbox:disabled {
+  cursor: not-allowed;
 }
 
 .ms-column-settings__check-mark {

@@ -54,6 +54,17 @@
       />
 
       <DxColumn
+        v-if="showFillColumn"
+        name="__fill-space"
+        :min-width="0"
+        :allow-sorting="false"
+        :allow-resizing="false"
+        :allow-reordering="false"
+        header-cell-template="fillSpaceTemplate"
+        cell-template="fillSpaceTemplate"
+      />
+
+      <DxColumn
         v-if="hasVisibleActions"
         name="__action-space"
         :width="actionColumnWidth"
@@ -175,6 +186,10 @@
 
       <template #actionSpaceCellTemplate>
         <div class="ms-table__action-space"></div>
+      </template>
+
+      <template #fillSpaceTemplate>
+        <div class="ms-table__fill-space"></div>
       </template>
 
       <template #headerCellTemplate="{ data }">
@@ -492,6 +507,7 @@ const reorderTimer = ref(null)
 const resizePersistTimer = ref(null)
 const pendingResizePersist = ref(null)
 const pinnedIconFields = ref(new Set())
+const pinnedFieldStack = ref([])
 const isGridReady = ref(false)
 const suppressOrderPersist = ref(false)
 let suppressOrderPersistTimer = null
@@ -632,13 +648,16 @@ const rawConfigColumns = computed(() => {
 
 watch(
   rawConfigColumns,
-  (columns) => {
+  async (columns) => {
     if (!columns.length) return
     const shouldApplyOrderDirectly = isGridReady.value
+    const previousPinnedFields = [...pinnedFieldStack.value]
     configColumns.value = columns.map(normalizeColumn)
-    pinnedIconFields.value = getInitialPinnedIconFields(configColumns.value)
+    setPinnedFieldStack(getNextPinnedFieldStack(previousPinnedFields, configColumns.value))
     if (shouldApplyOrderDirectly) {
-      applyColumnOrderToGrid()
+      await applyColumnOrderToGrid()
+      syncAndPersistFixedColumns(displayColumns.value)
+      repaintGrid()
     }
     window.setTimeout(() => {
       isGridReady.value = true
@@ -723,6 +742,7 @@ const displayColumns = computed(() =>
     .filter((column) => column.visible !== false)
     .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0)),
 )
+const showFillColumn = computed(() => displayColumns.value.length <= 1)
 
 /// Tam dung luu thu tu cot khi dang dong bo tu cau hinh backend vao grid.
 /// <returns>Khong tra ve du lieu.</returns>
@@ -754,6 +774,40 @@ async function applyColumnOrderToGrid() {
   try {
     displayColumns.value.forEach((column, index) => {
       gridInstance.columnOption(column.fieldName, 'visibleIndex', index + 1)
+    })
+  } finally {
+    gridInstance.endUpdate()
+  }
+}
+
+/// Repaint grid sau khi doi visible/sort/fixed runtime de DevExtreme bo cache cot cu.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function repaintGrid() {
+  const rawGridInstance = dataGridRef.value?.instance
+  const gridInstance = typeof rawGridInstance === 'function' ? rawGridInstance() : rawGridInstance
+  gridInstance?.repaint?.()
+  gridInstance?.updateDimensions?.()
+}
+
+/// Apply trang thai fixed truc tiep vao DevExtreme de tranh grid dung cache cot cu sau hide/show/drag.
+/// <param name="orderedColumns">Danh sach cot visible theo thu tu can hien thi.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function applyFixedColumnsToGrid(orderedColumns = displayColumns.value) {
+  const rawGridInstance = dataGridRef.value?.instance
+  const gridInstance = typeof rawGridInstance === 'function' ? rawGridInstance() : rawGridInstance
+  if (!gridInstance) return
+
+  suppressOrderPersistTemporarily()
+  gridInstance.beginUpdate()
+  try {
+    orderedColumns.forEach((column, index) => {
+      gridInstance.columnOption(column.fieldName, 'visibleIndex', index + 1)
+      gridInstance.columnOption(column.fieldName, 'fixed', Boolean(column.isFixed))
+      if (column.isFixed) {
+        gridInstance.columnOption(column.fieldName, 'fixedPosition', column.fixedPosition || 'left')
+      }
     })
   } finally {
     gridInstance.endUpdate()
@@ -818,14 +872,43 @@ function normalizeBoolean(value) {
 /// <param name="columns">Danh sach cot can xu ly.</param>
 /// <returns>Du lieu sau khi xu ly.</returns>
 /// CREATED BY: VVHung (03/06/2026)
-function getInitialPinnedIconFields(columns) {
+function getInitialPinnedFieldStack(columns) {
   const fixedColumns = columns
-    .filter((column) => column.isFixed)
+    .filter((column) => column.visible !== false && column.isFixed)
     .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
 
-  if (!fixedColumns.length) return new Set()
+  if (!fixedColumns.length) return []
 
-  return new Set([fixedColumns[fixedColumns.length - 1].fieldName])
+  return [fixedColumns[fixedColumns.length - 1].fieldName]
+}
+
+/// Lay moc ghim tiep theo khi cau hinh cot thay doi.
+/// <param name="previousPinnedFields">Moc ghim dang duoc dung truoc khi config doi.</param>
+/// <param name="columns">Danh sach cot moi.</param>
+/// <returns>Stack field dang la moc ghim.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function getNextPinnedFieldStack(previousPinnedFields, columns) {
+  const fieldNames = new Set(columns.map((column) => column.fieldName))
+  const visibleFields = new Set(
+    columns.filter((column) => column.visible !== false).map((column) => column.fieldName),
+  )
+  const preservedPinnedFields = previousPinnedFields.filter(
+    (fieldName) => fieldNames.has(fieldName) && visibleFields.has(fieldName),
+  )
+
+  if (preservedPinnedFields.length) return preservedPinnedFields
+  return getInitialPinnedFieldStack(columns)
+}
+
+/// Cap nhat stack ghim va chi hien icon o moc ghim hien tai.
+/// <param name="fieldStack">Danh sach field ghim theo thu tu lich su.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function setPinnedFieldStack(fieldStack) {
+  const uniqueFieldStack = [...new Set(fieldStack)]
+  pinnedFieldStack.value = uniqueFieldStack
+  const currentPinnedField = uniqueFieldStack[uniqueFieldStack.length - 1]
+  pinnedIconFields.value = currentPinnedField ? new Set([currentPinnedField]) : new Set()
 }
 
 /// Chuyen ten field sang dang camelCase.
@@ -1387,13 +1470,10 @@ function queueColumnOrderPersist(event) {
 function persistColumnOrder(component) {
   if (suppressOrderPersist.value) return
 
-  const orderedColumns = displayColumns.value
-    .map((column) => ({
-      column,
-      visibleIndex: component.columnOption(column.fieldName, 'visibleIndex'),
-    }))
-    .filter((item) => Number.isFinite(Number(item.visibleIndex)) && Number(item.visibleIndex) >= 0)
-    .sort((a, b) => Number(a.visibleIndex) - Number(b.visibleIndex))
+  const orderedColumns = getCurrentOrderedColumns(component).map((column, index) => ({
+    column,
+    visibleIndex: index,
+  }))
 
   if (!orderedColumns.length) return
 
@@ -1404,7 +1484,7 @@ function persistColumnOrder(component) {
     enqueuePersistColumn(item.column, { SortOrder: nextSortOrder })
   })
 
-  const changedFixedColumns = syncFixedColumns()
+  const changedFixedColumns = syncFixedColumns(orderedColumns.map((item) => item.column))
   changedFixedColumns.forEach((column) => {
     enqueuePersistColumn(column, {
       IsFixed: column.isFixed,
@@ -1481,33 +1561,32 @@ function togglePin(fieldName) {
   const column = configColumns.value.find((item) => item.fieldName === fieldName)
   if (!column) return
 
-  if (isPinnedIconColumn(fieldName)) {
-    const nextPinnedFields = new Set(pinnedIconFields.value)
-    nextPinnedFields.delete(fieldName)
-    pinnedIconFields.value = nextPinnedFields
+  const orderedColumns = getConfigOrderedVisibleColumns()
 
-    const changedColumns = syncFixedColumns()
+  if (isPinnedIconColumn(fieldName)) {
+    setPinnedFieldStack(pinnedFieldStack.value.slice(0, -1))
+
+    const changedColumns = syncFixedColumns(orderedColumns)
     changedColumns.forEach((item) => {
       enqueuePersistColumn(item, {
         IsFixed: item.isFixed,
         FixedPosition: item.fixedPosition,
       })
     })
+    repaintGrid()
     headerMenu.isOpen = false
     return
   }
 
-  if (Number(column.sortOrder) > 5) {
+  if (getColumnDisplayIndex(fieldName, orderedColumns) > 4) {
     pinDialogVisible.value = true
     headerMenu.isOpen = false
     return
   }
 
-  const nextPinnedFields = new Set(pinnedIconFields.value)
-  nextPinnedFields.add(fieldName)
-  pinnedIconFields.value = nextPinnedFields
+  setPinnedFieldStack([...pinnedFieldStack.value.filter((item) => item !== fieldName), fieldName])
 
-  const changedColumns = syncFixedColumns()
+  const changedColumns = syncFixedColumns(orderedColumns)
   const changedColumnIds = new Set(changedColumns.map((item) => item.gridConfigID))
   changedColumns.forEach((item) => {
     enqueuePersistColumn(item, {
@@ -1521,27 +1600,28 @@ function togglePin(fieldName) {
       FixedPosition: 'left',
     })
   }
+  repaintGrid()
   headerMenu.isOpen = false
 }
 
 /// Dong bo trang thai cot co dinh voi cau hinh grid.
 /// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
-function syncFixedColumns() {
+function syncFixedColumns(orderedColumns = getCurrentOrderedColumns()) {
   suppressOrderPersist.value = true
   if (suppressOrderPersistTimer) {
     window.clearTimeout(suppressOrderPersistTimer)
   }
 
-  const maxPinnedSortOrder = configColumns.value.reduce((maxSortOrder, column) => {
-    if (!pinnedIconFields.value.has(column.fieldName)) return maxSortOrder
-    return Math.max(maxSortOrder, Number(column.sortOrder || 0))
-  }, 0)
+  const maxPinnedIndex = orderedColumns.reduce((maxIndex, column, index) => {
+    if (!pinnedIconFields.value.has(column.fieldName)) return maxIndex
+    return Math.max(maxIndex, index)
+  }, -1)
 
   const changedColumns = []
   configColumns.value.forEach((column) => {
-    const shouldFixed =
-      maxPinnedSortOrder > 0 && Number(column.sortOrder || 0) <= maxPinnedSortOrder
+    const columnIndex = orderedColumns.findIndex((item) => item.fieldName === column.fieldName)
+    const shouldFixed = maxPinnedIndex >= 0 && columnIndex >= 0 && columnIndex <= maxPinnedIndex
     const nextFixedPosition = shouldFixed ? 'left' : null
     if (column.isFixed !== shouldFixed || column.fixedPosition !== nextFixedPosition) {
       changedColumns.push(column)
@@ -1550,12 +1630,64 @@ function syncFixedColumns() {
     column.fixedPosition = nextFixedPosition
   })
 
+  applyFixedColumnsToGrid(orderedColumns)
+
   suppressOrderPersistTimer = window.setTimeout(() => {
     suppressOrderPersist.value = false
     suppressOrderPersistTimer = null
   }, 300)
 
   return changedColumns
+}
+
+/// Dong bo va luu lai trang thai fixed sau khi thu tu cot thay doi tu cau hinh.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function syncAndPersistFixedColumns(orderedColumns = getCurrentOrderedColumns()) {
+  const changedColumns = syncFixedColumns(orderedColumns)
+  changedColumns.forEach((column) => {
+    enqueuePersistColumn(column, {
+      IsFixed: column.isFixed,
+      FixedPosition: column.fixedPosition,
+    })
+  })
+}
+
+/// Lay danh sach cot theo dung thu tu dang hien thi tren grid.
+/// <param name="gridInstance">Instance grid neu co.</param>
+/// <returns>Danh sach cot dang hien thi theo thu tu hien tai.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function getCurrentOrderedColumns(gridInstance = null) {
+  const rawGridInstance = gridInstance || dataGridRef.value?.instance
+  const component = typeof rawGridInstance === 'function' ? rawGridInstance() : rawGridInstance
+
+  if (!component) return displayColumns.value
+
+  const orderedColumns = displayColumns.value
+    .map((column) => ({
+      column,
+      visibleIndex: Number(component.columnOption(column.fieldName, 'visibleIndex')),
+    }))
+    .filter((item) => Number.isFinite(item.visibleIndex) && item.visibleIndex >= 0)
+    .sort((a, b) => a.visibleIndex - b.visibleIndex)
+    .map((item) => item.column)
+
+  return orderedColumns.length ? orderedColumns : displayColumns.value
+}
+
+/// Lay danh sach cot visible theo config hien tai, khong phu thuoc cache visibleIndex cua grid.
+/// <returns>Danh sach cot visible theo SortOrder hien tai.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function getConfigOrderedVisibleColumns() {
+  return [...displayColumns.value]
+}
+
+/// Lay vi tri hien thi hien tai cua cot.
+/// <param name="fieldName">Ten field can kiem tra.</param>
+/// <returns>Vi tri hien thi cua cot.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function getColumnDisplayIndex(fieldName, orderedColumns = getCurrentOrderedColumns()) {
+  return orderedColumns.findIndex((column) => column.fieldName === fieldName)
 }
 
 /// Dua thay doi cau hinh cot vao hang doi luu.
@@ -2071,6 +2203,10 @@ onBeforeUnmount(() => {
   box-shadow: none !important;
 }
 
+.ms-table .dx-datagrid-content .dx-datagrid-table {
+  min-width: 100% !important;
+}
+
 .ms-table .dx-header-row > td.dx-datagrid-sticky-column-left,
 .ms-table .dx-header-row > td.dx-datagrid-sticky-column-right,
 .ms-table .dx-header-row > td.dx-datagrid-sticky-column-border-left,
@@ -2250,6 +2386,11 @@ onBeforeUnmount(() => {
   height: 36px;
 }
 
+.ms-table__fill-space {
+  width: 100%;
+  height: 36px;
+}
+
 .ms-table__checkbox {
   width: 16px;
   height: 16px;
@@ -2301,6 +2442,20 @@ onBeforeUnmount(() => {
 .ms-table .dx-focused > td:first-child {
   outline: none !important;
   box-shadow: none !important;
+}
+
+.ms-table .dx-datagrid-focus-overlay {
+  display: none !important;
+}
+
+.ms-table .dx-row > td.dx-focused,
+.ms-table .dx-row > td:focus,
+.ms-table .dx-row > td:focus-visible,
+.ms-table .dx-cell-focus-disabled:focus,
+.ms-table .dx-cell-focus-disabled:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: #d5d7da !important;
 }
 
 /* Toàn bộ text data/header căn trái, riêng checkbox vẫn center */

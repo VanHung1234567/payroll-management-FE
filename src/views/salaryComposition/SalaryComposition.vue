@@ -367,7 +367,8 @@ const debouncedSearchKeyword = ref('')
 const selectedRows = ref<any[]>([])
 const clearSelectionSignal = ref(0)
 const isAdvancedFilterOpen = ref(false)
-const advancedFilters = ref<any[]>([])
+const ADVANCED_FILTER_STORAGE_KEY = 'salary_composition_advanced_filters'
+const advancedFilters = ref<any[]>(readStoredAdvancedFilters(ADVANCED_FILTER_STORAGE_KEY))
 const isAddMenuOpen = ref(false)
 const addActionRef = ref<HTMLElement | null>(null)
 const isSystemPickerOpen = ref(false)
@@ -456,7 +457,7 @@ const statusOptions = computed(() => [
 ])
 const salaryCompositionTypeOptions = computed(() => [
   {
-    typeName: 'Tất cả',
+    label: 'Tất cả',
     value: null,
   },
 
@@ -475,6 +476,7 @@ const selectedHasInactive = computed(() => selectedRows.value.some((row) => !isA
 const hasSystemPickerSelection = computed(() => systemPickerSelectedRows.value.length > 0)
 const isCopyingFromSystem = computed(() => copyFromSystemMutation.isPending.value)
 const hasAppliedAdvancedFilters = computed(() => advancedFilters.value.length > 0)
+const effectiveAdvancedFilters = computed(() => advancedFilters.value.filter(isEffectiveAdvancedFilter))
 const taxTypeOptions = [
   { value: 1, label: 'Chịu thuế' },
   { value: 2, label: 'Miễn thuế toàn phần' },
@@ -556,10 +558,20 @@ const appliedAdvancedFilterTags = computed(() =>
       fieldName: filter.fieldName,
       label: field?.label || filter.fieldName,
       operatorLabel: operatorLabelMap[filter.operator] || filter.operator,
-      valueLabel: valueOption?.label ?? (filter.value === '' ? '' : String(filter.value)),
+      valueLabel: getAdvancedFilterTagValue(filter, valueOption),
     }
   }),
 )
+
+function getAdvancedFilterTagValue(filter: any, valueOption: any) {
+  if (filter.operator === 'empty' || filter.operator === 'notEmpty') return ''
+  return valueOption?.label ?? (filter.value === '' ? '"Rỗng"' : String(filter.value))
+}
+
+function isEffectiveAdvancedFilter(filter: any) {
+  if (filter.operator === 'empty' || filter.operator === 'notEmpty') return true
+  return filter.value !== null && filter.value !== undefined && filter.value !== ''
+}
 
 watch(searchKeyword, (value) => {
   if (searchDebounceTimer) {
@@ -570,6 +582,14 @@ watch(searchKeyword, (value) => {
     debouncedSearchKeyword.value = value
   }, 300)
 })
+
+watch(
+  advancedFilters,
+  (filters) => {
+    writeStoredAdvancedFilters(ADVANCED_FILTER_STORAGE_KEY, filters)
+  },
+  { deep: true },
+)
 
 watch(systemPickerSearchKeyword, (value) => {
   if (systemPickerSearchDebounceTimer) {
@@ -608,8 +628,8 @@ const salaryCompositionFilters = computed(() => {
     filters.organizationIDs = selectedOrganizationIds.value.join(';')
   }
 
-  if (advancedFilters.value.length) {
-    filters.advancedFilters = advancedFilters.value
+  if (effectiveAdvancedFilters.value.length) {
+    filters.advancedFilters = effectiveAdvancedFilters.value
   }
 
   return filters
@@ -679,6 +699,35 @@ function clearAdvancedFilters() {
 function removeAdvancedFilter(fieldName: string) {
   advancedFilters.value = advancedFilters.value.filter((filter) => filter.fieldName !== fieldName)
   clearSelectedRows()
+}
+
+/// Doc bo loc nang cao da luu trong localStorage.
+/// <param name="storageKey">Key localStorage can doc.</param>
+/// <returns>Danh sach bo loc nang cao.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function readStoredAdvancedFilters(storageKey: string) {
+  try {
+    const value = window.localStorage.getItem(storageKey)
+    if (!value) return []
+    const filters = JSON.parse(value)
+    return Array.isArray(filters) ? filters : []
+  } catch {
+    return []
+  }
+}
+
+/// Luu bo loc nang cao vao localStorage.
+/// <param name="storageKey">Key localStorage can luu.</param>
+/// <param name="filters">Danh sach bo loc nang cao.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function writeStoredAdvancedFilters(storageKey: string, filters: any[]) {
+  if (!filters.length) {
+    window.localStorage.removeItem(storageKey)
+    return
+  }
+
+  window.localStorage.setItem(storageKey, JSON.stringify(filters))
 }
 
 /// Lay Id thanh phan luong tu dong du lieu.
@@ -1162,7 +1211,7 @@ function handleDocumentMouseDown(event: MouseEvent) {
   position: absolute;
   top: calc(100% + 4px);
   right: -8px;
-  z-index: 100;
+  z-index: 300;
   width: 224px;
   padding: 8px 0;
   border-radius: 8px;

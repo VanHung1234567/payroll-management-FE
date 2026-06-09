@@ -130,7 +130,7 @@ const gridConfigColumns = computed(() => {
 
   return columns
     .map(normalizeColumn)
-    .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
+    .sort((a: { sortOrder: any }, b: { sortOrder: any }) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
 })
 
 const saveColumnSettingsMutation = useMutation({

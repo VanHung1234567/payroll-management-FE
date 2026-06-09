@@ -533,6 +533,52 @@ const findNode = (nodes, id) => {
   return null
 }
 
+/// Mo rong danh sach id dang chon de bao gom ca node con khi node cha duoc chon.
+/// <param name="value">Danh sach id dang chon.</param>
+/// <returns>Danh sach id da gom du node con.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+const expandSelectedValues = (value) => {
+  const next = new Set(value.map((id) => normalizeId(id)).filter(Boolean))
+
+  Array.from(next).forEach((id) => {
+    const node = findNode(tree.value, id)
+    if (!node) return
+    getDescendantIds(node).forEach((descendantId) => next.add(descendantId))
+  })
+
+  return Array.from(next)
+}
+
+/// Dong bo v-model khi dau vao chi co id cha nhung cay da co cac node con.
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+const syncSelectedDescendants = () => {
+  if (!props.modelValue.length || !tree.value.length) return
+
+  const expandedValues = expandSelectedValues(props.modelValue)
+  if (isSameIdList(expandedValues, props.modelValue)) return
+  updateValue(expandedValues)
+}
+
+/// So sanh hai danh sach id sau khi chuan hoa.
+/// <param name="left">Danh sach id thu nhat.</param>
+/// <param name="right">Danh sach id thu hai.</param>
+/// <returns>true neu hai danh sach giong nhau.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+const isSameIdList = (left, right) => {
+  const leftText = left.map(normalizeId).sort().join(';')
+  const rightText = right.map(normalizeId).sort().join(';')
+  return leftText === rightText
+}
+
+watch(
+  [() => props.modelValue, tree],
+  () => {
+    syncSelectedDescendants()
+  },
+  { immediate: true, deep: true },
+)
+
 /// Kiem tra option co node cha dang duoc chon hay khong de an tag trung lap.
 /// <param name="id">Id cua option can kiem tra.</param>
 /// <returns>true neu co node cha dang chon, nguoc lai false.</returns>

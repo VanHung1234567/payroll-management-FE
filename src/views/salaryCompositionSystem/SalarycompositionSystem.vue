@@ -157,7 +157,8 @@ const debouncedSearchKeyword = ref('')
 const selectedRows = ref([])
 const clearSelectionSignal = ref(0)
 const isAdvancedFilterOpen = ref(false)
-const advancedFilters = ref([])
+const ADVANCED_FILTER_STORAGE_KEY = 'salary_composition_system_advanced_filters'
+const advancedFilters = ref(readStoredAdvancedFilters(ADVANCED_FILTER_STORAGE_KEY))
 const copyRows = ref([])
 const isCopyConfirmModalOpen = ref(false)
 const toast = ref({
@@ -179,6 +180,7 @@ const hasSelectedRows = computed(() => selectedRows.value.length > 0)
 const isSingleCopyRow = computed(() => copyRows.value.length === 1)
 const copyTargetName = computed(() => getSalaryCompositionSystemName(copyRows.value[0]))
 const hasAppliedAdvancedFilters = computed(() => advancedFilters.value.length > 0)
+const effectiveAdvancedFilters = computed(() => advancedFilters.value.filter(isEffectiveAdvancedFilter))
 const taxTypeOptions = [
   { value: 1, label: 'Chịu thuế' },
   { value: 2, label: 'Miễn thuế toàn phần' },
@@ -255,10 +257,20 @@ const appliedAdvancedFilterTags = computed(() =>
       fieldName: filter.fieldName,
       label: field?.label || filter.fieldName,
       operatorLabel: operatorLabelMap[filter.operator] || filter.operator,
-      valueLabel: valueOption?.label ?? (filter.value === '' ? '' : String(filter.value)),
+      valueLabel: getAdvancedFilterTagValue(filter, valueOption),
     }
   }),
 )
+
+function getAdvancedFilterTagValue(filter, valueOption) {
+  if (filter.operator === 'empty' || filter.operator === 'notEmpty') return ''
+  return valueOption?.label ?? (filter.value === '' ? '"Rỗng"' : String(filter.value))
+}
+
+function isEffectiveAdvancedFilter(filter) {
+  if (filter.operator === 'empty' || filter.operator === 'notEmpty') return true
+  return filter.value !== null && filter.value !== undefined && filter.value !== ''
+}
 
 const copyFromSystemMutation = useMutation({
   mutationFn: (rows) =>
@@ -284,6 +296,14 @@ watch(searchKeyword, (value) => {
   }, 300)
 })
 
+watch(
+  advancedFilters,
+  (filters) => {
+    writeStoredAdvancedFilters(ADVANCED_FILTER_STORAGE_KEY, filters)
+  },
+  { deep: true },
+)
+
 onBeforeUnmount(() => {
   if (searchDebounceTimer) {
     window.clearTimeout(searchDebounceTimer)
@@ -297,8 +317,8 @@ const salaryCompositionSystemFilters = computed(() => {
     filters.salaryCompositionType = selectedSalaryCompositionTypeId.value
   }
 
-  if (advancedFilters.value.length) {
-    filters.advancedFilters = advancedFilters.value
+  if (effectiveAdvancedFilters.value.length) {
+    filters.advancedFilters = effectiveAdvancedFilters.value
   }
 
   return filters
@@ -342,6 +362,35 @@ function clearAdvancedFilters() {
 function removeAdvancedFilter(fieldName) {
   advancedFilters.value = advancedFilters.value.filter((filter) => filter.fieldName !== fieldName)
   clearSelectedRows()
+}
+
+/// Doc bo loc nang cao da luu trong localStorage.
+/// <param name="storageKey">Key localStorage can doc.</param>
+/// <returns>Danh sach bo loc nang cao.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function readStoredAdvancedFilters(storageKey) {
+  try {
+    const value = window.localStorage.getItem(storageKey)
+    if (!value) return []
+    const filters = JSON.parse(value)
+    return Array.isArray(filters) ? filters : []
+  } catch {
+    return []
+  }
+}
+
+/// Luu bo loc nang cao vao localStorage.
+/// <param name="storageKey">Key localStorage can luu.</param>
+/// <param name="filters">Danh sach bo loc nang cao.</param>
+/// <returns>Khong tra ve du lieu.</returns>
+/// CREATED BY: VVHung (09/06/2026)
+function writeStoredAdvancedFilters(storageKey, filters) {
+  if (!filters.length) {
+    window.localStorage.removeItem(storageKey)
+    return
+  }
+
+  window.localStorage.setItem(storageKey, JSON.stringify(filters))
 }
 
 /// Mo modal xac nhan dua thanh phan he thong vao danh sach su dung.

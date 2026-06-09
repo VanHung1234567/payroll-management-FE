@@ -8,7 +8,7 @@
         </button>
       </div>
 
-      <MsInput v-model="searchKeyword" placeholder="Tìm kiếm">
+      <MsInput ref="filterSearchInputRef" v-model="searchKeyword" placeholder="Tìm kiếm">
         <template #prefix>
           <span class="mi-search"></span>
         </template>
@@ -69,6 +69,7 @@
             variant="form"
             width="100%"
             menu-width="100%"
+            :placement="getValueSelectPlacement(field.fieldName)"
             @update:model-value="setDraftValue(field.fieldName, $event)"
           />
 
@@ -118,13 +119,13 @@ type FilterField = {
   fieldName: string
   label: string
   type?: 'text' | 'enum'
-  options?: Array<{ label: string; value: string | number | boolean | null }>
+  options?: Array<{ label: string; value: string | number | boolean }>
 }
 
 type AdvancedFilter = {
   fieldName: string
   operator: string
-  value: string | number | boolean | null
+  value: string | number | boolean
 }
 
 const props = defineProps<{
@@ -142,6 +143,7 @@ const emit = defineEmits<{
 const searchKeyword = ref('')
 const debouncedSearchKeyword = ref('')
 const draftFilters = reactive<Record<string, AdvancedFilter>>({})
+const filterSearchInputRef = ref<InstanceType<typeof MsInput> | null>(null)
 let searchDebounceTimer: number | null = null
 
 const TEXT_OPERATORS = [
@@ -180,6 +182,9 @@ watch(
   (isOpen) => {
     if (isOpen) {
       syncDraftFromApplied()
+      nextTick(() => {
+        filterSearchInputRef.value?.focus?.()
+      })
       return
     }
 
@@ -282,10 +287,6 @@ function shouldShowValueControl(fieldName: string) {
 
 function applyFilters() {
   const nextFilters = Object.values(draftFilters)
-    .filter((filter) => {
-      if (EMPTY_OPERATORS.has(filter.operator)) return true
-      return filter.value !== null && filter.value !== undefined && filter.value !== ''
-    })
     .map((filter) => ({
       fieldName: filter.fieldName,
       operator: filter.operator,
@@ -299,16 +300,29 @@ async function focusFieldValueControl(fieldName: string) {
   await nextTick()
 
   const fieldElement = document.querySelector(`[data-filter-field="${fieldName}"]`)
-  const focusTarget =
-    fieldElement?.querySelector('.ms-grid-filter__value-control input') ||
-    fieldElement?.querySelector('.ms-grid-filter__value-control button')
+  const inputTarget = fieldElement?.querySelector('.ms-grid-filter__value-control input')
+  if (inputTarget) {
+    ;(inputTarget as HTMLElement).focus?.()
+    return
+  }
 
+  const selectTrigger = fieldElement?.querySelector('.ms-grid-filter__value-control button')
+  if (selectTrigger) {
+    ;(selectTrigger as HTMLElement).focus?.()
+    return
+  }
+
+  const focusTarget = fieldElement?.querySelector('.ms-grid-filter__value-control input')
   ;(focusTarget as HTMLElement | null)?.focus?.()
 }
 
 function normalizeFilterValue(value: string | number | boolean | null) {
   if (value === null || value === undefined) return ''
   return String(value)
+}
+
+function getValueSelectPlacement(fieldName: string) {
+  return ['CreatedSource', 'PayslipDisplayType'].includes(fieldName) ? 'top' : 'bottom'
 }
 
 function clearFilters() {
