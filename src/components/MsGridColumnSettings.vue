@@ -243,6 +243,8 @@ onBeforeUnmount(() => {
   }
 })
 
+/// Đồng bộ danh sách cột nháp từ props để người dùng chỉnh sửa trước khi lưu.
+/// CREATED BY: VVHung (11/6/2026)
 function syncDraftColumns() {
   draftColumns.value = props.columns
     .map((column) => ({
@@ -253,6 +255,8 @@ function syncDraftColumns() {
     .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
 }
 
+/// Đặt lại ô tìm kiếm cấu hình cột về trạng thái rỗng.
+/// CREATED BY: VVHung (11/6/2026)
 function resetSearch() {
   keyword.value = ''
   debouncedKeyword.value = ''
@@ -262,15 +266,24 @@ function resetSearch() {
   }
 }
 
+/// Bật hoặc tắt hiển thị một cột trong danh sách cấu hình.
+/// <param name="column">Cột cần thay đổi trạng thái hiển thị.</param>
+/// CREATED BY: VVHung (11/6/2026)
 function toggleColumn(column) {
   if (column.visible && visibleDraftColumnCount.value <= 1) return
   column.visible = !column.visible
 }
 
+/// Kiểm tra cột hiện tại có phải cột hiển thị cuối cùng hay không.
+/// <param name="column">Cột cần kiểm tra.</param>
+/// <returns>true nếu đây là cột hiển thị cuối cùng.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function isLastVisibleColumn(column) {
   return column.visible && visibleDraftColumnCount.value <= 1
 }
 
+/// Khôi phục cấu hình cột về trạng thái mặc định và lưu ngay.
+/// CREATED BY: VVHung (11/6/2026)
 function resetDefaultColumns() {
   draftColumns.value = draftColumns.value
     .map((column) => ({
@@ -284,27 +297,43 @@ function resetDefaultColumns() {
   emit('save', draftColumns.value)
 }
 
+/// Cập nhật lại sortOrder theo thứ tự đang hiển thị trong popup.
+/// CREATED BY: VVHung (11/6/2026)
 function syncSortOrder() {
   draftColumns.value.forEach((column, index) => {
     column.sortOrder = index + 1
   })
 }
 
+/// Lưu cấu hình cột nếu còn ít nhất một cột được hiển thị.
+/// CREATED BY: VVHung (11/6/2026)
 function saveColumns() {
   if (!canSaveColumns.value) return
   syncSortOrder()
   emit('save', draftColumns.value)
 }
 
+/// Chuẩn hóa tên field về chữ thường để so sánh ổn định.
+/// <param name="fieldName">Tên field cần chuẩn hóa.</param>
+/// <returns>Tên field sau khi chuẩn hóa.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function normalizeFieldName(fieldName) {
   return String(fieldName || '').toLowerCase()
 }
 
+/// Lấy thứ tự mặc định của cột theo danh sách cấu hình chuẩn.
+/// <param name="column">Cột cần lấy thứ tự mặc định.</param>
+/// <returns>Thứ tự mặc định của cột.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function getDefaultSortOrder(column) {
   const fieldName = normalizeFieldName(column.apiFieldName || column.fieldName)
   return defaultOrderMap.value.get(fieldName) ?? Number(column.sortOrder || 999)
 }
 
+/// Chuẩn hóa giá trị boolean từ dữ liệu API hoặc props.
+/// <param name="value">Giá trị cần chuẩn hóa.</param>
+/// <returns>Giá trị boolean sau khi chuẩn hóa.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function normalizeBoolean(value) {
   if (typeof value === 'string') return value.toLowerCase() === 'true' || value === '1'
   return Boolean(value)

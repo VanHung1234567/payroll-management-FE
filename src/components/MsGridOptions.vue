@@ -1,8 +1,8 @@
 <template>
-  <div class="grid-options">
-    <div class="flex items-center justify-between w-full h-full">
-      <div class="flex items-center gap-8">
-        <div class="w-300">
+  <div class="grid-options" :class="{ 'is-filter-open': filterOpen }">
+    <div class="grid-options__inner">
+      <div class="grid-options__left">
+        <div class="grid-options__search">
           <MsInput
             :model-value="search"
             placeholder="Tìm kiếm"
@@ -18,7 +18,7 @@
         <slot v-else name="options" />
       </div>
 
-      <div v-if="!bulkMode" class="flex items-center gap-8">
+      <div v-if="!bulkMode" class="grid-options__actions">
         <MsTooltip content="Bộ lọc">
           <MsButton
             width="32px"
@@ -163,26 +163,42 @@ onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentMouseDown)
 })
 
+/// Mở hoặc đóng popup tùy chỉnh cột của grid.
+/// CREATED BY: VVHung (11/6/2026)
 function toggleColumnSettings() {
   isColumnSettingsOpen.value = !isColumnSettingsOpen.value
 }
 
+/// Đóng popup tùy chỉnh cột khi người dùng click ra ngoài.
+/// <param name="event">Sự kiện mousedown trên document.</param>
+/// CREATED BY: VVHung (11/6/2026)
 function handleDocumentMouseDown(event: MouseEvent) {
   if (!isColumnSettingsOpen.value) return
   if (settingRef.value?.contains(event.target as Node)) return
   isColumnSettingsOpen.value = false
 }
 
+/// Lưu cấu hình cột mới và cập nhật cache để grid hiển thị ngay.
+/// <param name="columns">Danh sách cột sau khi người dùng tùy chỉnh.</param>
+/// CREATED BY: VVHung (11/6/2026)
 function saveColumnSettings(columns: any[]) {
   isColumnSettingsOpen.value = false
   updateGridConfigCache(columns)
   saveColumnSettingsMutation.mutate(columns)
 }
 
+/// Chuẩn hóa response cấu hình grid về payload sử dụng trong component.
+/// <param name="response">Response trả về từ API hoặc cache Vue Query.</param>
+/// <returns>Payload cấu hình grid.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function normalizeResponseData(response: any) {
   return response?.data?.data ?? response?.data ?? {}
 }
 
+/// Chuẩn hóa một cột cấu hình từ backend về format frontend.
+/// <param name="column">Cấu hình cột cần chuẩn hóa.</param>
+/// <returns>Cấu hình cột sau khi chuẩn hóa.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function normalizeColumn(column: any) {
   const rawFieldName = column.fieldName || column.FieldName
 
@@ -196,6 +212,9 @@ function normalizeColumn(column: any) {
   }
 }
 
+/// Cập nhật cache cấu hình cột để popup và grid dùng cùng thứ tự mới.
+/// <param name="columns">Danh sách cột mới cần ghi vào cache.</param>
+/// CREATED BY: VVHung (11/6/2026)
 function updateGridConfigCache(columns: any[]) {
   const nextColumnMap = new Map(
     columns.map((column, index) => [
@@ -229,12 +248,21 @@ function updateGridConfigCache(columns: any[]) {
   })
 }
 
+/// Lấy danh sách cột từ payload cấu hình grid.
+/// <param name="payload">Payload cấu hình grid.</param>
+/// <returns>Danh sách cột cấu hình.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function getGridConfigColumns(payload: any) {
   if (Array.isArray(payload)) return payload
   if (Array.isArray(payload?.data)) return payload.data
   return []
 }
 
+/// Thay danh sách cột trong cache nhưng vẫn giữ nguyên cấu trúc response cũ.
+/// <param name="oldData">Dữ liệu cache hiện tại.</param>
+/// <param name="nextColumns">Danh sách cột mới.</param>
+/// <returns>Dữ liệu cache sau khi thay danh sách cột.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function replaceGridConfigColumns(oldData: any, nextColumns: any[]) {
   if (Array.isArray(oldData)) return nextColumns
   if (Array.isArray(oldData?.data)) return { ...oldData, data: nextColumns }
@@ -257,6 +285,10 @@ function replaceGridConfigColumns(oldData: any, nextColumns: any[]) {
   }
 }
 
+/// Chuẩn hóa giá trị boolean từ backend hoặc form.
+/// <param name="value">Giá trị cần chuẩn hóa.</param>
+/// <returns>Giá trị boolean sau khi chuẩn hóa.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function normalizeBoolean(value: any) {
   if (typeof value === 'string') return value.toLowerCase() === 'true' || value === '1'
   return Boolean(value)
@@ -269,8 +301,79 @@ function normalizeBoolean(value: any) {
   background-color: #fff;
   position: relative;
   z-index: 260;
-  height: 56px;
+  min-height: 56px;
   border-radius: 8px 8px 0 0;
+}
+
+.grid-options__inner {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.grid-options__left {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grid-options__search {
+  width: 300px;
+  min-width: 180px;
+  flex: 0 1 300px;
+}
+
+.grid-options__actions {
+  min-width: 72px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.grid-options.is-filter-open .grid-options__inner {
+  align-items: flex-start;
+}
+
+.grid-options.is-filter-open .grid-options__left {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.grid-options.is-filter-open .grid-options__search {
+  width: 210px;
+  flex-basis: 210px;
+}
+
+.grid-options.is-filter-open :deep(.ms-tree-select) {
+  max-width: min(330px, 100%);
+}
+
+@media (max-width: 1366px) {
+  .grid-options {
+    padding: 12px;
+  }
+
+  .grid-options__search {
+    width: 200px;
+    flex-basis: 200px;
+  }
+
+  .grid-options.is-filter-open .grid-options__search {
+    width: 200px;
+    flex-basis: 200px;
+  }
+
+  .grid-options.is-filter-open :deep(.ms-tree-select) {
+    max-width: 270px;
+  }
 }
 
 .grid-options__setting {

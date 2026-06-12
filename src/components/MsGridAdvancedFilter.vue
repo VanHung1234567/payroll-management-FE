@@ -124,7 +124,7 @@ type FilterField = {
 
 type AdvancedFilter = {
   fieldName: string
-  operator: string
+  operator: string | number
   value: string | number | boolean
 }
 
@@ -146,25 +146,52 @@ const draftFilters = reactive<Record<string, AdvancedFilter>>({})
 const filterSearchInputRef = ref<InstanceType<typeof MsInput> | null>(null)
 let searchDebounceTimer: number | null = null
 
-const TEXT_OPERATORS = [
-  { value: 'contains', label: 'Chứa' },
-  { value: 'notContains', label: 'Không chứa' },
-  { value: 'equals', label: 'Bằng' },
-  { value: 'notEquals', label: 'Không bằng' },
-  { value: 'startsWith', label: 'Bắt đầu bằng' },
-  { value: 'endsWith', label: 'Kết thúc bằng' },
-  { value: 'empty', label: 'Trống' },
-  { value: 'notEmpty', label: 'Không trống' },
+const FILTER_OPERATOR = {
+  Contains: 1,
+  NotContains: 2,
+  Equals: 3,
+  NotEquals: 4,
+  StartsWith: 5,
+  EndsWith: 6,
+  Empty: 7,
+  NotEmpty: 8,
+}
+
+const LEGACY_OPERATOR_MAP: Record<string, number> = {
+  contains: FILTER_OPERATOR.Contains,
+  notContains: FILTER_OPERATOR.NotContains,
+  equals: FILTER_OPERATOR.Equals,
+  notEquals: FILTER_OPERATOR.NotEquals,
+  startsWith: FILTER_OPERATOR.StartsWith,
+  endsWith: FILTER_OPERATOR.EndsWith,
+  empty: FILTER_OPERATOR.Empty,
+  notEmpty: FILTER_OPERATOR.NotEmpty,
+}
+
+const FULL_TEXT_OPERATOR_FIELDS = new Set([
+  'SalaryCompositionCode',
+  'SalaryCompositionName',
+  'NormFormula',
+])
+
+const FULL_TEXT_OPERATORS = [
+  { value: FILTER_OPERATOR.Contains, label: 'Chứa' },
+  { value: FILTER_OPERATOR.NotContains, label: 'Không chứa' },
+  { value: FILTER_OPERATOR.Equals, label: 'Bằng' },
+  { value: FILTER_OPERATOR.StartsWith, label: 'Bắt đầu bằng' },
+  { value: FILTER_OPERATOR.EndsWith, label: 'Kết thúc bằng' },
+  { value: FILTER_OPERATOR.Empty, label: 'Trống' },
+  { value: FILTER_OPERATOR.NotEmpty, label: 'Không trống' },
 ]
 
-const ENUM_OPERATORS = [
-  { value: 'equals', label: 'Bằng' },
-  { value: 'notEquals', label: 'Khác' },
-  { value: 'empty', label: 'Trống' },
-  { value: 'notEmpty', label: 'Không trống' },
+const SIMPLE_OPERATORS = [
+  { value: FILTER_OPERATOR.Equals, label: 'Bằng' },
+  { value: FILTER_OPERATOR.NotEquals, label: 'Khác' },
+  { value: FILTER_OPERATOR.Empty, label: 'Trống' },
+  { value: FILTER_OPERATOR.NotEmpty, label: 'Không trống' },
 ]
 
-const EMPTY_OPERATORS = new Set(['empty', 'notEmpty'])
+const EMPTY_OPERATORS = new Set([FILTER_OPERATOR.Empty, FILTER_OPERATOR.NotEmpty])
 
 const visibleFields = computed(() => {
   const keyword = debouncedSearchKeyword.value.trim().toLowerCase()
@@ -212,6 +239,8 @@ onBeforeUnmount(() => {
   if (searchDebounceTimer) window.clearTimeout(searchDebounceTimer)
 })
 
+/// Đồng bộ bộ lọc nháp từ danh sách bộ lọc đang áp dụng.
+/// CREATED BY: VVHung (11/6/2026)
 function syncDraftFromApplied() {
   Object.keys(draftFilters).forEach((key) => {
     delete draftFilters[key]
@@ -220,32 +249,57 @@ function syncDraftFromApplied() {
   props.filters.forEach((filter) => {
     draftFilters[filter.fieldName] = {
       fieldName: filter.fieldName,
-      operator: filter.operator,
+      operator: normalizeOperator(filter.operator),
       value: filter.value ?? '',
     }
   })
 }
 
+/// Kiểm tra một trường lọc đã được chọn hay chưa.
+/// <param name="fieldName">Tên field cần kiểm tra.</param>
+/// <returns>true nếu field đang được chọn.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function isFieldChecked(fieldName: string) {
   return Boolean(draftFilters[fieldName])
 }
 
+/// Lấy danh sách toán tử phù hợp với kiểu dữ liệu của trường lọc.
+/// <param name="field">Cấu hình trường lọc.</param>
+/// <returns>Danh sách toán tử có thể chọn.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function getOperatorOptions(field: FilterField) {
-  return field.type === 'enum' ? ENUM_OPERATORS : TEXT_OPERATORS
+  return FULL_TEXT_OPERATOR_FIELDS.has(field.fieldName) ? FULL_TEXT_OPERATORS : SIMPLE_OPERATORS
 }
 
+/// Lấy toán tử mặc định khi người dùng chọn một trường lọc.
+/// <param name="field">Cấu hình trường lọc.</param>
+/// <returns>Toán tử mặc định của trường lọc.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function getDefaultOperator(field: FilterField) {
-  return field.type === 'enum' ? 'equals' : 'contains'
+  return FULL_TEXT_OPERATOR_FIELDS.has(field.fieldName)
+    ? FILTER_OPERATOR.Contains
+    : FILTER_OPERATOR.Equals
 }
 
+/// Lấy giá trị mặc định của điều kiện lọc mới.
+/// <param name="field">Cấu hình trường lọc.</param>
+/// <returns>Giá trị mặc định của điều kiện lọc.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function getDefaultValue(field: FilterField) {
   return ''
 }
 
+/// Lấy điều kiện lọc nháp của một field.
+/// <param name="fieldName">Tên field cần lấy điều kiện.</param>
+/// <returns>Điều kiện lọc nháp của field.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function getDraft(fieldName: string) {
-  return draftFilters[fieldName] || { fieldName, operator: 'contains', value: '' }
+  return draftFilters[fieldName] || { fieldName, operator: FILTER_OPERATOR.Contains, value: '' }
 }
 
+/// Bật hoặc tắt một trường trong bộ lọc nâng cao.
+/// <param name="field">Cấu hình trường lọc cần xử lý.</param>
+/// CREATED BY: VVHung (11/6/2026)
 function toggleField(field: FilterField) {
   if (draftFilters[field.fieldName]) {
     delete draftFilters[field.fieldName]
@@ -260,12 +314,16 @@ function toggleField(field: FilterField) {
   focusFieldValueControl(field.fieldName)
 }
 
-function setDraftOperator(field: FilterField, operator: string) {
+/// Cập nhật toán tử của điều kiện lọc đang chọn.
+/// <param name="field">Cấu hình trường lọc.</param>
+/// <param name="operator">Toán tử mới.</param>
+/// CREATED BY: VVHung (11/6/2026)
+function setDraftOperator(field: FilterField, operator: string | number) {
   const draft = draftFilters[field.fieldName]
   if (!draft) return
 
-  draft.operator = operator
-  if (EMPTY_OPERATORS.has(operator)) {
+  draft.operator = normalizeOperator(operator)
+  if (EMPTY_OPERATORS.has(draft.operator)) {
     draft.value = ''
     applyFilters()
     return
@@ -275,27 +333,40 @@ function setDraftOperator(field: FilterField, operator: string) {
   focusFieldValueControl(field.fieldName)
 }
 
+/// Cập nhật giá trị của điều kiện lọc nháp.
+/// <param name="fieldName">Tên field cần cập nhật.</param>
+/// <param name="value">Giá trị lọc mới.</param>
+/// CREATED BY: VVHung (11/6/2026)
 function setDraftValue(fieldName: string, value: string | number | boolean | null) {
   const draft = draftFilters[fieldName]
   if (!draft) return
   draft.value = normalizeFilterValue(value)
 }
 
+/// Kiểm tra điều kiện lọc có cần hiển thị control nhập giá trị hay không.
+/// <param name="fieldName">Tên field cần kiểm tra.</param>
+/// <returns>true nếu cần hiển thị input hoặc select giá trị.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function shouldShowValueControl(fieldName: string) {
   return !EMPTY_OPERATORS.has(getDraft(fieldName).operator)
 }
 
+/// Áp dụng danh sách bộ lọc nháp ra component cha.
+/// CREATED BY: VVHung (11/6/2026)
 function applyFilters() {
   const nextFilters = Object.values(draftFilters)
     .map((filter) => ({
       fieldName: filter.fieldName,
-      operator: filter.operator,
+      operator: normalizeOperator(filter.operator),
       value: normalizeFilterValue(filter.value),
     }))
 
   emit('apply', nextFilters)
 }
 
+/// Focus vào input hoặc select của trường lọc vừa được chọn.
+/// <param name="fieldName">Tên field cần focus control giá trị.</param>
+/// CREATED BY: VVHung (11/6/2026)
 async function focusFieldValueControl(fieldName: string) {
   await nextTick()
 
@@ -316,15 +387,34 @@ async function focusFieldValueControl(fieldName: string) {
   ;(focusTarget as HTMLElement | null)?.focus?.()
 }
 
+/// Chuẩn hóa giá trị lọc trước khi lưu hoặc gửi lên API.
+/// <param name="value">Giá trị lọc cần chuẩn hóa.</param>
+/// <returns>Giá trị lọc dạng chuỗi.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function normalizeFilterValue(value: string | number | boolean | null) {
   if (value === null || value === undefined) return ''
   return String(value)
 }
 
+/// Chuẩn hóa operator từ dữ liệu cũ dạng chuỗi sang enum backend.
+/// <param name="operator">Toán tử cần chuẩn hóa.</param>
+/// <returns>Giá trị enum operator gửi backend.</returns>
+/// CREATED BY: VVHung (12/6/2026)
+function normalizeOperator(operator: string | number) {
+  if (typeof operator === 'number') return operator
+  return LEGACY_OPERATOR_MAP[operator] ?? FILTER_OPERATOR.Contains
+}
+
+/// Xác định hướng mở dropdown của select giá trị trong bộ lọc.
+/// <param name="fieldName">Tên field cần xác định vị trí dropdown.</param>
+/// <returns>Vị trí mở dropdown.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function getValueSelectPlacement(fieldName: string) {
   return ['CreatedSource', 'PayslipDisplayType'].includes(fieldName) ? 'top' : 'bottom'
 }
 
+/// Xóa toàn bộ điều kiện lọc và đóng panel bộ lọc.
+/// CREATED BY: VVHung (11/6/2026)
 function clearFilters() {
   Object.keys(draftFilters).forEach((key) => {
     delete draftFilters[key]
@@ -335,6 +425,8 @@ function clearFilters() {
   emit('update:modelValue', false)
 }
 
+/// Đóng panel bộ lọc nâng cao.
+/// CREATED BY: VVHung (11/6/2026)
 function closePanel() {
   emit('update:modelValue', false)
 }

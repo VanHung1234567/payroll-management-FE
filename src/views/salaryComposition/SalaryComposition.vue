@@ -405,25 +405,33 @@ const { data: organizationResponse } = useQuery({
   queryFn: () => OrganizationAPI.getAll(),
 })
 
+/// Khởi tạo mutation xóa một thành phần lương và làm mới danh sách sau khi xóa.
+/// CREATED BY: VVHung (11/6/2026)
 const deleteSalaryCompositionMutation = useMutation({
   mutationFn: (id: string | number) => SalaryCompositionAPI.delete(id),
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
     clearSelectedRows()
     showToast('Xóa thành công')
   },
 })
 
+/// Khởi tạo mutation xóa nhiều thành phần lương đã chọn trên grid.
+/// CREATED BY: VVHung (11/6/2026)
 const bulkDeleteSalaryCompositionMutation = useMutation({
   mutationFn: (ids: Array<string | number>) => SalaryCompositionAPI.bulkDelete({ ids }),
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
     clearSelectedRows()
     bulkDeleteRows.value = []
     showToast('Xóa thành công')
   },
 })
 
+/// Khởi tạo mutation cập nhật trạng thái theo dõi/ngừng theo dõi cho các bản ghi.
+/// CREATED BY: VVHung (11/6/2026)
 const changeStatusMutation = useMutation({
   mutationFn: ({ rows, status }: { rows: any[]; status: number }) =>
     SalaryCompositionAPI.updateBulkStatus({
@@ -432,11 +440,14 @@ const changeStatusMutation = useMutation({
     }),
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
     clearSelectedRows()
     showToast('Cập nhật trạng thái thành công')
   },
 })
 
+/// Khởi tạo mutation đưa thành phần lương hệ thống vào danh sách sử dụng.
+/// CREATED BY: VVHung (11/6/2026)
 const copyFromSystemMutation = useMutation({
   mutationFn: (rows: any[]) =>
     SalaryCompositionAPI.copyFromSystem({
@@ -476,7 +487,14 @@ const selectedHasInactive = computed(() => selectedRows.value.some((row) => !isA
 const hasSystemPickerSelection = computed(() => systemPickerSelectedRows.value.length > 0)
 const isCopyingFromSystem = computed(() => copyFromSystemMutation.isPending.value)
 const hasAppliedAdvancedFilters = computed(() => advancedFilters.value.length > 0)
-const effectiveAdvancedFilters = computed(() => advancedFilters.value.filter(isEffectiveAdvancedFilter))
+const effectiveAdvancedFilters = computed(() =>
+  advancedFilters.value
+    .filter(isEffectiveAdvancedFilter)
+    .map((filter) => ({
+      ...filter,
+      operator: normalizeAdvancedFilterOperator(filter.operator),
+    })),
+)
 const taxTypeOptions = [
   { value: 1, label: 'Chịu thuế' },
   { value: 2, label: 'Miễn thuế toàn phần' },
@@ -540,6 +558,14 @@ const advancedFilterFields = computed(() => [
   },
 ])
 const operatorLabelMap: Record<string, string> = {
+  '1': 'Chứa',
+  '2': 'Không chứa',
+  '3': 'Bằng',
+  '4': 'Khác',
+  '5': 'Bắt đầu bằng',
+  '6': 'Kết thúc bằng',
+  '7': 'Trống',
+  '8': 'Không trống',
   contains: 'Chứa',
   notContains: 'Không chứa',
   equals: 'Bằng',
@@ -557,20 +583,54 @@ const appliedAdvancedFilterTags = computed(() =>
     return {
       fieldName: filter.fieldName,
       label: field?.label || filter.fieldName,
-      operatorLabel: operatorLabelMap[filter.operator] || filter.operator,
+      operatorLabel: operatorLabelMap[String(filter.operator)] || filter.operator,
       valueLabel: getAdvancedFilterTagValue(filter, valueOption),
     }
   }),
 )
 
+/// Lấy giá trị hiển thị trên tag của bộ lọc nâng cao.
+/// <param name="filter">Điều kiện lọc đang áp dụng.</param>
+/// <param name="valueOption">Option tương ứng với giá trị lọc.</param>
+/// <returns>Chuỗi giá trị hiển thị trên tag.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function getAdvancedFilterTagValue(filter: any, valueOption: any) {
-  if (filter.operator === 'empty' || filter.operator === 'notEmpty') return ''
+  const operator = normalizeAdvancedFilterOperator(filter.operator)
+  if (operator === 7 || operator === 8) return ''
   return valueOption?.label ?? (filter.value === '' ? '"Rỗng"' : String(filter.value))
 }
 
+/// Kiểm tra điều kiện lọc có đủ dữ liệu để gửi lên API hay không.
+/// <param name="filter">Điều kiện lọc cần kiểm tra.</param>
+/// <returns>true nếu điều kiện lọc có hiệu lực.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function isEffectiveAdvancedFilter(filter: any) {
-  if (filter.operator === 'empty' || filter.operator === 'notEmpty') return true
+  const operator = normalizeAdvancedFilterOperator(filter.operator)
+  if (operator === 7 || operator === 8) return true
   return filter.value !== null && filter.value !== undefined && filter.value !== ''
+}
+
+/// Chuẩn hóa operator của bộ lọc nâng cao sang enum backend.
+/// <param name="operator">Toán tử cần chuẩn hóa.</param>
+/// <returns>Giá trị enum operator.</returns>
+/// CREATED BY: VVHung (12/6/2026)
+function normalizeAdvancedFilterOperator(operator: string | number) {
+  if (typeof operator === 'number') return operator
+
+  const legacyOperatorMap: Record<string, number> = {
+    contains: 1,
+    notContains: 2,
+    equals: 3,
+    notEquals: 4,
+    startsWith: 5,
+    endsWith: 6,
+    empty: 7,
+    notEmpty: 8,
+  }
+
+  const numericOperator = Number(operator)
+  if (Number.isNaN(numericOperator)) return legacyOperatorMap[operator] ?? 1
+  return numericOperator
 }
 
 watch(searchKeyword, (value) => {
@@ -643,17 +703,17 @@ const systemPickerFilters = computed(() => {
   }
 })
 
-/// Lay gia tri trang thai cua ban ghi.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy giá trị trạng thái của bản ghi.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getStatusValue(row: any) {
   return row?.status ?? row?.Status ?? row?.statusName ?? row?.StatusName
 }
 
-/// Kiem tra ban ghi dang o trang thai theo doi hay khong.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// Kiểm tra bản ghi đang ở trạng thái theo dõi hay không.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>true nếu thỏa điều kiện, ngược lại false.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function isActiveStatus(row: any) {
   const value = getStatusValue(row)
@@ -661,49 +721,44 @@ function isActiveStatus(row: any) {
   return Number(value) === 1
 }
 
-/// Bo chon cac dong dang chon tren grid.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Bỏ chọn các dòng đang chọn trên grid.
 /// CREATED BY: VVHung (03/06/2026)
 function clearSelectedRows() {
   clearSelectionSignal.value += 1
 }
 
-/// Mo hoac dong panel bo loc nang cao.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở hoặc đóng panel bộ lọc nâng cao.
 /// CREATED BY: VVHung (03/06/2026)
 function toggleAdvancedFilter() {
   isAdvancedFilterOpen.value = !isAdvancedFilterOpen.value
 }
 
-/// Ap dung danh sach dieu kien bo loc nang cao vao grid.
-/// <param name="filters">Danh sach dieu kien da chon.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Áp dụng danh sách điều kiện bộ lọc nâng cao vào grid.
+/// <param name="filters">Danh sách điều kiện đã chọn.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function applyAdvancedFilters(filters: any[]) {
   advancedFilters.value = filters
   clearSelectedRows()
 }
 
-/// Xoa toan bo bo loc nang cao.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xóa toàn bộ bộ lọc nâng cao.
 /// CREATED BY: VVHung (03/06/2026)
 function clearAdvancedFilters() {
   advancedFilters.value = []
   clearSelectedRows()
 }
 
-/// Xoa mot dieu kien bo loc nang cao theo field.
-/// <param name="fieldName">Ten field can xoa bo loc.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xóa một điều kiện bộ lọc nâng cao theo field.
+/// <param name="fieldName">Tên field cần xóa bộ lọc.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function removeAdvancedFilter(fieldName: string) {
   advancedFilters.value = advancedFilters.value.filter((filter) => filter.fieldName !== fieldName)
   clearSelectedRows()
 }
 
-/// Doc bo loc nang cao da luu trong localStorage.
-/// <param name="storageKey">Key localStorage can doc.</param>
-/// <returns>Danh sach bo loc nang cao.</returns>
+/// Đọc bộ lọc nâng cao đã lưu trong localStorage.
+/// <param name="storageKey">Key localStorage cần đọc.</param>
+/// <returns>Danh sách bộ lọc nâng cao.</returns>
 /// CREATED BY: VVHung (09/06/2026)
 function readStoredAdvancedFilters(storageKey: string) {
   try {
@@ -716,10 +771,9 @@ function readStoredAdvancedFilters(storageKey: string) {
   }
 }
 
-/// Luu bo loc nang cao vao localStorage.
-/// <param name="storageKey">Key localStorage can luu.</param>
-/// <param name="filters">Danh sach bo loc nang cao.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Lưu bộ lọc nâng cao vào localStorage.
+/// <param name="storageKey">Key localStorage cần lưu.</param>
+/// <param name="filters">Danh sách bộ lọc nâng cao.</param>
 /// CREATED BY: VVHung (09/06/2026)
 function writeStoredAdvancedFilters(storageKey: string, filters: any[]) {
   if (!filters.length) {
@@ -730,33 +784,33 @@ function writeStoredAdvancedFilters(storageKey: string, filters: any[]) {
   window.localStorage.setItem(storageKey, JSON.stringify(filters))
 }
 
-/// Lay Id thanh phan luong tu dong du lieu.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy Id thành phần lương từ dòng dữ liệu.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionId(row: any) {
   return row?.salaryCompositionID ?? row?.SalaryCompositionID
 }
 
-/// Lay ten thanh phan luong tu dong du lieu.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy tên thành phần lương từ dòng dữ liệu.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionName(row: any) {
   return row?.salaryCompositionName ?? row?.SalaryCompositionName ?? ''
 }
 
-/// Lay Id thanh phan luong he thong tu dong du lieu.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy Id thành phần lương hệ thống từ dòng dữ liệu.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionSystemId(row: any) {
   return row?.salaryCompositionSystemID ?? row?.SalaryCompositionSystemID
 }
 
-/// Lay nguon tao cua thanh phan luong.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy nguồn tạo của thành phần lương.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getCreatedSource(row: any) {
   return (
@@ -764,9 +818,9 @@ function getCreatedSource(row: any) {
   )
 }
 
-/// Kiem tra thanh phan luong co phai du lieu mac dinh cua he thong khong.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// Kiểm tra thành phần lương có phải dữ liệu mặc định của hệ thống không.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>true nếu thỏa điều kiện, ngược lại false.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function isDefaultSourceRow(row: any) {
   const source = getCreatedSource(row)
@@ -801,8 +855,7 @@ const bulkDefaultNames = computed(() =>
 )
 const hasBulkDeletableRows = computed(() => bulkDeletableRows.value.length > 0)
 
-/// Mo form them moi thanh phan luong.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở form thêm mới thành phần lương.
 /// CREATED BY: VVHung (03/06/2026)
 function openAddForm() {
   formMode.value = 'add'
@@ -811,9 +864,8 @@ function openAddForm() {
   isFormOpen.value = true
 }
 
-/// Mo form chi tiet de sua thanh phan luong.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở form chi tiết để sửa thành phần lương.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function openEditForm(row: any) {
   const id = getSalaryCompositionId(row)
@@ -824,9 +876,8 @@ function openEditForm(row: any) {
   isFormOpen.value = true
 }
 
-/// Mo form nhan ban thanh phan luong tu dong dang chon.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở form nhân bản thành phần lương từ dòng đang chọn.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function openDuplicateForm(row: any) {
   const id = getSalaryCompositionId(row)
@@ -837,8 +888,7 @@ function openDuplicateForm(row: any) {
   isFormOpen.value = true
 }
 
-/// Dong form thanh phan luong va quay lai danh sach.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Đóng form thành phần lương và quay lại danh sách.
 /// CREATED BY: VVHung (03/06/2026)
 function closeForm() {
   isFormOpen.value = false
@@ -847,24 +897,21 @@ function closeForm() {
   editingSalaryCompositionTitle.value = ''
 }
 
-/// Xu ly sau khi form them, sua hoac nhan ban luu thanh cong.
-/// <param name="action">Loai hanh dong vua luu.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xử lý sau khi form thêm, sửa hoặc nhân bản lưu thành công.
+/// <param name="action">Loại hành động vừa lưu.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleFormSaved(action = 'create') {
   showToast(action === 'update' ? 'Cập nhật thành phần lương thành công' : 'Thêm thành công')
 }
 
-/// Xu ly sau khi xoa thanh phan luong tu form chi tiet.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xử lý sau khi xóa thành phần lương từ form chi tiết.
 /// CREATED BY: VVHung (03/06/2026)
 function handleFormDeleted() {
   showToast('Xóa thành công')
 }
 
-/// Hien thi thong bao toast voi noi dung truyen vao.
-/// <param name="message">Noi dung thong bao.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Hiển thị thông báo toast với nội dung truyền vào.
+/// <param name="message">Nội dung thông báo.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function showToast(message: string) {
   toast.value.visible = false
@@ -874,9 +921,8 @@ function showToast(message: string) {
   })
 }
 
-/// Mo modal xac nhan xoa thanh phan luong.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở modal xác nhận xóa thành phần lương.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function openDeleteModal(row: any) {
   deleteTargetRow.value = row
@@ -888,8 +934,7 @@ function openDeleteModal(row: any) {
   isDeleteConfirmModalOpen.value = true
 }
 
-/// Xac nhan xoa thanh phan luong dang chon.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xác nhận xóa thành phần lương đang chọn.
 /// CREATED BY: VVHung (03/06/2026)
 function confirmDeleteSalaryComposition() {
   const id = getSalaryCompositionId(deleteTargetRow.value)
@@ -897,8 +942,7 @@ function confirmDeleteSalaryComposition() {
   deleteSalaryCompositionMutation.mutate(id)
 }
 
-/// Mo modal xac nhan xoa nhieu thanh phan luong.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở modal xác nhận xóa nhiều thành phần lương.
 /// CREATED BY: VVHung (03/06/2026)
 function openBulkDeleteModal() {
   if (!selectedRows.value.length) return
@@ -906,8 +950,7 @@ function openBulkDeleteModal() {
   isBulkDeleteConfirmModalOpen.value = true
 }
 
-/// Xac nhan xoa cac thanh phan luong da chon.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xác nhận xóa các thành phần lương đã chọn.
 /// CREATED BY: VVHung (03/06/2026)
 function confirmBulkDeleteSalaryCompositions() {
   const ids = bulkDeletableRows.value.map(getSalaryCompositionId).filter(Boolean)
@@ -915,9 +958,8 @@ function confirmBulkDeleteSalaryCompositions() {
   bulkDeleteSalaryCompositionMutation.mutate(ids)
 }
 
-/// Mo modal xac nhan chuyen trang thai mot thanh phan luong.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở modal xác nhận chuyển trạng thái một thành phần lương.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function openStatusModal(row: any) {
   statusTargetRows.value = [row]
@@ -925,9 +967,8 @@ function openStatusModal(row: any) {
   isStatusConfirmModalOpen.value = true
 }
 
-/// Mo modal xac nhan chuyen trang thai cac thanh phan luong da chon.
-/// <param name="status">Trang thai can chuyen.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở modal xác nhận chuyển trạng thái các thành phần lương đã chọn.
+/// <param name="status">Trạng thái cần chuyển.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function openBulkStatusModal(status: number) {
   const rows = selectedRows.value.filter((row) =>
@@ -939,8 +980,7 @@ function openBulkStatusModal(status: number) {
   isStatusConfirmModalOpen.value = true
 }
 
-/// Xac nhan chuyen trang thai cac thanh phan luong dang chon.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xác nhận chuyển trạng thái các thành phần lương đang chọn.
 /// CREATED BY: VVHung (03/06/2026)
 function confirmChangeStatus() {
   if (targetStatus.value === null || !statusTargetRows.value.length) return
@@ -950,15 +990,13 @@ function confirmChangeStatus() {
   })
 }
 
-/// Mo hoac dong menu them thanh phan luong.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở hoặc đóng menu thêm thành phần lương.
 /// CREATED BY: VVHung (03/06/2026)
 function toggleAddMenu() {
   isAddMenuOpen.value = !isAddMenuOpen.value
 }
 
-/// Mo popup chon thanh phan luong mac dinh cua he thong.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở popup chọn thành phần lương mặc định của hệ thống.
 /// CREATED BY: VVHung (03/06/2026)
 async function openSystemPicker() {
   isAddMenuOpen.value = false
@@ -968,8 +1006,7 @@ async function openSystemPicker() {
   systemPickerSearchInputRef.value?.focus()
 }
 
-/// Yeu cau dong popup chon thanh phan he thong va kiem tra du lieu dang chon.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Yêu cầu đóng popup chọn thành phần hệ thống và kiểm tra dữ liệu đang chọn.
 /// CREATED BY: VVHung (03/06/2026)
 function requestCloseSystemPicker() {
   if (hasSystemPickerSelection.value) {
@@ -980,8 +1017,7 @@ function requestCloseSystemPicker() {
   closeSystemPicker()
 }
 
-/// Dong popup chon thanh phan he thong va dat lai trang thai chon.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Đóng popup chọn thành phần hệ thống và đặt lại trạng thái chọn.
 /// CREATED BY: VVHung (03/06/2026)
 function closeSystemPicker() {
   isSystemPickerOpen.value = false
@@ -993,24 +1029,21 @@ function closeSystemPicker() {
   systemPickerSelectedRows.value = []
 }
 
-/// Xac nhan thoat popup chon thanh phan he thong ma khong luu lua chon.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xác nhận thoát popup chọn thành phần hệ thống mà không lưu lựa chọn.
 /// CREATED BY: VVHung (03/06/2026)
 function confirmDiscardSystemPicker() {
   closeSystemPicker()
 }
 
-/// Xac nhan dua cac thanh phan he thong da chon vao danh sach su dung.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xác nhận đưa các thành phần hệ thống đã chọn vào danh sách sử dụng.
 /// CREATED BY: VVHung (03/06/2026)
 function confirmSystemPicker() {
   if (!hasSystemPickerSelection.value) return
   copyFromSystemMutation.mutate([...systemPickerSelectedRows.value])
 }
 
-/// Xu ly click ben ngoai de dong menu dang mo.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xử lý click bên ngoài để đóng menu đang mở.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleDocumentMouseDown(event: MouseEvent) {
   const target = event.target as Node
@@ -1042,10 +1075,12 @@ function handleDocumentMouseDown(event: MouseEvent) {
 }
 
 .salary-grid-layout {
-  min-height: 520px;
+  height: 100vh;
+  min-height: 0;
   display: flex;
   gap: 20px;
   align-items: stretch;
+  overflow: hidden;
 }
 
 .salary-grid-main {

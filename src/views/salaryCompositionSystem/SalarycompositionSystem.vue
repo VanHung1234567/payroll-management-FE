@@ -36,6 +36,7 @@
             :options="salaryCompositionTypeOptions"
             label-key="label"
             value-key="value"
+            :width="190"
             :menu-width="172"
           />
         </template>
@@ -128,7 +129,7 @@
       Bạn có chắc chắn muốn đưa các thành phần lương mặc định đã chọn vào danh sách sử dụng không?
     </span>
   </MsModal>
-  <MsToast v-model="toast.visible" type="success" :message="toast.message" />
+  <MsToast v-model="toast.visible" :type="toast.type" :message="toast.message" />
 </template>
 
 <script setup>
@@ -164,6 +165,7 @@ const isCopyConfirmModalOpen = ref(false)
 const toast = ref({
   visible: false,
   message: 'Thêm thành công',
+  type: 'success',
 })
 const queryClient = useQueryClient()
 let searchDebounceTimer = null
@@ -180,7 +182,14 @@ const hasSelectedRows = computed(() => selectedRows.value.length > 0)
 const isSingleCopyRow = computed(() => copyRows.value.length === 1)
 const copyTargetName = computed(() => getSalaryCompositionSystemName(copyRows.value[0]))
 const hasAppliedAdvancedFilters = computed(() => advancedFilters.value.length > 0)
-const effectiveAdvancedFilters = computed(() => advancedFilters.value.filter(isEffectiveAdvancedFilter))
+const effectiveAdvancedFilters = computed(() =>
+  advancedFilters.value
+    .filter(isEffectiveAdvancedFilter)
+    .map((filter) => ({
+      ...filter,
+      operator: normalizeAdvancedFilterOperator(filter.operator),
+    })),
+)
 const taxTypeOptions = [
   { value: 1, label: 'Chịu thuế' },
   { value: 2, label: 'Miễn thuế toàn phần' },
@@ -239,6 +248,14 @@ const advancedFilterFields = computed(() => [
   },
 ])
 const operatorLabelMap = {
+  '1': 'Chứa',
+  '2': 'Không chứa',
+  '3': 'Bằng',
+  '4': 'Khác',
+  '5': 'Bắt đầu bằng',
+  '6': 'Kết thúc bằng',
+  '7': 'Trống',
+  '8': 'Không trống',
   contains: 'Chứa',
   notContains: 'Không chứa',
   equals: 'Bằng',
@@ -256,33 +273,72 @@ const appliedAdvancedFilterTags = computed(() =>
     return {
       fieldName: filter.fieldName,
       label: field?.label || filter.fieldName,
-      operatorLabel: operatorLabelMap[filter.operator] || filter.operator,
+      operatorLabel: operatorLabelMap[String(filter.operator)] || filter.operator,
       valueLabel: getAdvancedFilterTagValue(filter, valueOption),
     }
   }),
 )
 
+/// Lấy giá trị hiển thị trên tag của bộ lọc nâng cao trang hệ thống.
+/// <param name="filter">Điều kiện lọc đang áp dụng.</param>
+/// <param name="valueOption">Option tương ứng với giá trị lọc.</param>
+/// <returns>Chuỗi giá trị hiển thị trên tag.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function getAdvancedFilterTagValue(filter, valueOption) {
-  if (filter.operator === 'empty' || filter.operator === 'notEmpty') return ''
+  const operator = normalizeAdvancedFilterOperator(filter.operator)
+  if (operator === 7 || operator === 8) return ''
   return valueOption?.label ?? (filter.value === '' ? '"Rỗng"' : String(filter.value))
 }
 
+/// Kiểm tra điều kiện lọc có đủ dữ liệu để gửi lên API hay không.
+/// <param name="filter">Điều kiện lọc cần kiểm tra.</param>
+/// <returns>true nếu điều kiện lọc có hiệu lực.</returns>
+/// CREATED BY: VVHung (11/6/2026)
 function isEffectiveAdvancedFilter(filter) {
-  if (filter.operator === 'empty' || filter.operator === 'notEmpty') return true
+  const operator = normalizeAdvancedFilterOperator(filter.operator)
+  if (operator === 7 || operator === 8) return true
   return filter.value !== null && filter.value !== undefined && filter.value !== ''
 }
 
+/// Chuẩn hóa operator của bộ lọc nâng cao sang enum backend.
+/// <param name="operator">Toán tử cần chuẩn hóa.</param>
+/// <returns>Giá trị enum operator.</returns>
+/// CREATED BY: VVHung (12/6/2026)
+function normalizeAdvancedFilterOperator(operator) {
+  if (typeof operator === 'number') return operator
+
+  const legacyOperatorMap = {
+    contains: 1,
+    notContains: 2,
+    equals: 3,
+    notEquals: 4,
+    startsWith: 5,
+    endsWith: 6,
+    empty: 7,
+    notEmpty: 8,
+  }
+
+  const numericOperator = Number(operator)
+  if (Number.isNaN(numericOperator)) return legacyOperatorMap[operator] ?? 1
+  return numericOperator
+}
+
+/// Khởi tạo mutation copy thành phần lương hệ thống sang danh sách thành phần lương sử dụng.
+/// CREATED BY: VVHung (11/6/2026)
 const copyFromSystemMutation = useMutation({
   mutationFn: (rows) =>
     SalaryCompositionAPI.copyFromSystem({
       salaryCompositionSystemIDs: rows.map(getSalaryCompositionSystemId).filter(Boolean),
     }),
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
+    queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition_system'] })
     queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
     clearSelectedRows()
     copyRows.value = []
     showToast('Thêm thành công')
+  },
+  onError: () => {
+    showToast('Đã tồn tại một thành phần lương trùng mã', 'error')
   },
 })
 
@@ -324,49 +380,44 @@ const salaryCompositionSystemFilters = computed(() => {
   return filters
 })
 
-/// Bo chon cac dong dang chon tren grid.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Bỏ chọn các dòng đang chọn trên grid.
 /// CREATED BY: VVHung (03/06/2026)
 function clearSelectedRows() {
   clearSelectionSignal.value += 1
 }
 
-/// Mo hoac dong panel bo loc nang cao.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở hoặc đóng panel bộ lọc nâng cao.
 /// CREATED BY: VVHung (03/06/2026)
 function toggleAdvancedFilter() {
   isAdvancedFilterOpen.value = !isAdvancedFilterOpen.value
 }
 
-/// Ap dung danh sach dieu kien bo loc nang cao vao grid.
-/// <param name="filters">Danh sach dieu kien da chon.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Áp dụng danh sách điều kiện bộ lọc nâng cao vào grid.
+/// <param name="filters">Danh sách điều kiện đã chọn.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function applyAdvancedFilters(filters) {
   advancedFilters.value = filters
   clearSelectedRows()
 }
 
-/// Xoa toan bo bo loc nang cao.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xóa toàn bộ bộ lọc nâng cao.
 /// CREATED BY: VVHung (03/06/2026)
 function clearAdvancedFilters() {
   advancedFilters.value = []
   clearSelectedRows()
 }
 
-/// Xoa mot dieu kien bo loc nang cao theo field.
-/// <param name="fieldName">Ten field can xoa bo loc.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xóa một điều kiện bộ lọc nâng cao theo field.
+/// <param name="fieldName">Tên field cần xóa bộ lọc.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function removeAdvancedFilter(fieldName) {
   advancedFilters.value = advancedFilters.value.filter((filter) => filter.fieldName !== fieldName)
   clearSelectedRows()
 }
 
-/// Doc bo loc nang cao da luu trong localStorage.
-/// <param name="storageKey">Key localStorage can doc.</param>
-/// <returns>Danh sach bo loc nang cao.</returns>
+/// Đọc bộ lọc nâng cao đã lưu trong localStorage.
+/// <param name="storageKey">Key localStorage cần đọc.</param>
+/// <returns>Danh sách bộ lọc nâng cao.</returns>
 /// CREATED BY: VVHung (09/06/2026)
 function readStoredAdvancedFilters(storageKey) {
   try {
@@ -379,10 +430,9 @@ function readStoredAdvancedFilters(storageKey) {
   }
 }
 
-/// Luu bo loc nang cao vao localStorage.
-/// <param name="storageKey">Key localStorage can luu.</param>
-/// <param name="filters">Danh sach bo loc nang cao.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Lưu bộ lọc nâng cao vào localStorage.
+/// <param name="storageKey">Key localStorage cần lưu.</param>
+/// <param name="filters">Danh sách bộ lọc nâng cao.</param>
 /// CREATED BY: VVHung (09/06/2026)
 function writeStoredAdvancedFilters(storageKey, filters) {
   if (!filters.length) {
@@ -393,9 +443,8 @@ function writeStoredAdvancedFilters(storageKey, filters) {
   window.localStorage.setItem(storageKey, JSON.stringify(filters))
 }
 
-/// Mo modal xac nhan dua thanh phan he thong vao danh sach su dung.
-/// <param name="rows">Danh sach dong du lieu can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở modal xác nhận đưa thành phần hệ thống vào danh sách sử dụng.
+/// <param name="rows">Danh sách dòng dữ liệu cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function openCopyFromSystemModal(rows) {
   const sourceRows = Array.isArray(rows) ? rows : (rows?.value ?? [rows])
@@ -405,37 +454,36 @@ function openCopyFromSystemModal(rows) {
   isCopyConfirmModalOpen.value = true
 }
 
-/// Xac nhan dua thanh phan he thong da chon vao danh sach su dung.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xác nhận đưa thành phần hệ thống đã chọn vào danh sách sử dụng.
 /// CREATED BY: VVHung (03/06/2026)
 function confirmCopyFromSystem() {
   if (!copyRows.value.length) return
   copyFromSystemMutation.mutate(copyRows.value)
 }
 
-/// Hien thi thong bao toast voi noi dung truyen vao.
-/// <param name="message">Noi dung thong bao.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Hiển thị thông báo toast với nội dung truyền vào.
+/// <param name="message">Nội dung thông báo.</param>
 /// CREATED BY: VVHung (03/06/2026)
-function showToast(message) {
+function showToast(message, type = 'success') {
   toast.value.visible = false
   toast.value.message = message
+  toast.value.type = type
   nextTick(() => {
     toast.value.visible = true
   })
 }
 
-/// Lay Id thanh phan luong he thong tu dong du lieu.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy Id thành phần lương hệ thống từ dòng dữ liệu.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionSystemId(row) {
   return row?.salaryCompositionSystemID ?? row?.SalaryCompositionSystemID
 }
 
-/// Lay ten thanh phan luong he thong tu dong du lieu.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy tên thành phần lương hệ thống từ dòng dữ liệu.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionSystemName(row) {
   return (
@@ -465,11 +513,12 @@ function getSalaryCompositionSystemName(row) {
 }
 
 .salary-grid-layout {
-  height: calc(100vh - 154px);
-  min-height: 520px;
+  height: 100vh;
+  min-height: 0;
   display: flex;
   gap: 8px;
   align-items: stretch;
+  overflow: hidden;
 }
 
 .salary-grid-main {
@@ -537,8 +586,6 @@ function getSalaryCompositionSystemName(row) {
 }
 
 .advanced-filter-tag__close {
-  width: 16px;
-  height: 16px;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -549,11 +596,11 @@ function getSalaryCompositionSystemName(row) {
 }
 
 .mi-tag-close {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   display: inline-block;
   flex-shrink: 0;
-  background-color: #717680;
+  background-color: #5e5e5e;
   -webkit-mask-image: url('../../assets/images/ICON_4.svg');
   mask-image: url('../../assets/images/ICON_4.svg');
   -webkit-mask-position: -442px -56px;

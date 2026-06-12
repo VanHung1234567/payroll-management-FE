@@ -535,8 +535,8 @@ const normalizedFilters = computed(() => {
 
 const hasActiveFilters = computed(() => Object.keys(normalizedFilters.value).length > 0)
 
-/// Lay thong tin phan trang, tim kiem, sap xep va bo loc de gui len API.
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy thông tin phân trang, tìm kiếm, sắp xếp và bộ lọc để gửi lên API.
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getPagingPayload() {
   return {
@@ -588,9 +588,9 @@ const SORT_FIELD_MAP = {
 const typeOptionTextMap = createOptionTextMap(SALARY_COMPOSITION_TYPE_OPTIONS)
 const valueTypeOptionTextMap = createOptionTextMap(SALARY_COMPOSITION_VALUE_TYPE_OPTIONS)
 
-/// Chuan hoa ten cot sap xep sang field backend cho phep sort.
-/// <param name="fieldName">Ten field can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Chuẩn hóa tên cột sắp xếp sang field backend cho phép sort.
+/// <param name="fieldName">Tên field cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function normalizeSortField(fieldName) {
   const pascalFieldName = toPascalCase(fieldName)
@@ -744,8 +744,7 @@ const displayColumns = computed(() =>
 )
 const showFillColumn = computed(() => displayColumns.value.length <= 1)
 
-/// Tam dung luu thu tu cot khi dang dong bo tu cau hinh backend vao grid.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Tạm dừng lưu thứ tự cột khi đang đồng bộ từ cấu hình backend vào grid.
 /// CREATED BY: VVHung (05/06/2026)
 function suppressOrderPersistTemporarily() {
   suppressOrderPersist.value = true
@@ -759,8 +758,7 @@ function suppressOrderPersistTemporarily() {
   }, 300)
 }
 
-/// Cap nhat thu tu cot truc tiep tren instance de tranh remount grid khi chi doi SortOrder.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Cập nhật thứ tự cột trực tiếp trên instance để tránh remount grid khi chỉ đổi SortOrder.
 /// CREATED BY: VVHung (05/06/2026)
 async function applyColumnOrderToGrid() {
   await nextTick()
@@ -780,8 +778,7 @@ async function applyColumnOrderToGrid() {
   }
 }
 
-/// Repaint grid sau khi doi visible/sort/fixed runtime de DevExtreme bo cache cot cu.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Repaint grid sau khi đổi visible/sort/fixed runtime để DevExtreme bỏ cache cột cũ.
 /// CREATED BY: VVHung (09/06/2026)
 function repaintGrid() {
   const rawGridInstance = dataGridRef.value?.instance
@@ -790,9 +787,8 @@ function repaintGrid() {
   gridInstance?.updateDimensions?.()
 }
 
-/// Apply trang thai fixed truc tiep vao DevExtreme de tranh grid dung cache cot cu sau hide/show/drag.
-/// <param name="orderedColumns">Danh sach cot visible theo thu tu can hien thi.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Apply trạng thái fixed trực tiếp vào DevExtreme để tránh grid dùng cache cột cũ sau hide/show/drag.
+/// <param name="orderedColumns">Danh sách cột visible theo thứ tự cần hiển thị.</param>
 /// CREATED BY: VVHung (09/06/2026)
 function applyFixedColumnsToGrid(orderedColumns = displayColumns.value) {
   const rawGridInstance = dataGridRef.value?.instance
@@ -827,17 +823,17 @@ const isPageIndeterminate = computed(
   () => rows.value.some((row) => selectedKeys.value.has(getRowKey(row))) && !isAllPageChecked.value,
 )
 
-/// Chuan hoa du lieu tra ve tu API ve payload su dung trong man hinh.
-/// <param name="response">Response tra ve tu API.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Chuẩn hóa dữ liệu trả về từ API về payload sử dụng trong màn hình.
+/// <param name="response">Response trả về từ API.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function normalizeResponseData(response) {
   return response?.data?.data ?? response?.data ?? {}
 }
 
-/// Chuan hoa cau hinh cot tu backend sang cau hinh hien thi cua grid.
-/// <param name="column">Cau hinh cot can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Chuẩn hóa cấu hình cột từ backend sang cấu hình hiển thị của grid.
+/// <param name="column">Cấu hình cột cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function normalizeColumn(column) {
   const rawFieldName = column.fieldName || column.FieldName
@@ -859,18 +855,18 @@ function normalizeColumn(column) {
   }
 }
 
-/// Chuan hoa gia tri boolean tu backend.
-/// <param name="value">Gia tri can xu ly.</param>
-/// <returns>Gia tri boolean.</returns>
+/// Chuẩn hóa giá trị boolean từ backend.
+/// <param name="value">Giá trị cần xử lý.</param>
+/// <returns>Giá trị boolean.</returns>
 /// CREATED BY: VVHung (05/06/2026)
 function normalizeBoolean(value) {
   if (typeof value === 'string') return value.toLowerCase() === 'true' || value === '1'
   return Boolean(value)
 }
 
-/// Lay danh sach cot can hien thi icon ghim ban dau.
-/// <param name="columns">Danh sach cot can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy danh sách cột cần hiển thị icon ghim ban đầu.
+/// <param name="columns">Danh sách cột cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getInitialPinnedFieldStack(columns) {
   const fixedColumns = columns
@@ -882,10 +878,10 @@ function getInitialPinnedFieldStack(columns) {
   return [fixedColumns[fixedColumns.length - 1].fieldName]
 }
 
-/// Lay moc ghim tiep theo khi cau hinh cot thay doi.
-/// <param name="previousPinnedFields">Moc ghim dang duoc dung truoc khi config doi.</param>
-/// <param name="columns">Danh sach cot moi.</param>
-/// <returns>Stack field dang la moc ghim.</returns>
+/// Lấy mốc ghim tiếp theo khi cấu hình cột thay đổi.
+/// <param name="previousPinnedFields">Mốc ghim đang được dùng trước khi config đổi.</param>
+/// <param name="columns">Danh sách cột mới.</param>
+/// <returns>Stack field đang là mốc ghim.</returns>
 /// CREATED BY: VVHung (09/06/2026)
 function getNextPinnedFieldStack(previousPinnedFields, columns) {
   const fieldNames = new Set(columns.map((column) => column.fieldName))
@@ -900,9 +896,8 @@ function getNextPinnedFieldStack(previousPinnedFields, columns) {
   return getInitialPinnedFieldStack(columns)
 }
 
-/// Cap nhat stack ghim va chi hien icon o moc ghim hien tai.
+/// Cập nhật stack ghim và chỉ hiện icon ở mốc ghim hiện tại.
 /// <param name="fieldStack">Danh sach field ghim theo thu tu lich su.</param>
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (09/06/2026)
 function setPinnedFieldStack(fieldStack) {
   const uniqueFieldStack = [...new Set(fieldStack)]
@@ -911,45 +906,43 @@ function setPinnedFieldStack(fieldStack) {
   pinnedIconFields.value = currentPinnedField ? new Set([currentPinnedField]) : new Set()
 }
 
-/// Chuyen ten field sang dang camelCase.
-/// <param name="value">Gia tri can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Chuyển tên field sang dạng camelCase.
+/// <param name="value">Giá trị cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function toCamelCase(value) {
   if (!value) return value
   return `${value[0].toLowerCase()}${value.slice(1)}`
 }
 
-/// Chuyen ten field sang dang PascalCase.
-/// <param name="value">Gia tri can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Chuyển tên field sang dạng PascalCase.
+/// <param name="value">Giá trị cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function toPascalCase(value) {
   if (!value) return value
   return `${value[0].toUpperCase()}${value.slice(1)}`
 }
 
-/// Lay khoa dinh danh cua dong du lieu.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy khóa định danh của dòng dữ liệu.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getRowKey(row) {
   return row?.[props.keyExpr] ?? row?.[toPascalCase(props.keyExpr)]
 }
 
-/// Lay gia tri goc cua o du lieu theo ten field.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <param name="fieldName">Ten field can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy giá trị gốc của ô dữ liệu theo tên field.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <param name="fieldName">Tên field cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getRawCellValue(row, fieldName) {
   return row?.[fieldName] ?? row?.[toPascalCase(fieldName)]
 }
 
-/// Lay gia tri hien thi cua o du lieu theo mapping frontend.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <param name="fieldName">Ten field can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy giá trị hiển thị của ô dữ liệu theo mapping frontend.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <param name="fieldName">Tên field cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getDisplayValue(row, fieldName) {
   const lowerField = String(fieldName || '').toLowerCase()
@@ -1037,16 +1030,16 @@ function getDisplayValue(row, fieldName) {
   return value
 }
 
-/// Chuan hoa id ve string de so sanh an toan.
-/// <param name="id">Id can chuan hoa.</param>
+/// Chuẩn hóa id về string để so sánh an toàn.
+/// <param name="id">Id cần chuẩn hóa.</param>
 /// <returns>Id dang string.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function normalizeId(id) {
   return id === null || id === undefined ? '' : String(id).trim()
 }
 
-/// Lay id don vi tu option.
-/// <param name="organization">Don vi can xu ly.</param>
+/// Lấy id đơn vị từ option.
+/// <param name="organization">Đơn vị cần xử lý.</param>
 /// <returns>Id don vi.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function getOrganizationId(organization) {
@@ -1059,8 +1052,8 @@ function getOrganizationId(organization) {
   )
 }
 
-/// Lay id cha cua don vi tu option.
-/// <param name="organization">Don vi can xu ly.</param>
+/// Lấy id cha của đơn vị từ option.
+/// <param name="organization">Đơn vị cần xử lý.</param>
 /// <returns>Id don vi cha.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function getOrganizationParentId(organization) {
@@ -1073,9 +1066,9 @@ function getOrganizationParentId(organization) {
   )
 }
 
-/// Lay ten hien thi cua don vi tu option.
-/// <param name="organization">Don vi can xu ly.</param>
-/// <returns>Ten don vi.</returns>
+/// Lấy tên hiển thị của đơn vị từ option.
+/// <param name="organization">Đơn vị cần xử lý.</param>
+/// <returns>Tên đơn vị.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function getOrganizationLabel(organization) {
   return (
@@ -1087,7 +1080,7 @@ function getOrganizationLabel(organization) {
   )
 }
 
-/// Tach danh sach id dang string tu cell du lieu.
+/// Tách danh sách id dạng string từ cell dữ liệu.
 /// <param name="value">Gia tri cell can tach.</param>
 /// <returns>Danh sach id.</returns>
 /// CREATED BY: VVHung (06/06/2026)
@@ -1099,9 +1092,9 @@ function splitIds(value) {
     .filter(Boolean)
 }
 
-/// Kiem tra mot id co cha dang nam trong tap da chon hay khong.
-/// <param name="id">Id can kiem tra.</param>
-/// <param name="selectedIdSet">Tap id dang chon.</param>
+/// Kiểm tra một id có cha đang nằm trong tập đã chọn hay không.
+/// <param name="id">Id cần kiểm tra.</param>
+/// <param name="selectedIdSet">Tập id đang chọn.</param>
 /// <returns>true neu co cha dang chon.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function hasSelectedOrganizationAncestor(id, selectedIdSet) {
@@ -1115,10 +1108,10 @@ function hasSelectedOrganizationAncestor(id, selectedIdSet) {
   return false
 }
 
-/// Hien thi ten don vi theo cay: neu cha da duoc chon thi khong hien cac con.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <param name="fallbackValue">Gia tri fallback khi khong co options.</param>
-/// <returns>Chuoi ten don vi hien thi.</returns>
+/// Hiển thị tên đơn vị theo cây: nếu cha đã được chọn thì không hiện các con.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <param name="fallbackValue">Giá trị fallback khi không có options.</param>
+/// <returns>Chuỗi tên đơn vị hiển thị.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function formatOrganizationDisplay(row, fallbackValue) {
   if (!props.organizationOptions.length) return ''
@@ -1141,26 +1134,25 @@ function formatOrganizationDisplay(row, fallbackValue) {
   return labels.join(', ')
 }
 
-/// Lay nhan hien thi tuong ung voi gia tri option.
-/// <param name="value">Gia tri can xu ly.</param>
-/// <param name="map">Map gia tri sang nhan hien thi.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Lấy nhãn hiển thị tương ứng với giá trị option.
+/// <param name="value">Giá trị cần xử lý.</param>
+/// <param name="map">Map giá trị sang nhãn hiển thị.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function optionText(value, map) {
   return map[Number(value)] ?? value
 }
 
-/// Tao map tra cuu nhan option theo gia tri.
-/// <param name="options">Danh sach option can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Tạo map tra cứu nhãn option theo giá trị.
+/// <param name="options">Danh sách option cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function createOptionTextMap(options) {
   return Object.fromEntries(options.map((option) => [Number(option.value), option.label]))
 }
 
-/// Kiem tra cong thuc gia tri co phai cau hinh tu dong cong tong khong.
-/// <param name="value">Gia tri can xu ly.</param>
-/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// Kiểm tra công thức giá trị có phải cấu hình tự động cộng tổng không.
+/// <param name="value">Giá trị cần xử lý.</param>
+/// <returns>true nếu thỏa điều kiện, ngược lại false.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function isAutoSumValueFormula(value) {
   if (typeof value !== 'string') return false
@@ -1172,10 +1164,10 @@ function isAutoSumValueFormula(value) {
   }
 }
 
-/// Kiem tra o cong thuc gia tri co can to mau cong thuc khong.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <param name="fieldName">Ten field can xu ly.</param>
-/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// Kiểm tra ô công thức giá trị có cần tô màu công thức không.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <param name="fieldName">Tên field cần xử lý.</param>
+/// <returns>true nếu thỏa điều kiện, ngược lại false.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function shouldHighlightValueFormula(row, fieldName) {
   if (String(fieldName || '').toLowerCase() !== 'valueformula') return false
@@ -1184,10 +1176,10 @@ function shouldHighlightValueFormula(row, fieldName) {
   return value !== null && value !== undefined && value !== '' && !isAutoSumValueFormula(value)
 }
 
-/// Tach cong thuc thanh cac token de hien thi mau trong grid.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <param name="fieldName">Ten field can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Tách công thức thành các token để hiển thị màu trong grid.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <param name="fieldName">Tên field cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getFormulaTokens(row, fieldName) {
   const value = String(getRawCellValue(row, fieldName) ?? '')
@@ -1207,17 +1199,16 @@ function getFormulaTokens(row, fieldName) {
   })
 }
 
-/// Kiem tra dong du lieu da duoc chon hay chua.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// Kiểm tra dòng dữ liệu đã được chọn hay chưa.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>true nếu thỏa điều kiện, ngược lại false.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function isRowChecked(row) {
   return selectedKeys.value.has(getRowKey(row))
 }
 
-/// Chon hoac bo chon mot dong du lieu.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Chọn hoặc bỏ chọn một dòng dữ liệu.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function toggleRow(row) {
   const next = new Set(selectedKeys.value)
@@ -1235,8 +1226,7 @@ function toggleRow(row) {
   emitSelectionChange()
 }
 
-/// Chon hoac bo chon tat ca dong tren trang hien tai.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Chọn hoặc bỏ chọn tất cả dòng trên trang hiện tại.
 /// CREATED BY: VVHung (03/06/2026)
 function toggleAllPageRows() {
   const next = new Set(selectedKeys.value)
@@ -1259,8 +1249,7 @@ function toggleAllPageRows() {
   emitSelectionChange()
 }
 
-/// Xoa toan bo lua chon hien tai tren grid.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xóa toàn bộ lựa chọn hiện tại trên grid.
 /// CREATED BY: VVHung (03/06/2026)
 function clearSelection() {
   if (!selectedKeys.value.size) return
@@ -1269,15 +1258,14 @@ function clearSelection() {
   emitSelectionChange()
 }
 
-/// Lay danh sach dong dang duoc chon.
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy danh sách dòng đang được chọn.
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSelectedRows() {
   return [...selectedRowMap.value.values()]
 }
 
-/// Phat su kien thay doi danh sach dong duoc chon.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Phát sự kiện thay đổi danh sách dòng được chọn.
 /// CREATED BY: VVHung (03/06/2026)
 function emitSelectionChange() {
   const selectedRows = getSelectedRows()
@@ -1285,26 +1273,23 @@ function emitSelectionChange() {
   emit('update:selectedRows', selectedRows)
 }
 
-/// Xu ly su kien chuan bi context menu cua grid.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xử lý sự kiện chuẩn bị context menu của grid.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleContextMenuPreparing(event) {
   event.items = []
   event.cancel = true
 }
 
-/// Xu ly su kien chuan bi toolbar cua grid.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xử lý sự kiện chuẩn bị toolbar của grid.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleToolbarPreparing(event) {
   event.toolbarOptions.items = []
 }
 
-/// Xu ly su kien sau khi dong du lieu duoc render.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xử lý sự kiện sau khi dòng dữ liệu được render.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleRowPrepared(event) {
   if (event.rowType !== 'data') return
@@ -1323,10 +1308,9 @@ function handleRowPrepared(event) {
   rowElement.onmouseleave = scheduleHideRowActions
 }
 
-/// Hien thi cum nut thao tac noi cua dong du lieu.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <param name="rowElement">Phan tu DOM cua dong du lieu.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Hiển thị cụm nút thao tác nổi của dòng dữ liệu.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <param name="rowElement">Phần tử DOM của dòng dữ liệu.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function showRowActions(row, rowElement) {
   clearActionHideTimer()
@@ -1340,8 +1324,7 @@ function showRowActions(row, rowElement) {
   updateFloatingActionTop()
 }
 
-/// Cap nhat vi tri top cua cum nut thao tac noi.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Cập nhật vị trí top của cụm nút thao tác nổi.
 /// CREATED BY: VVHung (03/06/2026)
 function updateFloatingActionTop() {
   if (!activeActionRowElement.value) return
@@ -1353,16 +1336,14 @@ function updateFloatingActionTop() {
   floatingActionTop.value = rowRect.top - (containerRect?.top || 0)
 }
 
-/// Hen gio an cum nut thao tac noi.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Hẹn giờ ẩn cụm nút thao tác nổi.
 /// CREATED BY: VVHung (03/06/2026)
 function scheduleHideRowActions() {
   clearActionHideTimer()
   actionHideTimer.value = window.setTimeout(hideRowActions, 80)
 }
 
-/// Xoa bo dem thoi gian an cum nut thao tac noi.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xóa bộ đếm thời gian ẩn cụm nút thao tác nổi.
 /// CREATED BY: VVHung (03/06/2026)
 function clearActionHideTimer() {
   if (!actionHideTimer.value) return
@@ -1370,8 +1351,7 @@ function clearActionHideTimer() {
   actionHideTimer.value = null
 }
 
-/// An cum nut thao tac noi cua dong du lieu.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Ẩn cụm nút thao tác nổi của dòng dữ liệu.
 /// CREATED BY: VVHung (03/06/2026)
 function hideRowActions() {
   clearActionHideTimer()
@@ -1380,17 +1360,15 @@ function hideRowActions() {
   hoveredRow.value = null
 }
 
-/// Xu ly su kien cuon bang va an thao tac noi.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xử lý sự kiện cuộn bảng và ẩn thao tác nổi.
 /// CREATED BY: VVHung (03/06/2026)
 function handleTableScroll() {
   if (!hoveredRow.value) return
   updateFloatingActionTop()
 }
 
-/// Xu ly thay doi option cua DevExtreme grid.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xử lý thay đổi option của DevExtreme grid.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleOptionChanged(event) {
   if (event.fullName?.includes('.width')) {
@@ -1404,9 +1382,8 @@ function handleOptionChanged(event) {
   }
 }
 
-/// Xu ly thay doi do rong cot va luu cau hinh.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xử lý thay đổi độ rộng cột và lưu cấu hình.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleColumnWidthChanged(event) {
   const match = event.fullName.match(/columns\[(\d+)\]\.width/)
@@ -1424,10 +1401,9 @@ function handleColumnWidthChanged(event) {
   queueColumnWidthPersist(column, nextWidth)
 }
 
-/// Dua thay doi do rong cot vao hang doi luu cau hinh.
-/// <param name="column">Cau hinh cot can xu ly.</param>
-/// <param name="width">Do rong cot can luu.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Đưa thay đổi độ rộng cột vào hàng đợi lưu cấu hình.
+/// <param name="column">Cấu hình cột cần xử lý.</param>
+/// <param name="width">Độ rộng cột cần lưu.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function queueColumnWidthPersist(column, width) {
   pendingResizePersist.value = { column, width }
@@ -1446,9 +1422,8 @@ function queueColumnWidthPersist(column, width) {
   }, 350)
 }
 
-/// Dua thay doi thu tu cot vao hang doi luu cau hinh.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Đưa thay đổi thứ tự cột vào hàng đợi lưu cấu hình.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function queueColumnOrderPersist(event) {
   if (!isGridReady.value || suppressOrderPersist.value) return
@@ -1464,8 +1439,7 @@ function queueColumnOrderPersist(event) {
 }
 
 /// Luu thu tu cot hien tai len backend.
-/// <param name="component">Instance grid can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// <param name="component">Instance grid cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function persistColumnOrder(component) {
   if (suppressOrderPersist.value) return
@@ -1493,10 +1467,9 @@ function persistColumnOrder(component) {
   })
 }
 
-/// Mo menu cau hinh o header cot.
-/// <param name="data">Du lieu truyen vao ham.</param>
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Mở menu cấu hình ở header cột.
+/// <param name="data">Dữ liệu truyền vào hàm.</param>
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function openHeaderMenu(data, event) {
   const column = configColumns.value.find((item) => item.fieldName === data.column.dataField)
@@ -1511,9 +1484,8 @@ function openHeaderMenu(data, event) {
   headerMenu.isOpen = true
 }
 
-/// Ap dung trang thai sap xep cho cot dang chon.
+/// Áp dụng trạng thái sắp xếp cho cột đang chọn.
 /// <param name="nextSort">Trang thai sap xep can ap dung.</param>
-/// <returns>Khong tra ve du lieu.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function applySort(nextSort) {
   if (!nextSort) {
@@ -1533,9 +1505,9 @@ function applySort(nextSort) {
   headerMenu.isOpen = false
 }
 
-/// Lay chieu sap xep dang ap dung cho header cot.
-/// <param name="fieldName">Ten field can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy chiều sắp xếp đang áp dụng cho header cột.
+/// <param name="fieldName">Tên field cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getHeaderSortDirection(fieldName) {
   const column = configColumns.value.find((item) => item.fieldName === fieldName)
@@ -1545,17 +1517,16 @@ function getHeaderSortDirection(fieldName) {
   return ''
 }
 
-/// Kiem tra cot co dang hien thi icon ghim hay khong.
-/// <param name="fieldName">Ten field can xu ly.</param>
-/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// Kiểm tra cột có đang hiển thị icon ghim hay không.
+/// <param name="fieldName">Tên field cần xử lý.</param>
+/// <returns>true nếu thỏa điều kiện, ngược lại false.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function isPinnedIconColumn(fieldName) {
   return pinnedIconFields.value.has(fieldName)
 }
 
 /// Ghim hoac bo ghim cot dang chon.
-/// <param name="fieldName">Ten field can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// <param name="fieldName">Tên field cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function togglePin(fieldName) {
   const column = configColumns.value.find((item) => item.fieldName === fieldName)
@@ -1604,8 +1575,7 @@ function togglePin(fieldName) {
   headerMenu.isOpen = false
 }
 
-/// Dong bo trang thai cot co dinh voi cau hinh grid.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Đồng bộ trạng thái cột cố định với cấu hình grid.
 /// CREATED BY: VVHung (03/06/2026)
 function syncFixedColumns(orderedColumns = getCurrentOrderedColumns()) {
   suppressOrderPersist.value = true
@@ -1640,8 +1610,7 @@ function syncFixedColumns(orderedColumns = getCurrentOrderedColumns()) {
   return changedColumns
 }
 
-/// Dong bo va luu lai trang thai fixed sau khi thu tu cot thay doi tu cau hinh.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Đồng bộ và lưu lại trạng thái fixed sau khi thứ tự cột thay đổi từ cấu hình.
 /// CREATED BY: VVHung (09/06/2026)
 function syncAndPersistFixedColumns(orderedColumns = getCurrentOrderedColumns()) {
   const changedColumns = syncFixedColumns(orderedColumns)
@@ -1653,9 +1622,9 @@ function syncAndPersistFixedColumns(orderedColumns = getCurrentOrderedColumns())
   })
 }
 
-/// Lay danh sach cot theo dung thu tu dang hien thi tren grid.
+/// Lấy danh sách cột theo đúng thứ tự đang hiển thị trên grid.
 /// <param name="gridInstance">Instance grid neu co.</param>
-/// <returns>Danh sach cot dang hien thi theo thu tu hien tai.</returns>
+/// <returns>Danh sách cột đang hiển thị theo thứ tự hiện tại.</returns>
 /// CREATED BY: VVHung (09/06/2026)
 function getCurrentOrderedColumns(gridInstance = null) {
   const rawGridInstance = gridInstance || dataGridRef.value?.instance
@@ -1675,25 +1644,24 @@ function getCurrentOrderedColumns(gridInstance = null) {
   return orderedColumns.length ? orderedColumns : displayColumns.value
 }
 
-/// Lay danh sach cot visible theo config hien tai, khong phu thuoc cache visibleIndex cua grid.
+/// Lấy danh sách cột visible theo config hiện tại, không phụ thuộc cache visibleIndex của grid.
 /// <returns>Danh sach cot visible theo SortOrder hien tai.</returns>
 /// CREATED BY: VVHung (09/06/2026)
 function getConfigOrderedVisibleColumns() {
   return [...displayColumns.value]
 }
 
-/// Lay vi tri hien thi hien tai cua cot.
+/// Lấy vị trí hiển thị hiện tại của cột.
 /// <param name="fieldName">Ten field can kiem tra.</param>
-/// <returns>Vi tri hien thi cua cot.</returns>
+/// <returns>Vị trí hiển thị của cột.</returns>
 /// CREATED BY: VVHung (09/06/2026)
 function getColumnDisplayIndex(fieldName, orderedColumns = getCurrentOrderedColumns()) {
   return orderedColumns.findIndex((column) => column.fieldName === fieldName)
 }
 
-/// Dua thay doi cau hinh cot vao hang doi luu.
-/// <param name="column">Cau hinh cot can xu ly.</param>
-/// <param name="patch">Phan cau hinh cot can cap nhat.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Đưa thay đổi cấu hình cột vào hàng đợi lưu.
+/// <param name="column">Cấu hình cột cần xử lý.</param>
+/// <param name="patch">Phần cấu hình cột cần cập nhật.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function enqueuePersistColumn(column, patch) {
   updateGridConfigCache(column, patch)
@@ -1702,10 +1670,9 @@ function enqueuePersistColumn(column, patch) {
   return persistQueue
 }
 
-/// Cap nhat cache cau hinh cot de popup tuy chinh cot hien thi ngay thu tu moi.
+/// Cập nhật cache cấu hình cột để popup tùy chỉnh cột hiển thị ngay thứ tự mới.
 /// <param name="column">Cot can cap nhat.</param>
-/// <param name="patch">Phan cau hinh thay doi.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// <param name="patch">Phần cấu hình thay đổi.</param>
 /// CREATED BY: VVHung (07/06/2026)
 function updateGridConfigCache(column, patch = {}) {
   const targetFieldName = column.apiFieldName || column.fieldName
@@ -1745,8 +1712,8 @@ function updateGridConfigCache(column, patch = {}) {
   })
 }
 
-/// Lay mang cot tu payload cau hinh grid.
-/// <param name="payload">Payload cau hinh grid.</param>
+/// Lấy mảng cột từ payload cấu hình grid.
+/// <param name="payload">Payload cấu hình grid.</param>
 /// <returns>Danh sach cot.</returns>
 /// CREATED BY: VVHung (07/06/2026)
 function getGridConfigColumns(payload) {
@@ -1756,9 +1723,9 @@ function getGridConfigColumns(payload) {
 }
 
 /// Thay mang cot vao dung shape response hien tai cua vue-query.
-/// <param name="oldData">Du lieu cache cu.</param>
-/// <param name="nextColumns">Danh sach cot moi.</param>
-/// <returns>Du lieu cache moi.</returns>
+/// <param name="oldData">Dữ liệu cache cũ.</param>
+/// <param name="nextColumns">Danh sách cột mới.</param>
+/// <returns>Dữ liệu cache mới.</returns>
 /// CREATED BY: VVHung (07/06/2026)
 function replaceGridConfigColumns(oldData, nextColumns) {
   if (Array.isArray(oldData)) return nextColumns
@@ -1776,10 +1743,9 @@ function replaceGridConfigColumns(oldData, nextColumns) {
   return oldData
 }
 
-/// Luu cau hinh cot len backend.
-/// <param name="column">Cau hinh cot can xu ly.</param>
-/// <param name="patch">Phan cau hinh cot can cap nhat.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Lưu cấu hình cột lên backend.
+/// <param name="column">Cấu hình cột cần xử lý.</param>
+/// <param name="patch">Phần cấu hình cột cần cập nhật.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function persistColumn(column, patch) {
   if (!column.gridConfigID) return
@@ -1800,10 +1766,10 @@ function persistColumn(column, patch) {
   })
 }
 
-/// Dinh dang gia tri o truoc khi hien thi.
-/// <param name="value">Gia tri can xu ly.</param>
-/// <param name="fieldName">Ten field can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Định dạng giá trị ô trước khi hiển thị.
+/// <param name="value">Giá trị cần xử lý.</param>
+/// <param name="fieldName">Tên field cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function formatCellValue(value, fieldName = '') {
   if (String(fieldName || '').toLowerCase() === 'normformula') return ''
@@ -1812,9 +1778,9 @@ function formatCellValue(value, fieldName = '') {
   return value
 }
 
-/// Kiem tra field co phai cot trang thai khong.
-/// <param name="fieldName">Ten field can xu ly.</param>
-/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// Kiểm tra field có phải cột trạng thái không.
+/// <param name="fieldName">Tên field cần xử lý.</param>
+/// <returns>true nếu thỏa điều kiện, ngược lại false.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function isStatusColumn(fieldName) {
   // Bảng salary composition hiện không có cột Status/StatusName trong database.
@@ -1822,17 +1788,17 @@ function isStatusColumn(fieldName) {
   return ['status'].includes(String(fieldName || '').toLowerCase())
 }
 
-/// Lay gia tri trang thai cua ban ghi.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy giá trị trạng thái của bản ghi.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getStatusValue(row) {
   return row?.status ?? row?.Status ?? row?.statusName ?? row?.StatusName
 }
 
-/// Kiem tra ban ghi dang o trang thai theo doi hay khong.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>true neu thoa dieu kien, nguoc lai false.</returns>
+/// Kiểm tra bản ghi đang ở trạng thái theo dõi hay không.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>true nếu thỏa điều kiện, ngược lại false.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function isActiveStatus(row) {
   const value = getStatusValue(row)
@@ -1840,17 +1806,16 @@ function isActiveStatus(row) {
   return Number(value) === 1
 }
 
-/// Lay nhan hien thi trang thai cua ban ghi.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy nhãn hiển thị trạng thái của bản ghi.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getStatusText(row) {
   return isActiveStatus(row) ? 'Đang theo dõi' : 'Ngừng theo dõi'
 }
 
-/// Lay class CSS hien thi trang thai cua ban ghi.
-/// <param name="row">Dong du lieu can xu ly.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Lấy class CSS hiển thị trạng thái của bản ghi.
+/// <param name="row">Dòng dữ liệu cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function statusClass(row) {
   return [
@@ -1859,9 +1824,8 @@ function statusClass(row) {
   ]
 }
 
-/// Xu ly click ngoai vung dang mo de dong menu noi.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xử lý click ngoài vùng đang mở để đóng menu nổi.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleDocumentClick(event) {
   if (

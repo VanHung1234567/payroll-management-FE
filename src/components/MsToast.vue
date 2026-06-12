@@ -72,8 +72,7 @@ const containerClass = computed(() => `ms-toast-container--${props.position}`)
 const messageClass = computed(() => `ms-toast-message--${normalizedType.value}`)
 const iconClass = computed(() => `ms-icon-${normalizedType.value}-circle`)
 
-/// Xoa timer tu dong dong toast dang chay.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Xóa timer tự động đóng toast đang chạy.
 /// CREATED BY: VVHung (03/06/2026)
 function clearTimer() {
   if (!timer.value) return
@@ -81,8 +80,7 @@ function clearTimer() {
   timer.value = null
 }
 
-/// Khoi tao timer tu dong dong toast theo thoi gian cau hinh.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Khởi tạo timer tự động đóng toast theo thời gian cấu hình.
 /// CREATED BY: VVHung (03/06/2026)
 function startTimer() {
   clearTimer()
@@ -93,8 +91,7 @@ function startTimer() {
   }, props.duration)
 }
 
-/// Dong toast va phat su kien close cho component cha.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Đóng toast và phát sự kiện close cho component cha.
 /// CREATED BY: VVHung (03/06/2026)
 function close() {
   clearTimer()

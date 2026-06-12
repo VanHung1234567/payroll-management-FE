@@ -51,13 +51,18 @@
 }
 
 #app {
-  min-width: 1366px;
+  width: 100%;
+  min-width: 0;
   height: 100vh;
+  overflow: hidden;
 }
 
 html,
 body {
-  min-width: 1366px;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
   color: var(--color-text-primary);
   font-size: var(--font-size-base);
   background: var(--color-background);
@@ -216,5 +221,4 @@ button {
 .font-weight-500 {
   font-weight: 500;
 }
-
 

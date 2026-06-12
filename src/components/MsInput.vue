@@ -137,6 +137,9 @@ const fieldWrapStyle = computed(() => ({
   width: normalizeCssSize(props.width),
 }))
 
+/// Phát sự kiện cập nhật v-model khi người dùng nhập liệu.
+/// <param name="event">Sự kiện input từ ô nhập liệu.</param>
+/// CREATED BY: VVHung (11/6/2026)
 const handleInput = (event) => {
   emit('update:modelValue', event.target.value)
   emit('input', event)

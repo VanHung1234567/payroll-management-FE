@@ -98,6 +98,7 @@ const headerActions = [
 <style scoped>
 .navbar {
   width: 100%;
+  min-width: 0;
   height: 48px;
   gap: 0;
   display: flex;
@@ -106,9 +107,12 @@ const headerActions = [
   padding: 0;
   background: #0e9a62;
   box-shadow: 0 1px 3px #0000001a;
+  overflow: hidden;
 }
 
 .navbar__left {
+  min-width: 0;
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -141,9 +145,11 @@ const headerActions = [
 }
 
 .navbar__right {
+  min-width: 0;
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-shrink: 1;
   margin-right: 16px;
 }
 
@@ -151,12 +157,13 @@ const headerActions = [
   display: flex;
   align-items: center;
   background: #fff3;
-  width: 300px;
+  width: clamp(220px, 28vw, 300px);
   height: 32px;
   padding: 0 8px;
   border-radius: 8px;
   border: none;
   margin-right: 8px;
+  flex-shrink: 1;
 }
 
 .search-input {
@@ -180,6 +187,7 @@ const headerActions = [
   width: 32px;
   height: 32px;
   margin-left: 12px;
+  flex-shrink: 0;
 }
 
 .navbar-action {
@@ -193,6 +201,31 @@ const headerActions = [
 
 .header-action-no-tooltip {
   margin-left: 12px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1366px) {
+  .app-menu-tooltip {
+    margin: 0 10px;
+  }
+
+  .logo-text {
+    margin-left: 8px;
+  }
+
+  .navbar__right {
+    margin-right: 10px;
+  }
+
+  .navbar__right__search {
+    width: 220px;
+    margin-right: 4px;
+  }
+
+  .header-action-tooltip,
+  .header-action-no-tooltip {
+    margin-left: 6px;
+  }
 }
 
 .container__avatar {

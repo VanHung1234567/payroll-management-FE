@@ -1698,9 +1698,9 @@ const aggregationScopeOptions = [
   },
 ]
 
-/// Lay noi dung tooltip cua combobox pham vi cong tong gia tri.
-/// <param name="option">Option pham vi can hien thi tooltip.</param>
-/// <returns>Noi dung tooltip dang HTML.</returns>
+/// Lấy nội dung tooltip của combobox phạm vi cộng tổng giá trị.
+/// <param name="option">Option phạm vi cần hiển thị tooltip.</param>
+/// <returns>Nội dung tooltip dạng HTML.</returns>
 /// CREATED BY: VVHung (07/06/2026)
 function getAggregationScopeTooltipHtml(option) {
   if (option?.value !== 'subordinate') {
@@ -1741,7 +1741,7 @@ const { data: organizationResponse } = useQuery({
 const { data: salaryCompositionParameterResponse } = useQuery({
   queryKey: ['salaryCompositionParameters'],
   queryFn: () =>
-    SalaryCompositionAPI.paging({
+    SalaryCompositionAPI.filter({
       pageIndex: 1,
       pageSize: 1000,
       status: 1,
@@ -1927,42 +1927,42 @@ const isSaving = computed(
     quickUpdateSalaryCompositionMutation.isPending.value,
 )
 
-/// Lay nhan hien thi cua option.
-/// <param name="option">Option can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy nhãn hiển thị của option.
+/// <param name="option">Option cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getOptionLabel(option) {
   return option?.label ?? option?.Label ?? option?.name ?? option?.Name ?? ''
 }
 
-/// Lay Id don vi tu du lieu don vi.
-/// <param name="organization">Du lieu don vi can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy Id đơn vị từ dữ liệu đơn vị.
+/// <param name="organization">Dữ liệu đơn vị cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getOrganizationId(organization) {
   return organization?.organizationID ?? organization?.OrganizationID ?? organization?.id ?? null
 }
 
-/// Lay Id don vi cha tu du lieu don vi.
-/// <param name="organization">Du lieu don vi can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy Id đơn vị cha từ dữ liệu đơn vị.
+/// <param name="organization">Dữ liệu đơn vị cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getOrganizationParentId(organization) {
   return organization?.parentID ?? organization?.ParentID ?? organization?.parentId ?? null
 }
 
-/// Lay ten hien thi cua don vi.
-/// <param name="organization">Du lieu don vi can xu ly.</param>
-/// <returns>Ten don vi.</returns>
+/// Lấy tên hiển thị của đơn vị.
+/// <param name="organization">Dữ liệu đơn vị cần xử lý.</param>
+/// <returns>Tên đơn vị.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function getOrganizationLabel(organization) {
   return organization?.organizationName ?? organization?.OrganizationName ?? ''
 }
 
-/// Kiem tra don vi co cha dang duoc chon khong de khong hien lap lai ten con.
+/// Kiểm tra đơn vị có cha đang được chọn không để không hiện lặp lại tên con.
 /// <param name="id">Id don vi can kiem tra.</param>
-/// <param name="selectedIdSet">Tap id dang chon.</param>
-/// <returns>true neu co cha dang duoc chon.</returns>
+/// <param name="selectedIdSet">Tập id đang chọn.</param>
+/// <returns>true nếu có cha đang được chọn.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function hasSelectedOrganizationAncestor(id, selectedIdSet) {
   const organizationMap = new Map(
@@ -1982,18 +1982,18 @@ function hasSelectedOrganizationAncestor(id, selectedIdSet) {
   return false
 }
 
-/// Lay Id don vi goc gan nhat de tu chon khi mo form.
-/// <param name="options">Danh sach option can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy Id đơn vị gốc gần nhất để tự chọn khi mở form.
+/// <param name="options">Danh sách option cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getNearestOrganizationId(options) {
   const rootOrganization = options.find((option) => !getOrganizationParentId(option))
   return getOrganizationId(rootOrganization ?? options[0])
 }
 
-/// Lay ten tham so thanh phan luong.
-/// <param name="parameter">Tham so thanh phan luong can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy tên tham số thành phần lương.
+/// <param name="parameter">Tham số thành phần lương cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getParameterName(parameter) {
   return (
@@ -2005,9 +2005,9 @@ function getParameterName(parameter) {
   )
 }
 
-/// Lay ma tham so thanh phan luong.
-/// <param name="parameter">Tham so thanh phan luong can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy mã tham số thành phần lương.
+/// <param name="parameter">Tham số thành phần lương cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getParameterCode(parameter) {
   return (
@@ -2019,8 +2019,8 @@ function getParameterCode(parameter) {
   )
 }
 
-/// Lay du lieu form dung cho validate.
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy dữ liệu form dùng cho validate.
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getFormData() {
   return {
@@ -2032,8 +2032,8 @@ function getFormData() {
   }
 }
 
-/// Lay snapshot du lieu form de kiem tra thay doi.
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy snapshot dữ liệu form để kiểm tra thay đổi.
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getFormSnapshot() {
   return JSON.stringify({
@@ -2058,9 +2058,8 @@ function getFormSnapshot() {
   })
 }
 
-/// Khoi phuc du lieu form tu snapshot.
-/// <param name="snapshot">Snapshot dang JSON cua form.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Khôi phục dữ liệu form từ snapshot.
+/// <param name="snapshot">Snapshot dạng JSON của form.</param>
 /// CREATED BY: VVHung (06/06/2026)
 function restoreFormSnapshot(snapshot) {
   if (!snapshot) return
@@ -2091,8 +2090,7 @@ function restoreFormSnapshot(snapshot) {
   }
 }
 
-/// Thiet lap snapshot ban dau cua form.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Thiết lập snapshot ban đầu của form.
 /// CREATED BY: VVHung (03/06/2026)
 function setInitialFormSnapshot() {
   nextTick(() => {
@@ -2100,8 +2098,8 @@ function setInitialFormSnapshot() {
   })
 }
 
-/// Lay ma pham vi tu dong cong tong de gui backend.
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Lấy mã phạm vi tự động cộng tổng để gửi backend.
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getAutoValueScope() {
   const scopeMap = {
@@ -2113,8 +2111,8 @@ function getAutoValueScope() {
   return scopeMap[selectedAggregationScopeValue.value] ?? scopeMap.sameOrganization
 }
 
-/// Tao gia tri cong thuc gui backend theo che do dang chon.
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Tạo giá trị công thức gửi backend theo chế độ đang chọn.
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getValueFormulaPayload() {
   if (isAutoValueConfigVisible.value && selectedValueMode.value === 'auto') {
@@ -2135,9 +2133,9 @@ function getValueFormulaPayload() {
   return valueFormula.value ?? ''
 }
 
-/// Tach cong thuc thanh cac token de hien thi mau trong sua nhanh.
-/// <param name="value">Chuoi cong thuc can xu ly.</param>
-/// <returns>Danh sach token hien thi.</returns>
+/// Tách công thức thành các token để hiển thị màu trong sửa nhanh.
+/// <param name="value">Chuỗi công thức cần xử lý.</param>
+/// <returns>Danh sách token hiển thị.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function getFormulaDisplayTokens(value) {
   const parts = String(value ?? '')
@@ -2158,8 +2156,8 @@ function getFormulaDisplayTokens(value) {
   })
 }
 
-/// Tao payload thanh phan luong de them hoac cap nhat.
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Tạo payload thành phần lương để thêm hoặc cập nhật.
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function buildSalaryCompositionPayload() {
   return {
@@ -2181,8 +2179,7 @@ function buildSalaryCompositionPayload() {
   }
 }
 
-/// Dat lai form ve trang thai them moi ban dau.
-/// <returns>Khong tra ve du lieu.</returns>
+/// Đặt lại form về trạng thái thêm mới ban đầu.
 /// CREATED BY: VVHung (03/06/2026)
 function resetForm() {
   salaryCompositionName.value = ''
@@ -2211,17 +2208,16 @@ function resetForm() {
   setInitialFormSnapshot()
 }
 
-/// Chuan hoa du lieu tra ve tu API ve payload su dung trong man hinh.
-/// <param name="response">Response tra ve tu API.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Chuẩn hóa dữ liệu trả về từ API về payload sử dụng trong màn hình.
+/// <param name="response">Response trả về từ API.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function normalizeResponseData(response) {
   return response?.data?.data ?? response?.data ?? {}
 }
 
-/// Gan du lieu chi tiet thanh phan luong len form.
-/// <param name="detail">Du lieu chi tiet thanh phan luong.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Gán dữ liệu chi tiết thành phần lương lên form.
+/// <param name="detail">Dữ liệu chi tiết thành phần lương.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function setFormValueFromDetail(detail) {
   if (!detail || !Object.keys(detail).length) return
@@ -2256,9 +2252,8 @@ function setFormValueFromDetail(detail) {
   setInitialFormSnapshot()
 }
 
-/// Gan cau hinh cong thuc gia tri tu du lieu chi tiet len form.
-/// <param name="rawValueFormula">Chuoi cong thuc gia tri tu backend.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Gán cấu hình công thức giá trị từ dữ liệu chi tiết lên form.
+/// <param name="rawValueFormula">Chuỗi công thức giá trị từ backend.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function setValueFormulaFromDetail(rawValueFormula) {
   const rawFormula = rawValueFormula ?? ''
@@ -2281,9 +2276,9 @@ function setValueFormulaFromDetail(rawValueFormula) {
   valueFormula.value = rawFormula
 }
 
-/// Chuyen ma pham vi backend sang gia tri chon tren form.
-/// <param name="scope">Ma pham vi tu dong cong tong.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Chuyển mã phạm vi backend sang giá trị chọn trên form.
+/// <param name="scope">Mã phạm vi tự động cộng tổng.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getAggregationScopeFromPayload(scope) {
   const scopeMap = {
@@ -2295,9 +2290,9 @@ function getAggregationScopeFromPayload(scope) {
   return scopeMap[scope] ?? 'sameOrganization'
 }
 
-/// Sinh ma thanh phan luong tu ten thanh phan.
-/// <param name="value">Gia tri can xu ly.</param>
-/// <returns>Du lieu sau khi xu ly.</returns>
+/// Sinh mã thành phần lương từ tên thành phần.
+/// <param name="value">Giá trị cần xử lý.</param>
+/// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function generateSalaryCompositionCode(value) {
   return String(value ?? '')
@@ -2312,9 +2307,8 @@ function generateSalaryCompositionCode(value) {
     .replace(/_+/g, '_')
 }
 
-/// Gan danh sach loi validate len form.
-/// <param name="errors">Danh sach loi validate.</param>
-/// <returns>Khong tra ve du lieu.</returns>
+/// Gán danh sách lỗi validate lên form.
+/// <param name="errors">Danh sách lỗi validate.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function setFormErrors(errors) {
   Object.keys(formErrors).forEach((key) => {
@@ -2336,7 +2330,7 @@ const errorFieldRefs = {
   nature: natureSelectRef,
 }
 
-/// Focus vao truong loi dau tien tren form.
+/// Focus vào trường lỗi đầu tiên trên form.
 /// CREATED BY: VVHung (03/06/2026)
 function focusFirstError() {
   const firstErrorField = [
@@ -2354,8 +2348,8 @@ function focusFirstError() {
   })
 }
 
-/// Hien thi toast thong bao thanh cong.
-/// <param name="message">Noi dung toast.</param>
+/// Hiển thị toast thông báo thành công.
+/// <param name="message">Nội dung toast.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function showSuccessToast(message = 'Thêm thành công') {
   toast.visible = false
@@ -2365,16 +2359,16 @@ function showSuccessToast(message = 'Thêm thành công') {
   })
 }
 
-/// Xoa loi validate cua mot truong.
-/// <param name="field">Ten truong can xu ly.</param>
+/// Xóa lỗi validate của một trường.
+/// <param name="field">Tên trường cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function clearFormError(field) {
   delete formErrors[field]
 }
 
-/// Gan hoac xoa loi validate cua mot truong.
-/// <param name="field">Ten truong can xu ly.</param>
-/// <param name="message">Noi dung thong bao.</param>
+/// Gán hoặc xóa lỗi validate của một trường.
+/// <param name="field">Tên trường cần xử lý.</param>
+/// <param name="message">Nội dung thông báo.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function setFieldError(field, message) {
   if (message) {
@@ -2385,8 +2379,8 @@ function setFieldError(field, message) {
   clearFormError(field)
 }
 
-/// Validate mot truong du lieu tren form.
-/// <param name="field">Ten truong can xu ly.</param>
+/// Validate một trường dữ liệu trên form.
+/// <param name="field">Tên trường cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 async function validateField(field) {
   try {
@@ -2402,8 +2396,8 @@ async function validateField(field) {
   }
 }
 
-/// Validate toan bo du lieu form truoc khi luu.
-/// <returns>true neu form hop le, nguoc lai false.</returns>
+/// Validate toàn bộ dữ liệu form trước khi lưu.
+/// <returns>true nếu form hợp lệ, ngược lại false.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 async function validateForm() {
   try {
@@ -2422,8 +2416,8 @@ async function validateForm() {
   }
 }
 
-/// Xu ly nhap ten thanh phan va tu sinh ma khi chua sua thu cong.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// Xử lý nhập tên thành phần và tự sinh mã khi chưa sửa thủ công.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleSalaryCompositionNameInput(event) {
   const value = event.target.value
@@ -2438,8 +2432,8 @@ function handleSalaryCompositionNameInput(event) {
   }
 }
 
-/// Xu ly nhap ma thanh phan va ngat lien ket tu sinh ma.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// Xử lý nhập mã thành phần và ngắt liên kết tự sinh mã.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleSalaryCompositionCodeInput(event) {
   isSalaryCompositionCodeManual.value = true
@@ -2449,13 +2443,13 @@ function handleSalaryCompositionCodeInput(event) {
   }
 }
 
-/// Validate don vi ap dung khi nguoi dung thay doi lua chon.
+/// Validate đơn vị áp dụng khi người dùng thay đổi lựa chọn.
 /// CREATED BY: VVHung (03/06/2026)
 function handleOrganizationChange() {
   validateField('organizationIDs')
 }
 
-/// Validate va luu thanh phan luong.
+/// Validate và lưu thành phần lương.
 /// CREATED BY: VVHung (03/06/2026)
 async function handleSave() {
   isSaveAndAddMode.value = false
@@ -2468,7 +2462,7 @@ async function handleSave() {
   createSalaryCompositionMutation.mutate(payload)
 }
 
-/// Validate, luu thanh phan luong va mo lai form them moi.
+/// Validate, lưu thành phần lương và mở lại form thêm mới.
 /// CREATED BY: VVHung (03/06/2026)
 async function handleSaveAndAdd() {
   isSaveAndAddMode.value = true
@@ -2476,7 +2470,7 @@ async function handleSaveAndAdd() {
   createSalaryCompositionMutation.mutate(buildSalaryCompositionPayload())
 }
 
-/// Chuyen form sang che do sua nhanh.
+/// Chuyển form sang chế độ sửa nhanh.
 /// CREATED BY: VVHung (06/06/2026)
 function enterQuickEditMode() {
   if (!isEditMode.value) return
@@ -2488,7 +2482,7 @@ function enterQuickEditMode() {
   setInitialFormSnapshot()
 }
 
-/// Chuyen tu sua nhanh ve che do sua day du.
+/// Chuyển từ sửa nhanh về chế độ sửa đầy đủ.
 /// CREATED BY: VVHung (06/06/2026)
 function enterFullEditMode() {
   if (!isEditMode.value) return
@@ -2500,8 +2494,8 @@ function enterFullEditMode() {
   isQuickEditModeValue.value = false
 }
 
-/// Bat dau sua nhanh mot truong.
-/// <param name="field">Ten truong can sua nhanh.</param>
+/// Bắt đầu sửa nhanh một trường.
+/// <param name="field">Tên trường cần sửa nhanh.</param>
 /// CREATED BY: VVHung (06/06/2026)
 function startQuickEdit(field) {
   if (!isQuickEditMode.value || isSaving.value) return
@@ -2538,7 +2532,7 @@ function startQuickEdit(field) {
   })
 }
 
-/// Huy thay doi cua truong dang sua nhanh.
+/// Hủy thay đổi của trường đang sửa nhanh.
 /// CREATED BY: VVHung (06/06/2026)
 function cancelQuickEdit() {
   restoreFormSnapshot(quickEditSnapshot.value)
@@ -2546,9 +2540,9 @@ function cancelQuickEdit() {
   quickEditSnapshot.value = ''
 }
 
-/// Lay payload PATCH theo truong dang sua nhanh.
-/// <param name="field">Ten truong can tao payload.</param>
-/// <returns>Payload gui len API.</returns>
+/// Lấy payload PATCH theo trường đang sửa nhanh.
+/// <param name="field">Tên trường cần tạo payload.</param>
+/// <returns>Payload gửi lên API.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function buildQuickPatchPayload(field) {
   const payloadMap = {
@@ -2576,8 +2570,8 @@ function buildQuickPatchPayload(field) {
   return payloadMap[field]?.() ?? {}
 }
 
-/// Validate truong dang sua nhanh neu can.
-/// <param name="field">Ten truong can validate.</param>
+/// Validate trường đang sửa nhanh nếu cần.
+/// <param name="field">Tên trường cần validate.</param>
 /// <returns>true neu hop le.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 async function validateQuickField(field) {
@@ -2593,8 +2587,8 @@ async function validateQuickField(field) {
   return validateField(formField)
 }
 
-/// Luu nhanh mot truong bang API PATCH.
-/// <param name="field">Ten truong can luu nhanh.</param>
+/// Lưu nhanh một trường bằng API PATCH.
+/// <param name="field">Tên trường cần lưu nhanh.</param>
 /// CREATED BY: VVHung (06/06/2026)
 async function saveQuickField(field = quickEditingField.value) {
   if (!field || isSaving.value || !currentId.value) return
@@ -2603,8 +2597,8 @@ async function saveQuickField(field = quickEditingField.value) {
   quickUpdateSalaryCompositionMutation.mutate(buildQuickPatchPayload(field))
 }
 
-/// Chon va tu dong luu cau hinh hien thi tren phieu luong trong sua nhanh.
-/// <param name="value">Gia tri lua chon.</param>
+/// Chọn và tự động lưu cấu hình hiển thị trên phiếu lương trong sửa nhanh.
+/// <param name="value">Giá trị lựa chọn.</param>
 /// CREATED BY: VVHung (06/06/2026)
 function selectDisplayOnPayslipQuick(value) {
   if (selectedDisplayOnPayslip.value === value || isSaving.value) return
@@ -2612,8 +2606,8 @@ function selectDisplayOnPayslipQuick(value) {
   saveQuickField('payslipDisplayType')
 }
 
-/// Chon kieu tinh thue va tu dong luu trong che do sua nhanh.
-/// <param name="value">Gia tri lua chon.</param>
+/// Chọn kiểu tính thuế và tự động lưu trong chế độ sửa nhanh.
+/// <param name="value">Giá trị lựa chọn.</param>
 /// CREATED BY: VVHung (06/06/2026)
 function selectTaxTypeQuick(value) {
   if (selectedTaxType.value === value || isSaving.value) return
@@ -2621,7 +2615,7 @@ function selectTaxTypeQuick(value) {
   saveQuickField('nature')
 }
 
-/// Bat/tat giam tru tinh thue va tu dong luu trong che do sua nhanh.
+/// Bật/tắt giảm trừ tính thuế và tự động lưu trong chế độ sửa nhanh.
 /// CREATED BY: VVHung (06/06/2026)
 function toggleTaxReductionQuick() {
   if (isSaving.value) return
@@ -2629,7 +2623,7 @@ function toggleTaxReductionQuick() {
   saveQuickField('nature')
 }
 
-/// Bat/tat cho phep vuot dinh muc va tu dong luu trong che do sua nhanh.
+/// Bật/tắt cho phép vượt định mức và tự động lưu trong chế độ sửa nhanh.
 /// CREATED BY: VVHung (06/06/2026)
 function toggleAllowOverNormQuick() {
   if (isSaving.value) return
@@ -2637,16 +2631,16 @@ function toggleAllowOverNormQuick() {
   saveQuickField('normFormula')
 }
 
-/// Chon che do gia tri trong sua nhanh neu cum gia tri dang mo sua.
-/// <param name="value">Che do gia tri.</param>
+/// Chọn chế độ giá trị trong sửa nhanh nếu cụm giá trị đang mở sửa.
+/// <param name="value">Chế độ giá trị.</param>
 /// CREATED BY: VVHung (06/06/2026)
 function selectValueModeQuick(value) {
   if (isQuickValueConfigDisabled.value) return
   selectedValueMode.value = value
 }
 
-/// Mo hoac dong dropdown cau hinh gia tri tu dong.
-/// <param name="name">Ten dropdown can xu ly.</param>
+/// Mở hoặc đóng dropdown cấu hình giá trị tự động.
+/// <param name="name">Tên dropdown cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function toggleValueSelect(name) {
   if (selectedValueMode.value === 'formula') return
@@ -2654,8 +2648,8 @@ function toggleValueSelect(name) {
   openedValueSelect.value = openedValueSelect.value === name ? '' : name
 }
 
-/// Chon pham vi tu dong cong tong gia tri.
-/// <param name="value">Gia tri can xu ly.</param>
+/// Chọn phạm vi tự động cộng tổng giá trị.
+/// <param name="value">Giá trị cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function selectAggregationScope(value) {
   if (isQuickEditMode.value && isQuickValueConfigDisabled.value) return
@@ -2663,35 +2657,35 @@ function selectAggregationScope(value) {
   openedValueSelect.value = ''
 }
 
-/// Chon kieu tinh thue cua thanh phan thu nhap.
-/// <param name="value">Gia tri can xu ly.</param>
+/// Chọn kiểu tính thuế của thành phần thu nhập.
+/// <param name="value">Giá trị cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function selectTaxType(value) {
   if (isNatureOptionDisabled.value) return
   selectedTaxType.value = value
 }
 
-/// Bat hoac tat lua chon giam tru khi tinh thue.
+/// Bật hoặc tắt lựa chọn giảm trừ khi tính thuế.
 /// CREATED BY: VVHung (03/06/2026)
 function toggleTaxReduction() {
   if (isNatureOptionDisabled.value) return
   isTaxReduction.value = !isTaxReduction.value
 }
 
-/// Mo hoac dong menu chuc nang tren header form.
+/// Mở hoặc đóng menu chức năng trên header form.
 /// CREATED BY: VVHung (03/06/2026)
 function toggleHeaderMenu() {
   isHeaderMenuOpen.value = !isHeaderMenuOpen.value
 }
 
-/// Chuyen form chi tiet sang che do nhan ban.
+/// Chuyển form chi tiết sang chế độ nhân bản.
 /// CREATED BY: VVHung (03/06/2026)
 function handleDuplicate() {
   isHeaderMenuOpen.value = false
   enterDuplicateMode()
 }
 
-/// Thiet lap form sang che do nhan ban va xoa ten, ma.
+/// Thiết lập form sang chế độ nhân bản và xóa tên, mã.
 /// CREATED BY: VVHung (03/06/2026)
 function enterDuplicateMode() {
   isDuplicateMode.value = true
@@ -2709,7 +2703,7 @@ function enterDuplicateMode() {
   })
 }
 
-/// Mo luong xoa thanh phan luong tu form chi tiet.
+/// Mở luồng xóa thành phần lương từ form chi tiết.
 /// CREATED BY: VVHung (03/06/2026)
 function handleDelete() {
   isHeaderMenuOpen.value = false
@@ -2721,15 +2715,15 @@ function handleDelete() {
   isDeleteConfirmModalOpen.value = true
 }
 
-/// Xac nhan xoa thanh phan luong dang chon.
+/// Xác nhận xóa thành phần lương đang chọn.
 /// CREATED BY: VVHung (03/06/2026)
 function confirmDeleteSalaryComposition() {
   if (!currentId.value) return
   deleteSalaryCompositionMutation.mutate()
 }
 
-/// Dong dropdown cau hinh khi click ra ngoai.
-/// <param name="event">Su kien phat sinh tu giao dien.</param>
+/// Đóng dropdown cấu hình khi click ra ngoài.
+/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function handleClickOutsideValueConfig(event) {
   if (!valueConfigRef.value?.contains(event.target)) {
@@ -2741,13 +2735,13 @@ function handleClickOutsideValueConfig(event) {
   }
 }
 
-/// Mo modal xac nhan thoat form khi co du lieu chua luu.
+/// Mở modal xác nhận thoát form khi có dữ liệu chưa lưu.
 /// CREATED BY: VVHung (03/06/2026)
 function openExitConfirmModal() {
   isExitConfirmModalOpen.value = true
 }
 
-/// Xu ly nut quay lai khoi form thanh phan luong.
+/// Xử lý nút quay lại khỏi form thành phần lương.
 /// CREATED BY: VVHung (03/06/2026)
 function handleBack() {
   if (isFormDirty.value || !isEditMode.value) {
@@ -2758,7 +2752,7 @@ function handleBack() {
   confirmExitWithoutSave()
 }
 
-/// Xu ly nut huy bo tren form thanh phan luong.
+/// Xử lý nút hủy bỏ trên form thành phần lương.
 /// CREATED BY: VVHung (03/06/2026)
 function goToSalaryCompositionList() {
   if (isEditMode.value) {
@@ -2774,14 +2768,14 @@ function goToSalaryCompositionList() {
   confirmExitWithoutSave()
 }
 
-/// Xac nhan thoat form ma khong luu du lieu.
+/// Xác nhận thoát form mà không lưu dữ liệu.
 /// CREATED BY: VVHung (03/06/2026)
 function confirmExitWithoutSave() {
   emit('close')
 }
 
-/// Chuan hoa chuoi tieng Viet de so sanh khong dau.
-/// <param name="value">Gia tri can xu ly.</param>
+/// Chuẩn hóa chuỗi tiếng Việt để so sánh không dấu.
+/// <param name="value">Giá trị cần xử lý.</param>
 /// CREATED BY: VVHung (03/06/2026)
 function normalizeText(value) {
   return String(value)
@@ -2984,6 +2978,7 @@ onBeforeUnmount(() => {
 }
 
 .salarycomposition-form {
+  --salary-form-label-width: 200px;
   height: 100%;
   min-height: 0;
   display: flex;
@@ -2999,9 +2994,10 @@ onBeforeUnmount(() => {
 .salarycomposition-container {
   width: 100%;
   min-height: 100%;
-  padding: 40px;
+  padding: 16px;
   display: flex;
   background-color: #ffffff;
+  box-sizing: border-box;
 }
 
 .insert-action-footer {
@@ -3016,12 +3012,78 @@ onBeforeUnmount(() => {
 .ms-row {
   display: flex;
   width: 100%;
+  min-width: 0;
   line-height: 35px;
   text-indent: 0px;
   padding: 0px;
   margin-bottom: 16px;
   /* clear: both;
   flex-flow: wrap; */
+}
+
+.salarycomposition-form .w-200 {
+  width: var(--salary-form-label-width);
+  flex: 0 0 var(--salary-form-label-width);
+}
+
+.ms-row > :not(.w-200) {
+  min-width: 0;
+}
+
+.ms-row > .flex {
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.salarycomposition-form :deep(.ms-input),
+.salarycomposition-form :deep(.ms-input__field-wrap),
+.salarycomposition-form :deep(.ms-tree-select),
+.salarycomposition-form :deep(.ms-select),
+.salarycomposition-form :deep(.ms-formula) {
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 1440px) {
+  .salarycomposition-container {
+    padding: 24px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .salarycomposition-container {
+    padding: 40px;
+  }
+}
+
+@media (max-width: 1366px) {
+  .salarycomposition-form {
+    --salary-form-label-width: 200px;
+  }
+
+  .ms-row {
+    margin-bottom: 12px;
+  }
+
+  .ms-radio-wrapper + .ms-radio-wrapper {
+    margin-left: 20px;
+  }
+}
+
+@media (max-height: 780px) {
+  .content-header {
+    margin-bottom: 10px;
+  }
+
+  .salarycomposition-container {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .ms-row {
+    margin-bottom: 12px;
+  }
 }
 
 label {
@@ -3383,10 +3445,14 @@ label {
 
 .quick-field--large {
   width: 838px;
+  max-width: 100%;
+  flex: 0 1 838px;
 }
 
 .quick-field--compact {
   width: 315px;
+  max-width: 100%;
+  flex: 0 1 315px;
 }
 
 .quick-field.is-locked {
@@ -3468,6 +3534,9 @@ label {
 .quick-nature-line {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
+  min-width: 0;
   min-height: 36px;
 }
 
@@ -3520,7 +3589,9 @@ label {
 
 .quick-field :deep(.ms-input),
 .quick-field :deep(.ms-input__field-wrap) {
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .quick-field :deep(.ms-input__control) {
@@ -3528,7 +3599,9 @@ label {
 }
 
 .quick-field :deep(.ms-tree-select) {
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .quick-edit-form :deep(.ms-select__trigger) {
@@ -3537,6 +3610,9 @@ label {
 
 .quick-textarea {
   width: 766px;
+  max-width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
   height: 78px;
   min-height: 78px;
   padding: 6px 8px 8px 12px;
@@ -3559,6 +3635,7 @@ label {
 .quick-value {
   position: relative;
   width: 838px;
+  max-width: 100%;
   min-height: 36px;
   display: flex;
   align-items: flex-start;
@@ -3567,6 +3644,8 @@ label {
 
 .quick-value__content {
   width: 838px;
+  max-width: 100%;
+  min-width: 0;
   min-height: 36px;
 }
 
@@ -3587,6 +3666,7 @@ label {
 
 .quick-value__formula-row {
   width: 838px;
+  max-width: 100%;
   min-height: 36px;
   display: flex;
   align-items: center;

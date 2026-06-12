@@ -202,31 +202,44 @@ const confirmButtonProps = computed(() => {
   }
 })
 
+/// Đóng modal bằng cách cập nhật v-model về false.
+/// CREATED BY: VVHung (11/6/2026)
 function closeModal() {
   emit('update:modelValue', false)
 }
 
+/// Xử lý nút xác nhận trong modal.
+/// CREATED BY: VVHung (11/6/2026)
 function handleConfirm() {
   emit('confirm')
   closeModal()
 }
 
+/// Xử lý nút hủy trong modal.
+/// CREATED BY: VVHung (11/6/2026)
 function handleCancel() {
   emit('cancel')
   closeModal()
 }
 
+/// Xử lý thao tác đóng modal bằng icon hoặc phím tắt.
+/// CREATED BY: VVHung (11/6/2026)
 function handleClose() {
   emit('close')
   closeModal()
 }
 
+/// Đóng modal khi click overlay nếu component cho phép.
+/// CREATED BY: VVHung (11/6/2026)
 function handleOverlayMouseDown() {
   if (props.closeOnOverlay) {
     handleClose()
   }
 }
 
+/// Lắng nghe phím Escape để đóng modal nếu được cấu hình.
+/// <param name="event">Sự kiện keydown trên window.</param>
+/// CREATED BY: VVHung (11/6/2026)
 function handleKeydown(event) {
   if (event.key === 'Escape' && props.modelValue && props.closeOnEsc) {
     handleClose()

@@ -38,10 +38,11 @@ watch(isSidebarCollapsed, (value) => {
 .container {
   --ms-sidebar-width: 235px;
   width: 100%;
-  min-width: 1366px;
-  height: calc(100% - 48px);
+  min-width: 0;
+  height: calc(100vh - 48px);
   display: flex;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .container.is-sidebar-collapsed {
@@ -52,10 +53,13 @@ watch(isSidebarCollapsed, (value) => {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  width: calc(100% - var(--ms-sidebar-width));
+  width: auto;
   min-width: 0;
   height: 100%;
   padding: 12px 16px 16px;
+  overflow: hidden;
+  box-sizing: border-box;
   transition: width 0.2s ease;
 }
+
 </style>
