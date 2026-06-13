@@ -76,6 +76,8 @@
 import { computed } from 'vue'
 import MsSelect from '@/components/MsSelect.vue'
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (10/06/2026)
 const props = defineProps({
   // Tổng số bản ghi từ API.
   total: {
@@ -99,13 +101,27 @@ const props = defineProps({
   },
 })
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (13/06/2026)
 const emit = defineEmits(['update:pageIndex', 'update:pageSize'])
 
+/// Tổng số trang tính từ total và pageSize.
+/// CREATED BY: VVHung (10/06/2026)
 const totalPages = computed(() => Math.max(Math.ceil(props.total / props.pageSize), 1))
+/// Biến xác định đang ở trang đầu tiên.
+/// CREATED BY: VVHung (07/06/2026)
 const isFirstPage = computed(() => props.pageIndex <= 1)
+/// Biến xác định đang ở trang cuối cùng.
+/// CREATED BY: VVHung (09/06/2026)
 const isLastPage = computed(() => props.pageIndex >= totalPages.value)
+/// Số thứ tự bản ghi đầu tiên của trang hiện tại.
+/// CREATED BY: VVHung (11/06/2026)
 const pageFrom = computed(() => (props.total ? (props.pageIndex - 1) * props.pageSize + 1 : 0))
+/// Số thứ tự bản ghi cuối cùng của trang hiện tại.
+/// CREATED BY: VVHung (12/06/2026)
 const pageTo = computed(() => Math.min(props.pageIndex * props.pageSize, props.total))
+/// Danh sách option phục vụ page size select options.
+/// CREATED BY: VVHung (12/06/2026)
 const pageSizeSelectOptions = computed(() =>
   props.pageSizeOptions.map((size) => ({
     label: String(size),

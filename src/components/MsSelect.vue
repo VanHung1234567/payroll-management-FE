@@ -70,6 +70,8 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (12/06/2026)
 const props = defineProps({
   // Giá trị đang chọn, dùng với v-model.
   modelValue: {
@@ -170,26 +172,46 @@ const props = defineProps({
   },
 })
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (11/06/2026)
 const emit = defineEmits(['update:modelValue', 'change', 'blur'])
 
+/// DOM ref bọc toàn bộ select để bắt click outside.
+/// CREATED BY: VVHung (11/06/2026)
 const selectRef = ref(null)
+/// DOM ref của vùng trigger select.
+/// CREATED BY: VVHung (11/06/2026)
 const triggerRef = ref(null)
+/// Ref tới input tìm kiếm trong popup tùy chỉnh cột.
+/// CREATED BY: VVHung (09/06/2026)
 const searchInputRef = ref(null)
+/// Cờ mở hoặc đóng dropdown/popup của component.
+/// CREATED BY: VVHung (12/06/2026)
 const isOpen = ref(false)
+/// Từ khóa search nội bộ trong dropdown.
+/// CREATED BY: VVHung (13/06/2026)
 const searchText = ref('')
+/// Cờ xác định select có cần lọc option theo search hay không.
+/// CREATED BY: VVHung (11/06/2026)
 const shouldFilterSearch = ref(false)
+/// Cờ bỏ qua lần watch search kế tiếp sau khi chọn option.
+/// CREATED BY: VVHung (11/06/2026)
 const suppressNextSearchWatch = ref(false)
 
 /// Chuẩn hóa giá trị kích thước CSS sang đơn vị px khi nhận vào dạng number.
 /// <param name="value">Giá trị kích thước cần chuẩn hóa.</param>
-/// <returns>Giá trị kích thước hợp lệ cho CSS.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm chuẩn hóa số thành đơn vị px cho style button.
+/// CREATED BY: VVHung (07/06/2026)
 const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : value)
 
+/// Style động áp dụng cho select style.
+/// CREATED BY: VVHung (09/06/2026)
 const selectStyle = computed(() => ({
   width: normalizeCssSize(props.width),
 }))
 
+/// Style động áp dụng cho trigger style.
+/// CREATED BY: VVHung (09/06/2026)
 const triggerStyle = computed(() => {
   const style = {}
   if (props.triggerPadding) style.padding = props.triggerPadding
@@ -197,53 +219,63 @@ const triggerStyle = computed(() => {
   return style
 })
 
+/// Style vị trí và kích thước menu dropdown.
+/// CREATED BY: VVHung (06/06/2026)
 const menuStyle = computed(() => ({
   width: normalizeCssSize(props.menuWidth),
 }))
 
+/// Class động áp dụng cho menu class.
+/// CREATED BY: VVHung (13/06/2026)
 const menuClass = computed(() => ({
   'ms-select__menu--top': props.placement === 'top',
 }))
 
 /// Lấy label hiển thị của một option.
 /// <param name="option">Option cần lấy label.</param>
-/// <returns>Label của option.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm lấy nhãn hiển thị của option select.
+/// CREATED BY: VVHung (09/06/2026)
 const getOptionLabel = (option) => option?.[props.labelKey] ?? ''
 
 /// Lấy giá trị model của một option.
 /// <param name="option">Option cần lấy giá trị.</param>
-/// <returns>Giá trị của option.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm lấy value thực tế của option select.
+/// CREATED BY: VVHung (06/06/2026)
 const getOptionValue = (option) => option?.[props.valueKey] ?? null
 
 /// Lấy mã code của option nếu component được cấu hình codeKey.
 /// <param name="option">Option cần lấy code.</param>
-/// <returns>Code của option hoặc chuỗi rỗng.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm lấy mã phụ của option select nếu có.
+/// CREATED BY: VVHung (12/06/2026)
 const getOptionCode = (option) => (props.codeKey ? (option?.[props.codeKey] ?? '') : '')
 
 /// Kiểm tra option có code để hiển thị dạng Label (CODE) hay không.
 /// <param name="option">Option cần kiểm tra.</param>
-/// <returns>true nếu option có code, ngược lại false.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Cờ kiểm tra có option code.
+/// CREATED BY: VVHung (08/06/2026)
 const hasOptionCode = (option) => Boolean(getOptionCode(option))
 
 /// Tạo chuỗi tìm kiếm từ label và code của option.
 /// <param name="option">Option cần tạo chuỗi tìm kiếm.</param>
-/// <returns>Chuỗi tìm kiếm đã chuẩn hóa.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm ghép text dùng để tìm kiếm option.
+/// CREATED BY: VVHung (12/06/2026)
 const getOptionSearchText = (option) =>
   `${getOptionLabel(option)} ${getOptionCode(option)}`.trim().toLowerCase()
 
+/// Option đang được chọn theo modelValue.
+/// CREATED BY: VVHung (08/06/2026)
 const selectedOption = computed(() =>
   props.options.find((option) => getOptionValue(option) === props.modelValue),
 )
 
+/// Nhãn hiển thị của option đang chọn.
+/// CREATED BY: VVHung (13/06/2026)
 const selectedLabel = computed(() =>
   selectedOption.value ? getOptionLabel(selectedOption.value) : props.placeholder,
 )
 
+/// Danh sách option sau khi lọc theo từ khóa.
+/// CREATED BY: VVHung (11/06/2026)
 const filteredOptions = computed(() => {
   const keyword = searchText.value.trim().toLowerCase()
   if (!props.searchable || !keyword || !shouldFilterSearch.value) return props.options
@@ -251,23 +283,25 @@ const filteredOptions = computed(() => {
   return props.options.filter((option) => getOptionSearchText(option).includes(keyword))
 })
 
+/// Cờ xác định trạng thái invalid.
+/// CREATED BY: VVHung (09/06/2026)
 const isInvalid = computed(() => Boolean(props.errorMessage && (!props.meta || props.meta.touched)))
 
 /// Kiểm tra option có đang được chọn hay không.
 /// <param name="option">Option cần kiểm tra.</param>
-/// <returns>true nếu option đang được chọn, ngược lại false.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Cờ xác định trạng thái selected.
+/// CREATED BY: VVHung (13/06/2026)
 const isSelected = (option) => getOptionValue(option) === props.modelValue
 
-/// Mở hoặc đóng dropdown khi click trigger.
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm bật/tắt dropdown.
+/// CREATED BY: VVHung (13/06/2026)
 const toggleDropdown = () => {
   if (!props.disabled) isOpen.value = !isOpen.value
 }
 
 /// Chọn option, cập nhật v-model và phát sự kiện change.
-/// <param name="option">Option được chọn.</param>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm chọn một option và emit value ra ngoài.
+/// CREATED BY: VVHung (09/06/2026)
 const selectOption = (option) => {
   const value = getOptionValue(option)
   emit('update:modelValue', value)
@@ -275,8 +309,8 @@ const selectOption = (option) => {
   closeDropdown()
 }
 
-/// Đóng dropdown và reset trạng thái tìm kiếm.
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm đóng dropdown.
+/// CREATED BY: VVHung (13/06/2026)
 const closeDropdown = () => {
   isOpen.value = false
   searchText.value = ''
@@ -284,8 +318,8 @@ const closeDropdown = () => {
 }
 
 /// Xử lý click bên ngoài select để đóng dropdown và phát blur.
-/// <param name="event">Sự kiện click trên document.</param>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm đóng dropdown/popup khi click ra ngoài.
+/// CREATED BY: VVHung (13/06/2026)
 const handleClickOutside = (event) => {
   if (selectRef.value && !selectRef.value.contains(event.target)) {
     const wasOpen = isOpen.value

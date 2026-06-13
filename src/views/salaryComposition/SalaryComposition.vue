@@ -333,7 +333,7 @@
   >
     Nếu bạn thoát, các dữ liệu đang nhập liệu sẽ không được lưu lại.
   </MsModal>
-  <MsToast v-model="toast.visible" type="success" :message="toast.message" />
+  <MsToast v-model="toast.visible" :type="toast.type" :message="toast.message" />
 </template>
 
 <script setup lang="ts">
@@ -382,6 +382,7 @@ const isSystemPickerDiscardModalOpen = ref(false)
 const toast = ref({
   visible: false,
   message: 'Thêm thành công',
+  type: 'success',
 })
 const isFormOpen = ref(false)
 const formMode = ref<'add' | 'edit' | 'duplicate'>('add')
@@ -459,6 +460,9 @@ const copyFromSystemMutation = useMutation({
     closeSystemPicker()
     showToast('Thêm thành công')
   },
+  onError: () => {
+    showToast('Đã tồn tại một thành phần lương trùng mã', 'error')
+  },
 })
 
 const organizations = computed(() => organizationResponse.value?.data?.data ?? [])
@@ -488,12 +492,10 @@ const hasSystemPickerSelection = computed(() => systemPickerSelectedRows.value.l
 const isCopyingFromSystem = computed(() => copyFromSystemMutation.isPending.value)
 const hasAppliedAdvancedFilters = computed(() => advancedFilters.value.length > 0)
 const effectiveAdvancedFilters = computed(() =>
-  advancedFilters.value
-    .filter(isEffectiveAdvancedFilter)
-    .map((filter) => ({
-      ...filter,
-      operator: normalizeAdvancedFilterOperator(filter.operator),
-    })),
+  advancedFilters.value.filter(isEffectiveAdvancedFilter).map((filter) => ({
+    ...filter,
+    operator: normalizeAdvancedFilterOperator(filter.operator),
+  })),
 )
 const taxTypeOptions = [
   { value: 1, label: 'Chịu thuế' },
@@ -533,7 +535,12 @@ const advancedFilterFields = computed(() => [
     type: 'enum',
     options: toAdvancedFilterOptions(SALARY_COMPOSITION_NATURE_OPTIONS),
   },
-  { fieldName: 'TaxType', label: 'Chịu thuế', type: 'enum', options: toAdvancedFilterOptions(taxTypeOptions) },
+  {
+    fieldName: 'TaxType',
+    label: 'Chịu thuế',
+    type: 'enum',
+    options: toAdvancedFilterOptions(taxTypeOptions),
+  },
   {
     fieldName: 'IsTaxReduction',
     label: 'Giảm trừ khi tính thuế',
@@ -549,7 +556,12 @@ const advancedFilterFields = computed(() => [
   },
   { fieldName: 'ValueFormula', label: 'Giá trị', type: 'text' },
   { fieldName: 'Description', label: 'Mô tả', type: 'text' },
-  { fieldName: 'CreatedSource', label: 'Nguồn tạo', type: 'enum', options: toAdvancedFilterOptions(createdSourceOptions) },
+  {
+    fieldName: 'CreatedSource',
+    label: 'Nguồn tạo',
+    type: 'enum',
+    options: toAdvancedFilterOptions(createdSourceOptions),
+  },
   {
     fieldName: 'PayslipDisplayType',
     label: 'Hiển thị trên phiếu lương',
@@ -789,7 +801,7 @@ function writeStoredAdvancedFilters(storageKey: string, filters: any[]) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionId(row: any) {
-  return row?.salaryCompositionID ?? row?.SalaryCompositionID
+  return row?.salaryCompositionID
 }
 
 /// Lấy tên thành phần lương từ dòng dữ liệu.
@@ -913,9 +925,10 @@ function handleFormDeleted() {
 /// Hiển thị thông báo toast với nội dung truyền vào.
 /// <param name="message">Nội dung thông báo.</param>
 /// CREATED BY: VVHung (03/06/2026)
-function showToast(message: string) {
+function showToast(message, type = 'success') {
   toast.value.visible = false
   toast.value.message = message
+  toast.value.type = type
   nextTick(() => {
     toast.value.visible = true
   })

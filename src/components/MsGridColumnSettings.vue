@@ -120,6 +120,8 @@ import MsButton from './MsButton.vue'
 import MsInput from './MsInput.vue'
 import MsTooltip from './MsTooltip.vue'
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (07/06/2026)
 const props = defineProps({
   // Trang thai mo/dong popup, dung voi v-model.
   modelValue: {
@@ -149,12 +151,26 @@ const props = defineProps({
   },
 })
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (08/06/2026)
 const emit = defineEmits(['update:modelValue', 'save'])
+/// Từ khóa tìm kiếm trong popup tùy chỉnh cột.
+/// CREATED BY: VVHung (08/06/2026)
 const keyword = ref('')
+/// Từ khóa tìm kiếm cột sau khi debounce.
+/// CREATED BY: VVHung (11/06/2026)
 const debouncedKeyword = ref('')
+/// Danh sách cột nháp đang chỉnh trong popup tùy chỉnh cột.
+/// CREATED BY: VVHung (09/06/2026)
 const draftColumns = ref([])
+/// Ref tới input tìm kiếm trong popup tùy chỉnh cột.
+/// CREATED BY: VVHung (06/06/2026)
 const searchInputRef = ref(null)
+/// Timer debounce tìm kiếm cột.
+/// CREATED BY: VVHung (12/06/2026)
 let searchTimer = null
+/// Thứ tự cột mặc định dùng khi người dùng bấm lấy lại mặc định.
+/// CREATED BY: VVHung (08/06/2026)
 const DEFAULT_COLUMN_ORDER = [
   'SalaryCompositionCode',
   'SalaryCompositionName',
@@ -175,15 +191,21 @@ const DEFAULT_COLUMN_ORDER = [
   'Status',
 ]
 
+/// Tập giá trị dùng để kiểm tra default hidden field set.
+/// CREATED BY: VVHung (10/06/2026)
 const defaultHiddenFieldSet = computed(
   () => new Set(props.defaultHiddenFields.map((fieldName) => normalizeFieldName(fieldName))),
 )
+/// Map sortOrder mặc định theo fieldName.
+/// CREATED BY: VVHung (06/06/2026)
 const defaultOrderMap = computed(
   () =>
     new Map(
       DEFAULT_COLUMN_ORDER.map((fieldName, index) => [normalizeFieldName(fieldName), index + 1]),
     ),
 )
+/// Danh sách cột hiển thị sau khi search trong popup.
+/// CREATED BY: VVHung (13/06/2026)
 const filteredColumns = computed(() => {
   const keywordText = debouncedKeyword.value.trim().toLowerCase()
   if (!keywordText) return draftColumns.value
@@ -196,9 +218,13 @@ const filteredColumns = computed(() => {
     )
   })
 })
+/// Số cột nháp đang được bật hiển thị.
+/// CREATED BY: VVHung (09/06/2026)
 const visibleDraftColumnCount = computed(
   () => draftColumns.value.filter((column) => column.visible).length,
 )
+/// Cờ xác định có thể save columns.
+/// CREATED BY: VVHung (13/06/2026)
 const canSaveColumns = computed(() => !props.saving && visibleDraftColumnCount.value > 0)
 
 watch(

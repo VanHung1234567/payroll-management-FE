@@ -128,24 +128,40 @@ type AdvancedFilter = {
   value: string | number | boolean
 }
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (08/06/2026)
 const props = defineProps<{
   modelValue: boolean
   fields: FilterField[]
   filters: AdvancedFilter[]
 }>()
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (07/06/2026)
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   apply: [filters: AdvancedFilter[]]
   clear: []
 }>()
 
+/// Từ khóa người dùng nhập trong ô tìm kiếm.
+/// CREATED BY: VVHung (09/06/2026)
 const searchKeyword = ref('')
+/// Từ khóa tìm kiếm sau khi debounce.
+/// CREATED BY: VVHung (10/06/2026)
 const debouncedSearchKeyword = ref('')
+/// Bộ lọc nháp đang chỉnh trong panel trước khi áp dụng.
+/// CREATED BY: VVHung (06/06/2026)
 const draftFilters = reactive<Record<string, AdvancedFilter>>({})
+/// Ref tới ô tìm kiếm trong panel bộ lọc nâng cao.
+/// CREATED BY: VVHung (13/06/2026)
 const filterSearchInputRef = ref<InstanceType<typeof MsInput> | null>(null)
+/// Timer debounce thao tác nhập tìm kiếm.
+/// CREATED BY: VVHung (12/06/2026)
 let searchDebounceTimer: number | null = null
 
+/// Enum operator filter phía FE khớp giá trị backend.
+/// CREATED BY: VVHung (11/06/2026)
 const FILTER_OPERATOR = {
   Contains: 1,
   NotContains: 2,
@@ -157,6 +173,8 @@ const FILTER_OPERATOR = {
   NotEmpty: 8,
 }
 
+/// Map chuyển operator dạng chuỗi cũ sang enum mới.
+/// CREATED BY: VVHung (07/06/2026)
 const LEGACY_OPERATOR_MAP: Record<string, number> = {
   contains: FILTER_OPERATOR.Contains,
   notContains: FILTER_OPERATOR.NotContains,
@@ -168,12 +186,16 @@ const LEGACY_OPERATOR_MAP: Record<string, number> = {
   notEmpty: FILTER_OPERATOR.NotEmpty,
 }
 
+/// Tập field dùng nhóm operator text đầy đủ.
+/// CREATED BY: VVHung (10/06/2026)
 const FULL_TEXT_OPERATOR_FIELDS = new Set([
   'SalaryCompositionCode',
   'SalaryCompositionName',
   'NormFormula',
 ])
 
+/// Danh sách operator dành cho field text.
+/// CREATED BY: VVHung (13/06/2026)
 const FULL_TEXT_OPERATORS = [
   { value: FILTER_OPERATOR.Contains, label: 'Chứa' },
   { value: FILTER_OPERATOR.NotContains, label: 'Không chứa' },
@@ -184,6 +206,8 @@ const FULL_TEXT_OPERATORS = [
   { value: FILTER_OPERATOR.NotEmpty, label: 'Không trống' },
 ]
 
+/// Danh sách operator rút gọn dành cho field select/boolean.
+/// CREATED BY: VVHung (06/06/2026)
 const SIMPLE_OPERATORS = [
   { value: FILTER_OPERATOR.Equals, label: 'Bằng' },
   { value: FILTER_OPERATOR.NotEquals, label: 'Khác' },
@@ -191,8 +215,12 @@ const SIMPLE_OPERATORS = [
   { value: FILTER_OPERATOR.NotEmpty, label: 'Không trống' },
 ]
 
+/// Tập operator không cần nhập giá trị lọc.
+/// CREATED BY: VVHung (13/06/2026)
 const EMPTY_OPERATORS = new Set([FILTER_OPERATOR.Empty, FILTER_OPERATOR.NotEmpty])
 
+/// Danh sách field filter sau khi lọc theo ô tìm kiếm.
+/// CREATED BY: VVHung (11/06/2026)
 const visibleFields = computed(() => {
   const keyword = debouncedSearchKeyword.value.trim().toLowerCase()
   if (!keyword) return props.fields
@@ -281,14 +309,6 @@ function getDefaultOperator(field: FilterField) {
     : FILTER_OPERATOR.Equals
 }
 
-/// Lấy giá trị mặc định của điều kiện lọc mới.
-/// <param name="field">Cấu hình trường lọc.</param>
-/// <returns>Giá trị mặc định của điều kiện lọc.</returns>
-/// CREATED BY: VVHung (11/6/2026)
-function getDefaultValue(field: FilterField) {
-  return ''
-}
-
 /// Lấy điều kiện lọc nháp của một field.
 /// <param name="fieldName">Tên field cần lấy điều kiện.</param>
 /// <returns>Điều kiện lọc nháp của field.</returns>
@@ -309,7 +329,7 @@ function toggleField(field: FilterField) {
   draftFilters[field.fieldName] = {
     fieldName: field.fieldName,
     operator: getDefaultOperator(field),
-    value: getDefaultValue(field),
+    value: '',
   }
   focusFieldValueControl(field.fieldName)
 }
@@ -371,19 +391,9 @@ async function focusFieldValueControl(fieldName: string) {
   await nextTick()
 
   const fieldElement = document.querySelector(`[data-filter-field="${fieldName}"]`)
-  const inputTarget = fieldElement?.querySelector('.ms-grid-filter__value-control input')
-  if (inputTarget) {
-    ;(inputTarget as HTMLElement).focus?.()
-    return
-  }
-
-  const selectTrigger = fieldElement?.querySelector('.ms-grid-filter__value-control button')
-  if (selectTrigger) {
-    ;(selectTrigger as HTMLElement).focus?.()
-    return
-  }
-
-  const focusTarget = fieldElement?.querySelector('.ms-grid-filter__value-control input')
+  const focusTarget =
+    fieldElement?.querySelector('.ms-grid-filter__value-control input') ||
+    fieldElement?.querySelector('.ms-grid-filter__value-control button')
   ;(focusTarget as HTMLElement | null)?.focus?.()
 }
 

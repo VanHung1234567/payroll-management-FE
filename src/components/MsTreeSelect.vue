@@ -107,6 +107,8 @@
 <script setup>
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+/// Component con dùng để render đệ quy từng node trong tree.
+/// CREATED BY: VVHung (10/06/2026)
 const TreeNode = defineComponent({
   name: 'TreeNode',
   props: {
@@ -135,8 +137,8 @@ const TreeNode = defineComponent({
   setup(props, { emit }) {
     /// Render một node trong cây và các node con của nó.
     /// <param name="node">Node cần render.</param>
-    /// <returns>VNode của node trong tree select.</returns>
-    /// CREATED BY: VVHung (03/06/2026)
+    /// Hàm render một node và các node con trong tree select.
+    /// CREATED BY: VVHung (10/06/2026)
     const renderNode = (node) => {
       const id = props.getId(node.raw)
       const checked = props.isChecked(id)
@@ -232,6 +234,8 @@ const TreeNode = defineComponent({
   },
 })
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (10/06/2026)
 const props = defineProps({
   // Danh sách id đang chọn, dùng với v-model.
   modelValue: {
@@ -290,41 +294,67 @@ const props = defineProps({
   },
 })
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (13/06/2026)
 const emit = defineEmits(['update:modelValue', 'change', 'blur'])
 
+/// DOM ref bọc toàn bộ select để bắt click outside.
+/// CREATED BY: VVHung (09/06/2026)
 const selectRef = ref(null)
+/// Ref tới input thật để component cha có thể gọi focus.
+/// CREATED BY: VVHung (11/06/2026)
 const inputRef = ref(null)
+/// Cờ mở hoặc đóng dropdown/popup của component.
+/// CREATED BY: VVHung (06/06/2026)
 const isOpen = ref(false)
+/// Từ khóa search nội bộ trong dropdown.
+/// CREATED BY: VVHung (07/06/2026)
 const searchText = ref('')
+/// Tập id node đang được mở rộng trong tree select.
+/// CREATED BY: VVHung (07/06/2026)
 const expandedKeys = ref(new Set())
+/// Cờ điều khiển hiển thị inactive checked.
+/// CREATED BY: VVHung (09/06/2026)
 const showInactiveChecked = ref(false)
 
+/// Chiều rộng đã chuẩn hóa để gắn vào style.
+/// CREATED BY: VVHung (09/06/2026)
 const normalizedWidth = computed(() =>
   typeof props.width === 'number' ? `${props.width}px` : props.width,
 )
+/// Danh sách id đang được chọn trong tree select.
+/// CREATED BY: VVHung (07/06/2026)
 const selectedValues = computed(() => props.modelValue)
+/// Hàm chuẩn hóa id về chuỗi để so sánh ổn định.
+/// CREATED BY: VVHung (10/06/2026)
 const normalizeId = (id) => (id === null || id === undefined ? '' : String(id))
+/// Tập giá trị dùng để kiểm tra selected set.
+/// CREATED BY: VVHung (09/06/2026)
 const selectedSet = computed(() => new Set(props.modelValue.map((id) => normalizeId(id))))
+/// Cờ xác định trạng thái invalid.
+/// CREATED BY: VVHung (07/06/2026)
 const isInvalid = computed(() => Boolean(props.errorMessage && (!props.meta || props.meta.touched)))
 
 /// Lấy id của option theo idKey.
 /// <param name="option">Option cần lấy id.</param>
-/// <returns>Id cua option.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm lấy id của một option tree.
+/// CREATED BY: VVHung (11/06/2026)
 const getId = (option) => normalizeId(option?.[props.idKey])
 
 /// Lấy parent id của option theo parentKey.
 /// <param name="option">Option cần lấy parent id.</param>
-/// <returns>Parent id cua option.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm lấy id cha của một option tree.
+/// CREATED BY: VVHung (13/06/2026)
 const getParentId = (option) => normalizeId(option?.[props.parentKey])
 
 /// Lấy label hiển thị của option theo labelKey.
 /// <param name="option">Option cần lấy label.</param>
-/// <returns>Label của option.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm lấy nhãn hiển thị của một option tree.
+/// CREATED BY: VVHung (08/06/2026)
 const getLabel = (option) => option?.[props.labelKey] ?? ''
 
+/// Map option theo id để lấy dữ liệu nhanh.
+/// CREATED BY: VVHung (09/06/2026)
 const optionMap = computed(() => {
   const map = new Map()
   props.options.forEach((option) => {
@@ -333,6 +363,8 @@ const optionMap = computed(() => {
   return map
 })
 
+/// Map gom các node con theo id cha để dựng cây.
+/// CREATED BY: VVHung (12/06/2026)
 const parentMap = computed(() => {
   const map = new Map()
   props.options.forEach((option) => {
@@ -342,8 +374,12 @@ const parentMap = computed(() => {
   return map
 })
 
+/// Cây option đầy đủ sau khi dựng từ danh sách phẳng.
+/// CREATED BY: VVHung (08/06/2026)
 const tree = computed(() => buildTree(props.options))
 
+/// Cây option sau khi lọc theo từ khóa tìm kiếm.
+/// CREATED BY: VVHung (07/06/2026)
 const filteredTree = computed(() => {
   const keyword = searchText.value.trim().toLowerCase()
   if (!keyword) return tree.value
@@ -351,6 +387,8 @@ const filteredTree = computed(() => {
   return filterTree(tree.value, keyword)
 })
 
+/// Danh sách option được chọn dùng để render tag trên input.
+/// CREATED BY: VVHung (09/06/2026)
 const selectedDisplayOptions = computed(() =>
   selectedValues.value
     .map((id) => optionMap.value.get(normalizeId(id)))
@@ -358,23 +396,29 @@ const selectedDisplayOptions = computed(() =>
     .filter((option) => !hasSelectedAncestor(getId(option))),
 )
 
+/// Số tag tối đa được hiển thị trực tiếp trên input.
+/// CREATED BY: VVHung (09/06/2026)
 const maxVisibleTags = computed(() => {
   const count = Number(props.maxVisibleTags)
   return Number.isFinite(count) && count > 0 ? count : 1
 })
 
+/// Danh sách option phục vụ visible selected options.
+/// CREATED BY: VVHung (11/06/2026)
 const visibleSelectedOptions = computed(() =>
   selectedDisplayOptions.value.slice(-maxVisibleTags.value),
 )
 
+/// Số option đã chọn đang bị gom vào phần còn lại.
+/// CREATED BY: VVHung (12/06/2026)
 const hiddenSelectedCount = computed(() =>
   Math.max(selectedDisplayOptions.value.length - visibleSelectedOptions.value.length, 0),
 )
 
 /// Build danh sách phẳng thành cấu trúc cây.
 /// <param name="options">Danh sách option phẳng.</param>
-/// <returns>Danh sách node gốc của cây.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm dựng cấu trúc cây từ danh sách option phẳng.
+/// CREATED BY: VVHung (06/06/2026)
 const buildTree = (options) => {
   const nodeMap = new Map()
   const roots = []
@@ -413,8 +457,8 @@ const buildTree = (options) => {
 /// Lọc cây theo từ khóa nhưng vẫn giữ các node cha của kết quả khớp.
 /// <param name="nodes">Danh sách node cần lọc.</param>
 /// <param name="keyword">Từ khóa tìm kiếm.</param>
-/// <returns>Danh sách node sau khi lọc.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm lọc cây theo từ khóa nhưng vẫn giữ quan hệ cha con.
+/// CREATED BY: VVHung (08/06/2026)
 const filterTree = (nodes, keyword) =>
   nodes
     .map((node) => {
@@ -430,8 +474,8 @@ const filterTree = (nodes, keyword) =>
 
 /// Lấy id của node hiện tại và tất cả node con.
 /// <param name="node">Node cần lấy danh sách id.</param>
-/// <returns>Danh sách id của node và các node con.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm lấy toàn bộ id con cháu của một node.
+/// CREATED BY: VVHung (07/06/2026)
 const getDescendantIds = (node) => [
   getId(node.raw),
   ...node.children.flatMap((child) => getDescendantIds(child)),
@@ -439,15 +483,15 @@ const getDescendantIds = (node) => [
 
 /// Lấy các option con trực tiếp theo parent id.
 /// <param name="parentId">Id của node cha.</param>
-/// <returns>Danh sách option con trực tiếp.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm lấy danh sách node con theo id cha.
+/// CREATED BY: VVHung (08/06/2026)
 const getChildrenByParent = (parentId) =>
   props.options.filter((option) => getParentId(option) === normalizeId(parentId))
 
 /// Cập nhật trạng thái chọn của các node cha sau khi node con thay đổi.
 /// <param name="set">Tập id đang được chọn.</param>
-/// <param name="optionId">Id của option vừa thay đổi.</param>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm cập nhật trạng thái chọn của các node cha.
+/// CREATED BY: VVHung (09/06/2026)
 const updateAncestors = (set, optionId) => {
   let parentId = parentMap.value.get(optionId)
 
@@ -467,8 +511,8 @@ const updateAncestors = (set, optionId) => {
 }
 
 /// Chọn hoặc bỏ chọn node và toàn bộ node con của nó.
-/// <param name="node">Node được click.</param>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm bật/tắt chọn một node trong tree.
+/// CREATED BY: VVHung (06/06/2026)
 const toggleCheck = (node) => {
   const next = new Set(selectedSet.value)
   const ids = getDescendantIds(node)
@@ -488,8 +532,8 @@ const toggleCheck = (node) => {
 }
 
 /// Xóa một tag đã chọn khỏi tree select.
-/// <param name="option">Option cần xóa khỏi danh sách chọn.</param>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm bỏ chọn một option khỏi danh sách đã chọn.
+/// CREATED BY: VVHung (11/06/2026)
 const removeOption = (option) => {
   const node = findNode(tree.value, getId(option))
   if (node) {
@@ -500,15 +544,15 @@ const removeOption = (option) => {
   }
 }
 
-/// Xóa tất cả option đang chọn.
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm xóa toàn bộ option đang chọn.
+/// CREATED BY: VVHung (10/06/2026)
 const clearSelected = () => {
   updateValue([])
 }
 
 /// Cập nhật v-model và phát sự kiện change.
-/// <param name="value">Danh sách id mới.</param>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm emit danh sách id mới sau khi chọn tree thay đổi.
+/// CREATED BY: VVHung (10/06/2026)
 const updateValue = (value) => {
   emit('update:modelValue', value)
   emit('change', value)
@@ -517,8 +561,8 @@ const updateValue = (value) => {
 /// Tìm node trong cây theo id.
 /// <param name="nodes">Danh sách node cần tìm.</param>
 /// <param name="id">Id cua node can tim.</param>
-/// <returns>Node tìm thấy hoặc null.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm tìm node trong cây theo id.
+/// CREATED BY: VVHung (13/06/2026)
 const findNode = (nodes, id) => {
   for (const node of nodes) {
     if (getId(node.raw) === id) return node
@@ -530,7 +574,7 @@ const findNode = (nodes, id) => {
 
 /// Mở rộng danh sách id đang chọn để bao gồm cả node con khi node cha được chọn.
 /// <param name="value">Danh sách id đang chọn.</param>
-/// <returns>Danh sách id đã gom đủ node con.</returns>
+/// Hàm tự mở các nhánh chứa node đang được chọn.
 /// CREATED BY: VVHung (09/06/2026)
 const expandSelectedValues = (value) => {
   const next = new Set(value.map((id) => normalizeId(id)).filter(Boolean))
@@ -544,8 +588,8 @@ const expandSelectedValues = (value) => {
   return Array.from(next)
 }
 
-/// Đồng bộ v-model khi đầu vào chỉ có id cha nhưng cây đã có các node con.
-/// CREATED BY: VVHung (09/06/2026)
+/// Hàm đồng bộ node con khi node cha được chọn.
+/// CREATED BY: VVHung (10/06/2026)
 const syncSelectedDescendants = () => {
   if (!props.modelValue.length || !tree.value.length) return
 
@@ -557,8 +601,8 @@ const syncSelectedDescendants = () => {
 /// So sánh hai danh sách id sau khi chuẩn hóa.
 /// <param name="left">Danh sách id thứ nhất.</param>
 /// <param name="right">Danh sách id thứ hai.</param>
-/// <returns>true nếu hai danh sách giống nhau.</returns>
-/// CREATED BY: VVHung (09/06/2026)
+/// Cờ xác định trạng thái same id list.
+/// CREATED BY: VVHung (11/06/2026)
 const isSameIdList = (left, right) => {
   const leftText = left.map(normalizeId).sort().join(';')
   const rightText = right.map(normalizeId).sort().join(';')
@@ -575,8 +619,8 @@ watch(
 
 /// Kiểm tra option có node cha đang được chọn hay không để ẩn tag trùng lặp.
 /// <param name="id">Id cua option can kiem tra.</param>
-/// <returns>true nếu có node cha đang chọn, ngược lại false.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Cờ kiểm tra có selected ancestor.
+/// CREATED BY: VVHung (10/06/2026)
 const hasSelectedAncestor = (id) => {
   let parentId = parentMap.value.get(id)
   while (parentId) {
@@ -588,19 +632,19 @@ const hasSelectedAncestor = (id) => {
 
 /// Kiểm tra id có đang được chọn hay không.
 /// <param name="id">Id cần kiểm tra.</param>
-/// <returns>true nếu id đang được chọn, ngược lại false.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Cờ xác định trạng thái checked.
+/// CREATED BY: VVHung (07/06/2026)
 const isChecked = (id) => selectedSet.value.has(id)
 
 /// Kiểm tra node có đang mở rộng hay không.
 /// <param name="id">Id cua node can kiem tra.</param>
-/// <returns>true nếu node đang mở rộng, ngược lại false.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Cờ xác định trạng thái expanded.
+/// CREATED BY: VVHung (13/06/2026)
 const isExpanded = (id) => expandedKeys.value.has(id)
 
 /// Mở hoặc thu gọn một node trong cây.
-/// <param name="id">Id của node cần đổi trạng thái mở rộng.</param>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm mở hoặc thu gọn một node trong tree.
+/// CREATED BY: VVHung (08/06/2026)
 const toggleExpand = (id) => {
   const next = new Set(expandedKeys.value)
   if (next.has(id)) {
@@ -611,21 +655,21 @@ const toggleExpand = (id) => {
   expandedKeys.value = next
 }
 
-/// Mở dropdown tree select.
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm mở dropdown tree select.
+/// CREATED BY: VVHung (13/06/2026)
 const openDropdown = () => {
   isOpen.value = true
 }
 
-/// Mở hoặc đóng dropdown tree select.
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm bật/tắt dropdown.
+/// CREATED BY: VVHung (07/06/2026)
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value
 }
 
 /// Xử lý click bên ngoài tree select để đóng dropdown.
-/// <param name="event">Sự kiện click trên document.</param>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm đóng dropdown/popup khi click ra ngoài.
+/// CREATED BY: VVHung (07/06/2026)
 const handleClickOutside = (event) => {
   if (selectRef.value && !selectRef.value.contains(event.target)) {
     const wasOpen = isOpen.value

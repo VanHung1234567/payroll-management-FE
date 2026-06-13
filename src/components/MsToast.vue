@@ -23,6 +23,8 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (07/06/2026)
 const props = defineProps({
   // Trạng thái hiển thị toast, dùng với v-model.
   modelValue: {
@@ -63,13 +65,27 @@ const props = defineProps({
   },
 })
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (08/06/2026)
 const emit = defineEmits(['update:modelValue', 'close'])
 
+/// Timer tự động đóng toast.
+/// CREATED BY: VVHung (12/06/2026)
 const timer = ref(null)
+/// Loại toast đã chuẩn hóa để chọn icon và màu.
+/// CREATED BY: VVHung (06/06/2026)
 const normalizedType = computed(() => (props.type === 'error' ? 'danger' : props.type))
+/// Cờ hiển thị toast theo modelValue và nội dung message.
+/// CREATED BY: VVHung (07/06/2026)
 const isVisible = computed(() => props.modelValue && Boolean(props.message))
+/// Class động áp dụng cho container class.
+/// CREATED BY: VVHung (12/06/2026)
 const containerClass = computed(() => `ms-toast-container--${props.position}`)
+/// Class động áp dụng cho message class.
+/// CREATED BY: VVHung (06/06/2026)
 const messageClass = computed(() => `ms-toast-message--${normalizedType.value}`)
+/// Class động áp dụng cho icon class.
+/// CREATED BY: VVHung (06/06/2026)
 const iconClass = computed(() => `ms-icon-${normalizedType.value}-circle`)
 
 /// Xóa timer tự động đóng toast đang chạy.

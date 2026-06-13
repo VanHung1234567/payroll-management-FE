@@ -39,6 +39,8 @@ import { computed } from 'vue'
 // showArrow
 
 //làm thêm custom arrow
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (11/06/2026)
 const props = defineProps({
   // Nội dung tooltip nếu không truyền slot #tooltip.
   content: {
@@ -114,14 +116,18 @@ const props = defineProps({
   },
 })
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (12/06/2026)
 const emit = defineEmits(['show', 'hide'])
 
 /// Chuẩn hóa giá trị kích thước CSS sang đơn vị px khi nhận vào dạng number.
 /// <param name="value">Giá trị kích thước cần chuẩn hóa.</param>
-/// <returns>Giá trị kích thước hợp lệ cho CSS.</returns>
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm chuẩn hóa số thành đơn vị px cho style button.
+/// CREATED BY: VVHung (08/06/2026)
 const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : value)
 
+/// Danh sách class trạng thái của input.
+/// CREATED BY: VVHung (09/06/2026)
 const rootClass = computed(() => [
   `ms-tooltip-wrapper--${props.placement}`,
   `ms-tooltip-wrapper--align-${props.align}`,
@@ -131,6 +137,8 @@ const rootClass = computed(() => [
   props.hoverClass,
 ])
 
+/// Class động áp dụng cho bubble class.
+/// CREATED BY: VVHung (07/06/2026)
 const bubbleClass = computed(() => [
   {
     'is-no-arrow': !props.showArrow,
@@ -138,6 +146,8 @@ const bubbleClass = computed(() => [
   props.tooltipClass,
 ])
 
+/// Style động áp dụng cho root style.
+/// CREATED BY: VVHung (10/06/2026)
 const rootStyle = computed(() => ({
   '--ms-tooltip-hover-bg': props.hoverBackground,
   '--ms-tooltip-hover-size': normalizeCssSize(props.hoverSize),
@@ -148,14 +158,14 @@ const rootStyle = computed(() => ({
   '--ms-tooltip-line-height': normalizeCssSize(props.lineHeight),
 }))
 
-/// Phát sự kiện hiện tooltip khi hover vào trigger.
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm xử lý khi con trỏ vào vùng trigger tooltip.
+/// CREATED BY: VVHung (06/06/2026)
 const handleShow = () => {
   if (!props.disabled) emit('show')
 }
 
-/// Phát sự kiện ẩn tooltip khi rời chuột khỏi trigger.
-/// CREATED BY: VVHung (03/06/2026)
+/// Hàm xử lý khi con trỏ rời vùng trigger tooltip.
+/// CREATED BY: VVHung (11/06/2026)
 const handleHide = () => {
   if (!props.disabled) emit('hide')
 }

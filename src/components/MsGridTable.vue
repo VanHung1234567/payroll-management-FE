@@ -135,7 +135,7 @@
         </button>
         <div v-if="hasVisibleActions" class="ms-table__action-cell" :style="actionCellStyle">
           <button
-            v-if="showAddAction"
+            v-if="props.showAddAction"
             type="button"
             class="button-command-wrap"
             @click.stop="$emit('row-add', data.data)"
@@ -143,7 +143,7 @@
             <span class="mi-plus-primary" title="Thêm"></span>
           </button>
           <button
-            v-if="showActiveAction"
+            v-if="props.showActiveAction"
             type="button"
             class="button-command-wrap"
             @click.stop="$emit('row-active', data.data)"
@@ -154,7 +154,7 @@
             ></span>
           </button>
           <button
-            v-if="showCopyAction"
+            v-if="props.showCopyAction"
             type="button"
             class="button-command-wrap"
             @click.stop="$emit('row-copy', data.data)"
@@ -162,7 +162,7 @@
             <span class="ms-copy" title="Nhân bản"></span>
           </button>
           <button
-            v-if="showEditAction"
+            v-if="props.showEditAction"
             type="button"
             class="button-command-wrap"
             @click.stop="$emit('row-edit', data.data)"
@@ -170,7 +170,7 @@
             <span class="ms-pencil" title="Sửa"></span>
           </button>
           <button
-            v-if="showDeleteAction"
+            v-if="props.showDeleteAction"
             type="button"
             class="button-command-wrap"
             @click.stop="$emit('row-delete', data.data)"
@@ -258,7 +258,7 @@
       @mouseleave="scheduleHideRowActions"
     >
       <button
-        v-if="showAddAction"
+        v-if="props.showAddAction"
         type="button"
         class="button-command-wrap"
         @click.stop="$emit('row-add', hoveredRow)"
@@ -266,7 +266,7 @@
         <span class="mi-plus-primary" title="Đưa vào danh sách sử dụng"></span>
       </button>
       <button
-        v-if="showActiveAction"
+        v-if="props.showActiveAction"
         type="button"
         class="button-command-wrap"
         @click.stop="$emit('row-active', hoveredRow)"
@@ -277,7 +277,7 @@
         ></span>
       </button>
       <button
-        v-if="showCopyAction"
+        v-if="props.showCopyAction"
         type="button"
         class="button-command-wrap"
         @click.stop="$emit('row-copy', hoveredRow)"
@@ -285,7 +285,7 @@
         <span class="ms-copy" title="Nhân bản"></span>
       </button>
       <button
-        v-if="showEditAction"
+        v-if="props.showEditAction"
         type="button"
         class="button-command-wrap"
         @click.stop="$emit('row-edit', hoveredRow)"
@@ -293,7 +293,7 @@
         <span class="ms-pencil" title="Sửa"></span>
       </button>
       <button
-        v-if="showDeleteAction"
+        v-if="props.showDeleteAction"
         type="button"
         class="button-command-wrap"
         @click.stop="$emit('row-delete', hoveredRow)"
@@ -383,6 +383,8 @@ import {
   SALARY_COMPOSITION_VALUE_TYPE_OPTIONS,
 } from '@/utils/constants'
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (08/06/2026)
 const props = defineProps({
   // Key định danh state paging/search và query data của grid.
   gridKey: {
@@ -466,6 +468,8 @@ const props = defineProps({
   },
 })
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (07/06/2026)
 const emit = defineEmits([
   'row-active',
   'row-add',
@@ -476,54 +480,107 @@ const emit = defineEmits([
   'update:selectedRows',
 ])
 
+/// Store quản lý state dùng chung của các grid.
+/// CREATED BY: VVHung (13/06/2026)
 const gridTableStore = useGridTableStore()
+/// State dùng chung để lưu paging, sort, filter và lựa chọn của grid.
+/// CREATED BY: VVHung (11/06/2026)
 const gridState = gridTableStore.ensureGridState(props.gridKey, {
   pageIndex: props.pageIndex,
   pageSize: props.pageSize,
   search: props.search,
   searchFields: props.searchFields,
 })
+/// Trang hiện tại của grid, đồng bộ với grid store.
+/// CREATED BY: VVHung (11/06/2026)
 const pageIndex = computed({
   get: () => gridState.pageIndex,
   set: (value) => gridTableStore.setPageIndex(props.gridKey, Number(value)),
 })
+/// Số dòng mỗi trang của grid, đồng bộ với grid store.
+/// CREATED BY: VVHung (12/06/2026)
 const pageSize = computed({
   get: () => gridState.pageSize,
   set: (value) => gridTableStore.setPageSize(props.gridKey, Number(value)),
 })
+/// Chuỗi sort hiện tại gửi lên API phân trang.
+/// CREATED BY: VVHung (10/06/2026)
 const sort = ref('')
+/// Tập key của các dòng đang được chọn.
+/// CREATED BY: VVHung (11/06/2026)
 const selectedKeys = ref(new Set())
+/// Map lưu dữ liệu dòng đã chọn theo key.
+/// CREATED BY: VVHung (09/06/2026)
 const selectedRowMap = ref(new Map())
+/// Danh sách cấu hình cột đã chuẩn hóa từ API.
+/// CREATED BY: VVHung (11/06/2026)
 const configColumns = ref([])
+/// Đối tượng Vue Query dùng để đọc, cập nhật và refetch cache.
+/// CREATED BY: VVHung (11/06/2026)
 const queryClient = useQueryClient()
+/// Cờ hiển thị dialog xác nhận ghim/bỏ ghim cột.
+/// CREATED BY: VVHung (09/06/2026)
 const pinDialogVisible = ref(false)
-const tableContainerRef = ref(null)
+/// Ref tới instance DevExtreme DataGrid.
+/// CREATED BY: VVHung (11/06/2026)
 const dataGridRef = ref(null)
+/// Dữ liệu dòng đang được hover để hiển thị action nổi.
+/// CREATED BY: VVHung (11/06/2026)
 const hoveredRow = ref(null)
+/// Tọa độ top của cụm action nổi theo dòng đang hover.
+/// CREATED BY: VVHung (09/06/2026)
 const floatingActionTop = ref(0)
+/// Timer trì hoãn ẩn cụm action nổi.
+/// CREATED BY: VVHung (13/06/2026)
 const actionHideTimer = ref(null)
+/// DOM row đang hiển thị cụm action nổi.
+/// CREATED BY: VVHung (10/06/2026)
 const activeActionRowElement = ref(null)
+/// Timer debounce lưu thứ tự cột sau khi kéo thả.
+/// CREATED BY: VVHung (06/06/2026)
 const reorderTimer = ref(null)
+/// Timer debounce lưu độ rộng cột sau khi kéo resize.
+/// CREATED BY: VVHung (09/06/2026)
 const resizePersistTimer = ref(null)
+/// Cờ đánh dấu đang chờ lưu độ rộng cột.
+/// CREATED BY: VVHung (13/06/2026)
 const pendingResizePersist = ref(null)
+/// Tập field đang hiển thị icon ghim trên header cột.
+/// CREATED BY: VVHung (06/06/2026)
 const pinnedIconFields = ref(new Set())
+/// Danh sách field đang ghim theo đúng thứ tự người dùng ghim.
+/// CREATED BY: VVHung (10/06/2026)
 const pinnedFieldStack = ref([])
+/// Cờ xác định DataGrid đã sẵn sàng để gọi instance API.
+/// CREATED BY: VVHung (11/06/2026)
 const isGridReady = ref(false)
+/// Cờ tạm chặn lưu sortOrder khi grid tự reorder.
+/// CREATED BY: VVHung (07/06/2026)
 const suppressOrderPersist = ref(false)
+/// Timer tạm chặn lưu sortOrder khi grid đang tự cập nhật cột.
+/// CREATED BY: VVHung (10/06/2026)
 let suppressOrderPersistTimer = null
+/// Hàng đợi lưu cấu hình cột để tránh gọi API chồng nhau.
+/// CREATED BY: VVHung (09/06/2026)
 let persistQueue = Promise.resolve()
 
+/// Map API dữ liệu theo loại grid được truyền vào.
+/// CREATED BY: VVHung (06/06/2026)
 const DATA_API_MAP = {
   SalaryCompositionAPI,
   SalaryCompositionSystemAPI,
 }
 
+/// API thực tế được chọn để lấy dữ liệu grid.
+/// CREATED BY: VVHung (08/06/2026)
 const resolvedDataApi = computed(() => {
   if (typeof props.dataApi !== 'string') return props.dataApi
 
   return DATA_API_MAP[props.dataApi] || SalaryCompositionAPI
 })
 
+/// Bộ filter đã chuẩn hóa trước khi gửi API.
+/// CREATED BY: VVHung (12/06/2026)
 const normalizedFilters = computed(() => {
   const entries = Object.entries(props.filters || {}).filter(([, value]) => {
     if (Array.isArray(value)) return value.length > 0
@@ -533,6 +590,8 @@ const normalizedFilters = computed(() => {
   return Object.fromEntries(entries)
 })
 
+/// Cờ kiểm tra có active filters.
+/// CREATED BY: VVHung (07/06/2026)
 const hasActiveFilters = computed(() => Object.keys(normalizedFilters.value).length > 0)
 
 /// Lấy thông tin phân trang, tìm kiếm, sắp xếp và bộ lọc để gửi lên API.
@@ -551,6 +610,8 @@ function getPagingPayload() {
 
 // Chỉ các field thật có trong bảng/database mới được gửi lên backend để sort.
 // Các field hiển thị như NatureName, TaxTypeName... chỉ là field ảo ở frontend.
+/// Tập field cần gửi sort theo tên cột database.
+/// CREATED BY: VVHung (13/06/2026)
 const DB_SORT_FIELDS = new Set([
   'SalaryCompositionID',
   'SalaryCompositionCode',
@@ -573,6 +634,8 @@ const DB_SORT_FIELDS = new Set([
   'OrganizationNames',
 ])
 
+/// Map chuyển field hiển thị trên grid sang field sort gửi backend.
+/// CREATED BY: VVHung (10/06/2026)
 const SORT_FIELD_MAP = {
   OrganizationName: 'OrganizationNames',
   OrganizationNames: 'OrganizationNames',
@@ -585,7 +648,11 @@ const SORT_FIELD_MAP = {
   CreatedSourceName: 'CreatedSource',
   StatusName: 'Status',
 }
+/// Map text loại thành phần theo value.
+/// CREATED BY: VVHung (08/06/2026)
 const typeOptionTextMap = createOptionTextMap(SALARY_COMPOSITION_TYPE_OPTIONS)
+/// Map text kiểu giá trị theo value.
+/// CREATED BY: VVHung (11/06/2026)
 const valueTypeOptionTextMap = createOptionTextMap(SALARY_COMPOSITION_VALUE_TYPE_OPTIONS)
 
 /// Chuẩn hóa tên cột sắp xếp sang field backend cho phép sort.
@@ -599,6 +666,8 @@ function normalizeSortField(fieldName) {
   return DB_SORT_FIELDS.has(mappedFieldName) ? mappedFieldName : ''
 }
 
+/// State menu sort/ghim đang mở trên header cột.
+/// CREATED BY: VVHung (08/06/2026)
 const headerMenu = reactive({
   isOpen: false,
   fieldName: '',
@@ -608,8 +677,14 @@ const headerMenu = reactive({
   top: 0,
 })
 
+/// Grid key thực tế dùng để lấy cấu hình cột.
+/// CREATED BY: VVHung (07/06/2026)
 const resolvedConfigGridKey = computed(() => props.configGridKey || props.gridKey)
+/// Query key lấy cấu hình cột của grid.
+/// CREATED BY: VVHung (11/06/2026)
 const gridConfigQueryKey = computed(() => ['grid-config', resolvedConfigGridKey.value])
+/// Query key lấy dữ liệu phân trang của grid.
+/// CREATED BY: VVHung (07/06/2026)
 const pagingQueryKey = computed(() => [
   'grid-table-paging',
   props.gridKey,
@@ -621,11 +696,15 @@ const pagingQueryKey = computed(() => [
   normalizedFilters.value,
 ])
 
+/// Response dữ liệu phân trang nhận từ API.
+/// CREATED BY: VVHung (08/06/2026)
 const { data: gridConfigResponse, isFetching: isConfigFetching } = useQuery({
   queryKey: gridConfigQueryKey,
   queryFn: () => GridConfigAPI.getGridKey(resolvedConfigGridKey.value),
 })
 
+/// Response cấu hình cột nhận từ API GridConfig.
+/// CREATED BY: VVHung (08/06/2026)
 const { data: pagingResponse, isFetching: isRowsFetching } = useQuery({
   queryKey: pagingQueryKey,
   queryFn: () => {
@@ -638,8 +717,12 @@ const { data: pagingResponse, isFetching: isRowsFetching } = useQuery({
   },
 })
 
+/// Cờ xác định trạng thái loading.
+/// CREATED BY: VVHung (10/06/2026)
 const isLoading = computed(() => isConfigFetching.value || isRowsFetching.value)
 
+/// Danh sách cột phục vụ raw config columns.
+/// CREATED BY: VVHung (07/06/2026)
 const rawConfigColumns = computed(() => {
   const payload = normalizeResponseData(gridConfigResponse.value)
   if (Array.isArray(payload)) return payload
@@ -682,10 +765,20 @@ watch(
   { deep: true },
 )
 
+/// Dữ liệu phân trang đã được chuẩn hóa từ response API.
+/// CREATED BY: VVHung (10/06/2026)
 const pagingData = computed(() => normalizeResponseData(pagingResponse.value))
+/// Danh sách bản ghi hiện tại đang hiển thị trong grid.
+/// CREATED BY: VVHung (13/06/2026)
 const rows = computed(() => pagingData.value.data || [])
+/// Tổng số bản ghi dùng cho phân trang.
+/// CREATED BY: VVHung (12/06/2026)
 const total = computed(() => pagingData.value.total || rows.value.length)
+/// Cờ hiển thị trạng thái không có dữ liệu của grid.
+/// CREATED BY: VVHung (13/06/2026)
 const showEmptyState = computed(() => !isLoading.value && rows.value.length === 0)
+/// Số lượng nút thao tác dòng đang được bật.
+/// CREATED BY: VVHung (11/06/2026)
 const visibleActionCount = computed(
   () =>
     Number(props.showActiveAction) +
@@ -694,23 +787,27 @@ const visibleActionCount = computed(
     Number(props.showEditAction) +
     Number(props.showDeleteAction),
 )
+/// Cờ xác định grid có cần render vùng nút thao tác không.
+/// CREATED BY: VVHung (13/06/2026)
 const hasVisibleActions = computed(() => visibleActionCount.value > 0)
+/// Độ rộng cột thao tác tính theo số nút đang hiển thị.
+/// CREATED BY: VVHung (10/06/2026)
 const actionColumnWidth = computed(() => Math.max(48, visibleActionCount.value * 40 + 40))
+/// Style độ rộng áp dụng cho cụm nút thao tác nổi.
+/// CREATED BY: VVHung (09/06/2026)
 const actionCellStyle = computed(() => ({
   width: `${actionColumnWidth.value - 40}px`,
 }))
-const showActiveAction = computed(() => props.showActiveAction)
-const showAddAction = computed(() => props.showAddAction)
-const showCopyAction = computed(() => props.showCopyAction)
-const showEditAction = computed(() => props.showEditAction)
-const showDeleteAction = computed(() => props.showDeleteAction)
-
+/// Danh sách dòng đã gắn thêm trạng thái checkbox chọn dòng.
+/// CREATED BY: VVHung (07/06/2026)
 const tableRows = computed(() => {
   return rows.value.map((row) => ({
     ...row,
     __msSelected: selectedKeys.value.has(getRowKey(row)),
   }))
 })
+/// Map đơn vị theo id để format tên đơn vị nhanh.
+/// CREATED BY: VVHung (12/06/2026)
 const organizationOptionMap = computed(() => {
   const map = new Map()
   props.organizationOptions.forEach((organization) => {
@@ -737,11 +834,15 @@ watch(
   },
 )
 
+/// Danh sách cột visible đã sắp xếp để render lên grid.
+/// CREATED BY: VVHung (07/06/2026)
 const displayColumns = computed(() =>
   configColumns.value
     .filter((column) => column.visible !== false)
     .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0)),
 )
+/// Cờ render cột trống để grid vẫn kéo hết chiều ngang.
+/// CREATED BY: VVHung (10/06/2026)
 const showFillColumn = computed(() => displayColumns.value.length <= 1)
 
 /// Tạm dừng lưu thứ tự cột khi đang đồng bộ từ cấu hình backend vào grid.
@@ -810,15 +911,21 @@ function applyFixedColumnsToGrid(orderedColumns = displayColumns.value) {
   }
 }
 
+/// Style động áp dụng cho header menu style.
+/// CREATED BY: VVHung (13/06/2026)
 const headerMenuStyle = computed(() => ({
   left: `${headerMenu.left}px`,
   top: `${headerMenu.top}px`,
 }))
 
+/// Cờ xác định trạng thái all page checked.
+/// CREATED BY: VVHung (13/06/2026)
 const isAllPageChecked = computed(
   () => rows.value.length > 0 && rows.value.every((row) => selectedKeys.value.has(getRowKey(row))),
 )
 
+/// Cờ xác định trạng thái page indeterminate.
+/// CREATED BY: VVHung (10/06/2026)
 const isPageIndeterminate = computed(
   () => rows.value.some((row) => selectedKeys.value.has(getRowKey(row))) && !isAllPageChecked.value,
 )

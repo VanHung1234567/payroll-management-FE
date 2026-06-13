@@ -34,7 +34,7 @@
             active-border-color="#D5D7DA"
             @click.stop="emit('toggle-filter')"
           >
-            <div :class="filterButtonActive ? 'ms-icon-filter-fill' : 'mi-filter'"></div>
+            <div :class="props.filterActive ? 'ms-icon-filter-fill' : 'mi-filter'"></div>
           </MsButton>
         </MsTooltip>
 
@@ -84,6 +84,8 @@ import MsGridColumnSettings from './MsGridColumnSettings.vue'
 import MsInput from './MsInput.vue'
 import MsTooltip from './MsTooltip.vue'
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (08/06/2026)
 const props = defineProps({
   // Key cau hinh cot can hien thi trong popup tuy chinh cot.
   gridKey: {
@@ -112,18 +114,31 @@ const props = defineProps({
   },
 })
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (07/06/2026)
 const emit = defineEmits(['update:search', 'toggle-filter'])
+/// Đối tượng Vue Query dùng để đọc, cập nhật và refetch cache.
+/// CREATED BY: VVHung (11/06/2026)
 const queryClient = useQueryClient()
+/// Cờ mở hoặc đóng popup tùy chỉnh cột.
+/// CREATED BY: VVHung (09/06/2026)
 const isColumnSettingsOpen = ref(false)
+/// DOM ref bọc nút thiết lập và popup tùy chỉnh cột.
+/// CREATED BY: VVHung (07/06/2026)
 const settingRef = ref<HTMLElement | null>(null)
+/// Query key lấy cấu hình cột của grid.
+/// CREATED BY: VVHung (11/06/2026)
 const gridConfigQueryKey = computed(() => ['grid-config', props.gridKey])
-const filterButtonActive = computed(() => props.filterActive)
 
+/// Response cấu hình cột nhận từ API GridConfig.
+/// CREATED BY: VVHung (08/06/2026)
 const { data: gridConfigResponse } = useQuery({
   queryKey: gridConfigQueryKey,
   queryFn: () => GridConfigAPI.getGridKey(props.gridKey),
 })
 
+/// Danh sách cột đưa vào popup tùy chỉnh cột.
+/// CREATED BY: VVHung (13/06/2026)
 const gridConfigColumns = computed(() => {
   const payload = normalizeResponseData(gridConfigResponse.value)
   const columns = Array.isArray(payload) ? payload : payload.data || []
@@ -133,6 +148,8 @@ const gridConfigColumns = computed(() => {
     .sort((a: { sortOrder: any }, b: { sortOrder: any }) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
 })
 
+/// Mutation lưu cấu hình ẩn hiện và sortOrder cột.
+/// CREATED BY: VVHung (11/06/2026)
 const saveColumnSettingsMutation = useMutation({
   mutationFn: (columns: any[]) =>
     GridConfigAPI.saveConfig({
@@ -148,6 +165,8 @@ const saveColumnSettingsMutation = useMutation({
     await queryClient.refetchQueries({ queryKey: gridConfigQueryKey.value, exact: true })
   },
 })
+/// Cờ loading khi đang lưu cấu hình cột.
+/// CREATED BY: VVHung (09/06/2026)
 const isSavingColumnSettings = computed(() => saveColumnSettingsMutation.isPending.value)
 
 watch(isColumnSettingsOpen, (isOpen) => {
@@ -404,20 +423,6 @@ function normalizeBoolean(value: any) {
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   background-color: #6e737a;
-}
-
-.ms-icon-filter-fill {
-  width: 20px;
-  height: 20px;
-  -webkit-mask-image: url('../assets/images/Filter_fill.svg');
-  mask-image: url('../assets/images/Filter_fill.svg');
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  background-color: #0e9a62;
 }
 
 .ms-icon-filter-fill {

@@ -60,6 +60,8 @@
 import MsButton from '@/components/MsButton.vue'
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (13/06/2026)
 const props = defineProps({
   // Trạng thái mở/đóng modal, dùng với v-model.
   modelValue: {
@@ -135,24 +137,36 @@ const props = defineProps({
   },
 })
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (10/06/2026)
 const emit = defineEmits(['update:modelValue', 'confirm', 'cancel', 'close'])
 
+/// Hàm chuẩn hóa số thành đơn vị px cho style button.
+/// CREATED BY: VVHung (06/06/2026)
 const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : value)
 
+/// Style động áp dụng cho popup style.
+/// CREATED BY: VVHung (12/06/2026)
 const popupStyle = computed(() => ({
   width: normalizeCssSize(props.width),
 }))
 
+/// Class động áp dụng cho confirm button class.
+/// CREATED BY: VVHung (13/06/2026)
 const confirmButtonClass = computed(() => ({
   'ms-popup__button--primary': props.confirmVariant === 'primary',
   'ms-popup__button--danger': props.confirmVariant === 'danger',
 }))
 
+/// Nhóm props dùng chung cho các button trong modal.
+/// CREATED BY: VVHung (06/06/2026)
 const sharedButtonProps = {
   height: 32,
   minWidth: 80,
 }
 
+/// Cờ xác định có thể cancel button props.
+/// CREATED BY: VVHung (09/06/2026)
 const cancelButtonProps = computed(() => ({
   ...sharedButtonProps,
   ...(props.cancelVariant === 'primary-outline'
@@ -176,6 +190,8 @@ const cancelButtonProps = computed(() => ({
       }),
 }))
 
+/// Props riêng cho nút xác nhận của modal.
+/// CREATED BY: VVHung (13/06/2026)
 const confirmButtonProps = computed(() => {
   if (props.confirmVariant === 'danger') {
     return {

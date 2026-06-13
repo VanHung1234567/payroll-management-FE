@@ -12,6 +12,8 @@
 <script setup>
 import { computed } from 'vue'
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (10/06/2026)
 const props = defineProps({
   // Loại button HTML.
   type: {
@@ -116,8 +118,12 @@ const props = defineProps({
   },
 })
 
+/// Hàm chuẩn hóa số thành đơn vị px cho style button.
+/// CREATED BY: VVHung (09/06/2026)
 const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : value)
 
+/// Style động của button theo props truyền vào.
+/// CREATED BY: VVHung (09/06/2026)
 const buttonStyle = computed(() => {
   const style = {}
 

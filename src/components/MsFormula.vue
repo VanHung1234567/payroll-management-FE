@@ -102,6 +102,8 @@ languages.formula = {
   parameter: /\b[A-Z_][A-Z0-9_]*\b/,
 }
 
+/// Khai báo toàn bộ dữ liệu component nhận từ component cha.
+/// CREATED BY: VVHung (06/06/2026)
 const props = defineProps({
   // Chuỗi công thức, dùng với v-model.
   modelValue: {
@@ -135,20 +137,36 @@ const props = defineProps({
   },
 })
 
+/// Khai báo các sự kiện component bắn ra ngoài.
+/// CREATED BY: VVHung (09/06/2026)
 const emit = defineEmits(['update:modelValue', 'agent-click'])
 
+/// Ref tới editor công thức trong template.
+/// CREATED BY: VVHung (11/06/2026)
 const formulaRef = ref(null)
+/// Cờ xác định input đang được focus.
+/// CREATED BY: VVHung (11/06/2026)
 const isFocused = ref(false)
+/// Tab đang được chọn trong popup công thức.
+/// CREATED BY: VVHung (13/06/2026)
 const activeTab = ref('functions')
 
+/// Hàm chuẩn hóa số thành đơn vị px cho style button.
+/// CREATED BY: VVHung (13/06/2026)
 const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : value)
+/// Chiều rộng đã chuẩn hóa để gắn vào style.
+/// CREATED BY: VVHung (13/06/2026)
 const normalizedWidth = computed(() => normalizeCssSize(props.width))
 
+/// Giá trị công thức đang nhập trong editor.
+/// CREATED BY: VVHung (09/06/2026)
 const formulaValue = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value),
 })
 
+/// Danh sách hàm công thức có thể chèn vào editor.
+/// CREATED BY: VVHung (11/06/2026)
 const formulaFunctions = [
   {
     name: 'SUM',
@@ -237,12 +255,16 @@ const formulaFunctions = [
   },
 ]
 
+/// Token ngay trước con trỏ dùng để gợi ý tham số.
+/// CREATED BY: VVHung (07/06/2026)
 const searchToken = computed(() => {
   const value = formulaValue.value || ''
   const match = value.match(/[A-Za-z0-9_À-ỹ]+$/)
   return normalizeText(match?.[0] ?? '')
 })
 
+/// Danh sách hàm công thức sau khi lọc theo từ khóa.
+/// CREATED BY: VVHung (10/06/2026)
 const filteredFunctions = computed(() => {
   if (!searchToken.value) return formulaFunctions
   return formulaFunctions.filter((item) =>
@@ -250,6 +272,8 @@ const filteredFunctions = computed(() => {
   )
 })
 
+/// Danh sách tham số sau khi lọc theo từ khóa.
+/// CREATED BY: VVHung (07/06/2026)
 const filteredParameters = computed(() => {
   if (!searchToken.value) return props.parameters
   return props.parameters.filter((item) =>
@@ -259,6 +283,8 @@ const filteredParameters = computed(() => {
   )
 })
 
+/// Cờ xác định trạng thái panel open.
+/// CREATED BY: VVHung (10/06/2026)
 const isPanelOpen = computed(
   () =>
     isFocused.value &&
@@ -349,6 +375,10 @@ function normalizeText(value) {
 .ms-formula__editor-wrap:hover,
 .ms-formula__editor-wrap.is-focused {
   border-color: #0e9a62;
+}
+
+.ms-formula__editor-wrap::selection{
+  background: #0d905d;
 }
 
 .ms-formula__equals {
