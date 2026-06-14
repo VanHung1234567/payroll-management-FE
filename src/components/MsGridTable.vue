@@ -11,7 +11,7 @@
       :hover-state-enabled="false"
       :column-auto-width="false"
       :allow-column-resizing="true"
-      :allow-column-reordering="true"
+      :allow-column-reordering="false"
       column-resizing-mode="widget"
       :height="'100%'"
       :focused-row-enabled="false"
@@ -46,7 +46,7 @@
         :min-width="200"
         :allow-sorting="false"
         :allow-resizing="true"
-        :allow-reordering="true"
+        :allow-reordering="false"
         :fixed="column.isFixed"
         :fixed-position="column.fixedPosition || 'left'"
         header-cell-template="headerCellTemplate"
@@ -536,9 +536,6 @@ const actionHideTimer = ref(null)
 /// DOM row đang hiển thị cụm action nổi.
 /// CREATED BY: VVHung (10/06/2026)
 const activeActionRowElement = ref(null)
-/// Timer debounce lưu thứ tự cột sau khi kéo thả.
-/// CREATED BY: VVHung (06/06/2026)
-const reorderTimer = ref(null)
 /// Timer debounce lưu độ rộng cột sau khi kéo resize.
 /// CREATED BY: VVHung (09/06/2026)
 const resizePersistTimer = ref(null)
@@ -554,12 +551,6 @@ const pinnedFieldStack = ref([])
 /// Cờ xác định DataGrid đã sẵn sàng để gọi instance API.
 /// CREATED BY: VVHung (11/06/2026)
 const isGridReady = ref(false)
-/// Cờ tạm chặn lưu sortOrder khi grid tự reorder.
-/// CREATED BY: VVHung (07/06/2026)
-const suppressOrderPersist = ref(false)
-/// Timer tạm chặn lưu sortOrder khi grid đang tự cập nhật cột.
-/// CREATED BY: VVHung (10/06/2026)
-let suppressOrderPersistTimer = null
 /// Hàng đợi lưu cấu hình cột để tránh gọi API chồng nhau.
 /// CREATED BY: VVHung (09/06/2026)
 let persistQueue = Promise.resolve()
@@ -845,20 +836,6 @@ const displayColumns = computed(() =>
 /// CREATED BY: VVHung (10/06/2026)
 const showFillColumn = computed(() => displayColumns.value.length <= 1)
 
-/// Tạm dừng lưu thứ tự cột khi đang đồng bộ từ cấu hình backend vào grid.
-/// CREATED BY: VVHung (05/06/2026)
-function suppressOrderPersistTemporarily() {
-  suppressOrderPersist.value = true
-  if (suppressOrderPersistTimer) {
-    window.clearTimeout(suppressOrderPersistTimer)
-  }
-
-  suppressOrderPersistTimer = window.setTimeout(() => {
-    suppressOrderPersist.value = false
-    suppressOrderPersistTimer = null
-  }, 300)
-}
-
 /// Cập nhật thứ tự cột trực tiếp trên instance để tránh remount grid khi chỉ đổi SortOrder.
 /// CREATED BY: VVHung (05/06/2026)
 async function applyColumnOrderToGrid() {
@@ -868,7 +845,6 @@ async function applyColumnOrderToGrid() {
   const gridInstance = typeof rawGridInstance === 'function' ? rawGridInstance() : rawGridInstance
   if (!gridInstance) return
 
-  suppressOrderPersistTemporarily()
   gridInstance.beginUpdate()
   try {
     displayColumns.value.forEach((column, index) => {
@@ -896,7 +872,6 @@ function applyFixedColumnsToGrid(orderedColumns = displayColumns.value) {
   const gridInstance = typeof rawGridInstance === 'function' ? rawGridInstance() : rawGridInstance
   if (!gridInstance) return
 
-  suppressOrderPersistTemporarily()
   gridInstance.beginUpdate()
   try {
     orderedColumns.forEach((column, index) => {
@@ -943,22 +918,22 @@ function normalizeResponseData(response) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function normalizeColumn(column) {
-  const rawFieldName = column.fieldName || column.FieldName
+  const rawFieldName = column.fieldName
 
   return {
     ...column,
-    gridConfigID: column.gridConfigID || column.GridConfigID,
-    gridKey: column.gridKey || column.GridKey || props.gridKey,
+    gridConfigID: column.gridConfigID,
+    gridKey: column.gridKey || props.gridKey,
     apiFieldName: rawFieldName,
     apiSortField: normalizeSortField(rawFieldName),
     fieldName: toCamelCase(rawFieldName),
-    caption: column.caption || column.Caption,
-    width: Math.max(Number(column.width || column.Width || 200), 200),
-    visible: normalizeBoolean(column.visible ?? column.Visible ?? true),
-    isFixed: Boolean(column.isFixed ?? column.IsFixed),
-    fixedPosition: column.fixedPosition || column.FixedPosition || null,
-    allowSorting: column.allowSorting ?? column.AllowSorting ?? true,
-    sortOrder: column.sortOrder ?? column.SortOrder,
+    caption: column.caption,
+    width: Math.max(Number(column.width || 200), 200),
+    visible: normalizeBoolean(column.visible ?? true),
+    isFixed: Boolean(column.isFixed),
+    fixedPosition: column.fixedPosition || null,
+    allowSorting: column.allowSorting ?? true,
+    sortOrder: column.sortOrder,
   }
 }
 
@@ -1069,11 +1044,12 @@ function getDisplayValue(row, fieldName) {
     lowerField === 'organizationname' ||
     lowerField === 'organizationnames'
   ) {
-    return formatOrganizationDisplay(row, value) || (
-      row.organizationNames ??
-      row.OrganizationNames ??
-      row.organizationName ??
-      row.OrganizationName ??
+    return (
+      formatOrganizationDisplay(row, value) ||
+      row.organizationNames ||
+      row.OrganizationNames ||
+      row.organizationName ||
+      row.OrganizationName ||
       value
     )
   }
@@ -1083,15 +1059,11 @@ function getDisplayValue(row, fieldName) {
     lowerField === 'salarycompositiontypeid' ||
     lowerField === 'typename'
   ) {
-    return (
-      row.typeName ??
-      row.TypeName ??
-      optionText(row.salaryCompositionType ?? row.SalaryCompositionType ?? value, typeOptionTextMap)
-    )
+    return row.typeName ?? optionText(row.salaryCompositionType ?? value, typeOptionTextMap)
   }
 
   if (lowerField === 'nature' || lowerField === 'naturename') {
-    return optionText(row.nature ?? row.Nature ?? value, {
+    return optionText(row.nature ?? value, {
       1: 'Thu nhập',
       2: 'Khấu trừ',
       3: 'Khác',
@@ -1099,7 +1071,7 @@ function getDisplayValue(row, fieldName) {
   }
 
   if (lowerField === 'taxtype' || lowerField === 'taxtypename') {
-    return optionText(row.taxType ?? row.TaxType ?? value, {
+    return optionText(row.taxType ?? value, {
       1: 'Chịu thuế',
       2: 'Miễn thuế toàn phần',
       3: 'Miễn thuế một phần',
@@ -1107,11 +1079,11 @@ function getDisplayValue(row, fieldName) {
   }
 
   if (lowerField === 'valuetype' || lowerField === 'valuetypename') {
-    return optionText(row.valueType ?? row.ValueType ?? value, valueTypeOptionTextMap)
+    return optionText(row.valueType ?? value, valueTypeOptionTextMap)
   }
 
   if (lowerField === 'valuetype' || lowerField === 'valuetypename') {
-    return optionText(row.valueType ?? row.ValueType ?? value, {
+    return optionText(row.valueType ?? value, {
       1: 'Tiền tệ',
       2: 'Số',
       3: 'Phần trăm',
@@ -1120,7 +1092,7 @@ function getDisplayValue(row, fieldName) {
   }
 
   if (lowerField === 'payslipdisplaytype' || lowerField === 'payslipdisplaytypename') {
-    return optionText(row.payslipDisplayType ?? row.PayslipDisplayType ?? value, {
+    return optionText(row.payslipDisplayType ?? value, {
       1: 'Có',
       2: 'Không',
       3: 'Chỉ hiện nếu giá trị khác 0',
@@ -1128,7 +1100,7 @@ function getDisplayValue(row, fieldName) {
   }
 
   if (lowerField === 'createdsource' || lowerField === 'createdsourcename') {
-    return optionText(row.createdSource ?? row.CreatedSource ?? value, {
+    return optionText(row.createdSource ?? value, {
       1: 'Tự thêm',
       2: 'Mặc định',
     })
@@ -1150,13 +1122,7 @@ function normalizeId(id) {
 /// <returns>Id don vi.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function getOrganizationId(organization) {
-  return (
-    organization?.organizationID ??
-    organization?.OrganizationID ??
-    organization?.id ??
-    organization?.ID ??
-    null
-  )
+  return organization?.organizationID ?? null
 }
 
 /// Lấy id cha của đơn vị từ option.
@@ -1164,13 +1130,7 @@ function getOrganizationId(organization) {
 /// <returns>Id don vi cha.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function getOrganizationParentId(organization) {
-  return (
-    organization?.parentID ??
-    organization?.ParentID ??
-    organization?.parentId ??
-    organization?.ParentId ??
-    null
-  )
+  return organization?.parentID ?? null
 }
 
 /// Lấy tên hiển thị của đơn vị từ option.
@@ -1178,13 +1138,7 @@ function getOrganizationParentId(organization) {
 /// <returns>Tên đơn vị.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function getOrganizationLabel(organization) {
-  return (
-    organization?.organizationName ??
-    organization?.OrganizationName ??
-    organization?.name ??
-    organization?.Name ??
-    ''
-  )
+  return organization?.organizationName ?? ''
 }
 
 /// Tách danh sách id dạng string từ cell dữ liệu.
@@ -1480,12 +1434,6 @@ function handleTableScroll() {
 function handleOptionChanged(event) {
   if (event.fullName?.includes('.width')) {
     handleColumnWidthChanged(event)
-    return
-  }
-
-  if (event.fullName?.includes('.visibleIndex')) {
-    if (event.fullName?.includes('fixed') || event.fullName?.includes('fixedPosition')) return
-    queueColumnOrderPersist(event)
   }
 }
 
@@ -1527,51 +1475,6 @@ function queueColumnWidthPersist(column, width) {
     resizePersistTimer.value = null
     enqueuePersistColumn(pendingColumn, { Width: pendingWidth })
   }, 350)
-}
-
-/// Đưa thay đổi thứ tự cột vào hàng đợi lưu cấu hình.
-/// <param name="event">Sự kiện phát sinh từ giao diện.</param>
-/// CREATED BY: VVHung (03/06/2026)
-function queueColumnOrderPersist(event) {
-  if (!isGridReady.value || suppressOrderPersist.value) return
-  if (event.fullName?.includes('.fixed') || event.fullName?.includes('.fixedPosition')) return
-
-  if (reorderTimer.value) {
-    window.clearTimeout(reorderTimer.value)
-  }
-
-  reorderTimer.value = window.setTimeout(() => {
-    persistColumnOrder(event.component)
-  }, 250)
-}
-
-/// Luu thu tu cot hien tai len backend.
-/// <param name="component">Instance grid cần xử lý.</param>
-/// CREATED BY: VVHung (03/06/2026)
-function persistColumnOrder(component) {
-  if (suppressOrderPersist.value) return
-
-  const orderedColumns = getCurrentOrderedColumns(component).map((column, index) => ({
-    column,
-    visibleIndex: index,
-  }))
-
-  if (!orderedColumns.length) return
-
-  orderedColumns.forEach((item, index) => {
-    const nextSortOrder = index + 1
-    if (Number(item.column.sortOrder) === nextSortOrder) return
-    item.column.sortOrder = nextSortOrder
-    enqueuePersistColumn(item.column, { SortOrder: nextSortOrder })
-  })
-
-  const changedFixedColumns = syncFixedColumns(orderedColumns.map((item) => item.column))
-  changedFixedColumns.forEach((column) => {
-    enqueuePersistColumn(column, {
-      IsFixed: column.isFixed,
-      FixedPosition: column.fixedPosition,
-    })
-  })
 }
 
 /// Mở menu cấu hình ở header cột.
@@ -1684,12 +1587,7 @@ function togglePin(fieldName) {
 
 /// Đồng bộ trạng thái cột cố định với cấu hình grid.
 /// CREATED BY: VVHung (03/06/2026)
-function syncFixedColumns(orderedColumns = getCurrentOrderedColumns()) {
-  suppressOrderPersist.value = true
-  if (suppressOrderPersistTimer) {
-    window.clearTimeout(suppressOrderPersistTimer)
-  }
-
+function syncFixedColumns(orderedColumns = displayColumns.value) {
   const maxPinnedIndex = orderedColumns.reduce((maxIndex, column, index) => {
     if (!pinnedIconFields.value.has(column.fieldName)) return maxIndex
     return Math.max(maxIndex, index)
@@ -1709,17 +1607,12 @@ function syncFixedColumns(orderedColumns = getCurrentOrderedColumns()) {
 
   applyFixedColumnsToGrid(orderedColumns)
 
-  suppressOrderPersistTimer = window.setTimeout(() => {
-    suppressOrderPersist.value = false
-    suppressOrderPersistTimer = null
-  }, 300)
-
   return changedColumns
 }
 
 /// Đồng bộ và lưu lại trạng thái fixed sau khi thứ tự cột thay đổi từ cấu hình.
 /// CREATED BY: VVHung (09/06/2026)
-function syncAndPersistFixedColumns(orderedColumns = getCurrentOrderedColumns()) {
+function syncAndPersistFixedColumns(orderedColumns = displayColumns.value) {
   const changedColumns = syncFixedColumns(orderedColumns)
   changedColumns.forEach((column) => {
     enqueuePersistColumn(column, {
@@ -1727,28 +1620,6 @@ function syncAndPersistFixedColumns(orderedColumns = getCurrentOrderedColumns())
       FixedPosition: column.fixedPosition,
     })
   })
-}
-
-/// Lấy danh sách cột theo đúng thứ tự đang hiển thị trên grid.
-/// <param name="gridInstance">Instance grid neu co.</param>
-/// <returns>Danh sách cột đang hiển thị theo thứ tự hiện tại.</returns>
-/// CREATED BY: VVHung (09/06/2026)
-function getCurrentOrderedColumns(gridInstance = null) {
-  const rawGridInstance = gridInstance || dataGridRef.value?.instance
-  const component = typeof rawGridInstance === 'function' ? rawGridInstance() : rawGridInstance
-
-  if (!component) return displayColumns.value
-
-  const orderedColumns = displayColumns.value
-    .map((column) => ({
-      column,
-      visibleIndex: Number(component.columnOption(column.fieldName, 'visibleIndex')),
-    }))
-    .filter((item) => Number.isFinite(item.visibleIndex) && item.visibleIndex >= 0)
-    .sort((a, b) => a.visibleIndex - b.visibleIndex)
-    .map((item) => item.column)
-
-  return orderedColumns.length ? orderedColumns : displayColumns.value
 }
 
 /// Lấy danh sách cột visible theo config hiện tại, không phụ thuộc cache visibleIndex của grid.
@@ -1762,7 +1633,7 @@ function getConfigOrderedVisibleColumns() {
 /// <param name="fieldName">Ten field can kiem tra.</param>
 /// <returns>Vị trí hiển thị của cột.</returns>
 /// CREATED BY: VVHung (09/06/2026)
-function getColumnDisplayIndex(fieldName, orderedColumns = getCurrentOrderedColumns()) {
+function getColumnDisplayIndex(fieldName, orderedColumns = displayColumns.value) {
   return orderedColumns.findIndex((column) => column.fieldName === fieldName)
 }
 
@@ -1791,27 +1662,22 @@ function updateGridConfigCache(column, patch = {}) {
     if (!currentColumns.length) return oldData
 
     const nextColumns = currentColumns.map((item) => {
-      const fieldName = item.fieldName || item.FieldName
+      const fieldName = item.fieldName
       if (fieldName !== targetFieldName) return item
 
-      const nextVisible = patch.Visible ?? patch.visible ?? column.visible
-      const nextWidth = patch.Width ?? patch.width ?? column.width
-      const nextIsFixed = patch.IsFixed ?? patch.isFixed ?? column.isFixed
-      const nextFixedPosition = patch.FixedPosition ?? patch.fixedPosition ?? column.fixedPosition
-      const nextSortOrder = patch.SortOrder ?? patch.sortOrder ?? column.sortOrder
+      const nextVisible = patch.visible ?? column.visible
+      const nextWidth = patch.width ?? column.width
+      const nextIsFixed = patch.isFixed ?? column.isFixed
+      const nextFixedPosition = patch.fixedPosition ?? column.fixedPosition
+      const nextSortOrder = patch.sortOrder ?? column.sortOrder
 
       return {
         ...item,
         width: nextWidth,
-        Width: nextWidth,
         visible: nextVisible,
-        Visible: nextVisible,
         isFixed: nextIsFixed,
-        IsFixed: nextIsFixed,
         fixedPosition: nextFixedPosition,
-        FixedPosition: nextFixedPosition,
         sortOrder: nextSortOrder,
-        SortOrder: nextSortOrder,
       }
     })
 
@@ -1900,7 +1766,7 @@ function isStatusColumn(fieldName) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getStatusValue(row) {
-  return row?.status ?? row?.Status ?? row?.statusName ?? row?.StatusName
+  return row?.status ?? row?.statusName
 }
 
 /// Kiểm tra bản ghi đang ở trạng thái theo dõi hay không.
@@ -1949,14 +1815,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentClick)
-  if (reorderTimer.value) {
-    window.clearTimeout(reorderTimer.value)
-  }
   if (resizePersistTimer.value) {
     window.clearTimeout(resizePersistTimer.value)
-  }
-  if (suppressOrderPersistTimer) {
-    window.clearTimeout(suppressOrderPersistTimer)
   }
   clearActionHideTimer()
 })
@@ -3048,3 +2908,4 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+

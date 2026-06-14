@@ -36,8 +36,8 @@
             :options="salaryCompositionTypeOptions"
             label-key="label"
             value-key="value"
-            :width="190"
-            :menu-width="172"
+            width="max-content"
+            menu-width="max-content"
           />
         </template>
         <template #bulk-actions>
@@ -478,7 +478,7 @@ function showToast(message, type = 'success') {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionSystemId(row) {
-  return row?.salaryCompositionSystemID ?? row?.SalaryCompositionSystemID
+  return row?.salaryCompositionSystemID
 }
 
 /// Lấy tên thành phần lương hệ thống từ dòng dữ liệu.
@@ -486,13 +486,7 @@ function getSalaryCompositionSystemId(row) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionSystemName(row) {
-  return (
-    row?.salaryCompositionSystemName ??
-    row?.SalaryCompositionSystemName ??
-    row?.salaryCompositionName ??
-    row?.SalaryCompositionName ??
-    ''
-  )
+  return row?.salaryCompositionSystemName ?? row?.salaryCompositionName ?? ''
 }
 
 </script>

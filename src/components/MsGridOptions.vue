@@ -219,15 +219,15 @@ function normalizeResponseData(response: any) {
 /// <returns>Cấu hình cột sau khi chuẩn hóa.</returns>
 /// CREATED BY: VVHung (11/6/2026)
 function normalizeColumn(column: any) {
-  const rawFieldName = column.fieldName || column.FieldName
+  const rawFieldName = column.fieldName
 
   return {
     ...column,
     apiFieldName: rawFieldName,
     fieldName: rawFieldName,
-    caption: column.caption || column.Caption || rawFieldName,
-    visible: normalizeBoolean(column.visible ?? column.Visible ?? true),
-    sortOrder: column.sortOrder ?? column.SortOrder,
+    caption: column.caption || rawFieldName,
+    visible: normalizeBoolean(column.visible ?? true),
+    sortOrder: column.sortOrder,
   }
 }
 
@@ -250,16 +250,14 @@ function updateGridConfigCache(columns: any[]) {
     const currentColumns = getGridConfigColumns(payload)
 
     const nextColumns = currentColumns.map((column: any) => {
-      const fieldName = column.fieldName || column.FieldName
+      const fieldName = column.fieldName
       const nextColumn = nextColumnMap.get(fieldName)
       if (!nextColumn) return column
 
       return {
         ...column,
         visible: nextColumn.visible,
-        Visible: nextColumn.visible,
         sortOrder: nextColumn.sortOrder,
-        SortOrder: nextColumn.sortOrder,
       }
     })
 

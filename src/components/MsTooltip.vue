@@ -211,7 +211,7 @@ const handleHide = () => {
 
 .ms-tooltip-wrapper__bubble {
   position: absolute;
-  z-index: 261;
+  z-index: 5000;
   width: max-content;
   max-width: 420px;
   padding: 8px 12px;

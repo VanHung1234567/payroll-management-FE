@@ -1748,6 +1748,15 @@ const { data: salaryCompositionParameterResponse } = useQuery({
     }),
 })
 
+const { data: salaryCompositionValidationResponse } = useQuery({
+  queryKey: ['salaryCompositionValidationList'],
+  queryFn: () =>
+    SalaryCompositionAPI.paging({
+      pageIndex: 1,
+      pageSize: 10000,
+    }),
+})
+
 const { data: salaryCompositionDetailResponse } = useQuery({
   queryKey: computed(() => ['salaryCompositionDetail', currentId.value]),
   queryFn: () => SalaryCompositionAPI.detail(currentId.value),
@@ -1759,6 +1768,7 @@ const createSalaryCompositionMutation = useMutation({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
     queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionValidationList'] })
     if (isSaveAndAddMode.value) {
       showSuccessToast()
       resetForm()
@@ -1774,6 +1784,7 @@ const updateSalaryCompositionMutation = useMutation({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
     queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionValidationList'] })
     emit('saved', 'update')
     emit('close')
   },
@@ -1784,7 +1795,7 @@ const quickUpdateSalaryCompositionMutation = useMutation({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
     queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
-    queryClient.invalidateQueries({ queryKey: ['salaryCompositionDetail', currentId.value] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionValidationList'] })
     quickEditingField.value = ''
     setInitialFormSnapshot()
     showSuccessToast('Cập nhật thành phần lương thành công')
@@ -1796,6 +1807,7 @@ const deleteSalaryCompositionMutation = useMutation({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
     queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionValidationList'] })
     emit('deleted')
     emit('close')
   },
@@ -1811,6 +1823,17 @@ const salaryCompositionParameterPayload = computed(
 )
 const salaryCompositionParameters = computed(() => {
   const payload = salaryCompositionParameterPayload.value
+  if (Array.isArray(payload)) return payload
+  return payload.data ?? []
+})
+const salaryCompositionValidationPayload = computed(
+  () =>
+    salaryCompositionValidationResponse.value?.data?.data ??
+    salaryCompositionValidationResponse.value?.data ??
+    {},
+)
+const salaryCompositionValidationItems = computed(() => {
+  const payload = salaryCompositionValidationPayload.value
   if (Array.isArray(payload)) return payload
   return payload.data ?? []
 })
@@ -1838,7 +1861,6 @@ const isCodeDisabled = computed(
   () => isEditMode.value && (Number(selectedStatus.value) === 1 || isSourceDefault.value),
 )
 const isNatureOptionDisabled = computed(() => isSourceDefault.value)
-const isQuickFieldLocked = computed(() => Boolean(quickEditingField.value))
 const canQuickEditValueType = computed(() => !isSourceDefault.value && !isValueTypeLocked.value)
 const showQuickValueTypeLock = computed(() => !isSourceDefault.value && isValueTypeLocked.value)
 const isQuickValueConfigEditing = computed(() => quickEditingField.value === 'valueConfig')
@@ -1932,7 +1954,7 @@ const isSaving = computed(
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getOptionLabel(option) {
-  return option?.label ?? option?.Label ?? option?.name ?? option?.Name ?? ''
+  return option?.label ?? ''
 }
 
 /// Lấy Id đơn vị từ dữ liệu đơn vị.
@@ -1940,7 +1962,7 @@ function getOptionLabel(option) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getOrganizationId(organization) {
-  return organization?.organizationID ?? organization?.OrganizationID ?? organization?.id ?? null
+  return organization?.organizationID ?? null
 }
 
 /// Lấy Id đơn vị cha từ dữ liệu đơn vị.
@@ -1948,7 +1970,7 @@ function getOrganizationId(organization) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getOrganizationParentId(organization) {
-  return organization?.parentID ?? organization?.ParentID ?? organization?.parentId ?? null
+  return organization?.parentID ?? null
 }
 
 /// Lấy tên hiển thị của đơn vị.
@@ -1956,7 +1978,7 @@ function getOrganizationParentId(organization) {
 /// <returns>Tên đơn vị.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function getOrganizationLabel(organization) {
-  return organization?.organizationName ?? organization?.OrganizationName ?? ''
+  return organization?.organizationName ?? ''
 }
 
 /// Kiểm tra đơn vị có cha đang được chọn không để không hiện lặp lại tên con.
@@ -1996,13 +2018,7 @@ function getNearestOrganizationId(options) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getParameterName(parameter) {
-  return (
-    parameter?.salaryCompositionName ??
-    parameter?.SalaryCompositionName ??
-    parameter?.name ??
-    parameter?.Name ??
-    ''
-  )
+  return parameter?.salaryCompositionName ?? ''
 }
 
 /// Lấy mã tham số thành phần lương.
@@ -2010,13 +2026,7 @@ function getParameterName(parameter) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getParameterCode(parameter) {
-  return (
-    parameter?.salaryCompositionCode ??
-    parameter?.SalaryCompositionCode ??
-    parameter?.code ??
-    parameter?.Code ??
-    ''
-  )
+  return parameter?.salaryCompositionCode ?? ''
 }
 
 /// Lấy dữ liệu form dùng cho validate.
@@ -2222,32 +2232,28 @@ function normalizeResponseData(response) {
 function setFormValueFromDetail(detail) {
   if (!detail || !Object.keys(detail).length) return
 
-  salaryCompositionName.value = detail.salaryCompositionName ?? detail.SalaryCompositionName ?? ''
+  salaryCompositionName.value = detail.salaryCompositionName ?? ''
   formLoadedTitle.value = salaryCompositionName.value || props.initialTitle
-  salaryCompositionCode.value = detail.salaryCompositionCode ?? detail.SalaryCompositionCode ?? ''
-  selectedOrganizationIds.value = String(detail.organizationIDs ?? detail.OrganizationIDs ?? '')
+  salaryCompositionCode.value = detail.salaryCompositionCode ?? ''
+  selectedOrganizationIds.value = String(detail.organizationIDs ?? '')
     .split(';')
     .map((id) => id.trim())
     .filter(Boolean)
-  selectedSalaryCompositionTypeId.value =
-    detail.salaryCompositionType ?? detail.SalaryCompositionType ?? null
-  selectedNature.value = detail.nature ?? detail.Nature ?? 1
-  selectedTaxType.value = detail.taxType ?? detail.TaxType ?? 1
-  isTaxReduction.value = Boolean(detail.isTaxReduction ?? detail.IsTaxReduction ?? false)
-  normFormula.value = detail.normFormula ?? detail.NormFormula ?? ''
-  isAllowOverNormValue.value = Boolean(detail.allowOverNorm ?? detail.AllowOverNorm ?? false)
-  selectedValueType.value = detail.valueType ?? detail.ValueType ?? null
-  description.value = detail.description ?? detail.Description ?? ''
-  selectedDisplayOnPayslip.value = detail.payslipDisplayType ?? detail.PayslipDisplayType ?? 1
-  sourceValue.value = detail.createdSource ?? detail.CreatedSource ?? 1
-  sourceName.value =
-    detail.createdSourceName ??
-    detail.CreatedSourceName ??
-    (Number(sourceValue.value) === 1 ? 'Tự thêm' : 'Mặc định')
-  selectedStatus.value = detail.status ?? detail.Status ?? 1
+  selectedSalaryCompositionTypeId.value = detail.salaryCompositionType ?? null
+  selectedNature.value = detail.nature ?? 1
+  selectedTaxType.value = detail.taxType ?? 1
+  isTaxReduction.value = Boolean(detail.isTaxReduction ?? false)
+  normFormula.value = detail.normFormula ?? ''
+  isAllowOverNormValue.value = Boolean(detail.allowOverNorm ?? false)
+  selectedValueType.value = detail.valueType ?? null
+  description.value = detail.description ?? ''
+  selectedDisplayOnPayslip.value = detail.payslipDisplayType ?? 1
+  sourceValue.value = detail.createdSource ?? 1
+  sourceName.value = detail.createdSourceName ?? (Number(sourceValue.value) === 1 ? 'Tự thêm' : 'Mặc định')
+  selectedStatus.value = detail.status ?? 1
   isSalaryCompositionCodeManual.value = true
 
-  setValueFormulaFromDetail(detail.valueFormula ?? detail.ValueFormula ?? '')
+  setValueFormulaFromDetail(detail.valueFormula ?? '')
   setFormErrors({ inner: [] })
   setInitialFormSnapshot()
 }
@@ -2385,7 +2391,7 @@ function setFieldError(field, message) {
 async function validateField(field) {
   try {
     await salaryCompositionSchema(
-      salaryCompositionParameters.value,
+      salaryCompositionValidationItems.value,
       validationCurrentId.value,
     ).validateAt(field, getFormData())
     clearFormError(field)
@@ -2402,7 +2408,7 @@ async function validateField(field) {
 async function validateForm() {
   try {
     await salaryCompositionSchema(
-      salaryCompositionParameters.value,
+      salaryCompositionValidationItems.value,
       validationCurrentId.value,
     ).validate(getFormData(), {
       abortEarly: false,
@@ -2545,26 +2551,50 @@ function cancelQuickEdit() {
 /// <returns>Payload gửi lên API.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function buildQuickPatchPayload(field) {
+  const keepOrganizationPayload = () => ({
+    organizationIDs: selectedOrganizationIds.value.join(';'),
+  })
   const payloadMap = {
-    salaryCompositionName: () => ({ salaryCompositionName: salaryCompositionName.value }),
+    salaryCompositionName: () => ({
+      ...keepOrganizationPayload(),
+      salaryCompositionName: salaryCompositionName.value,
+    }),
     organizationIDs: () => ({ organizationIDs: selectedOrganizationIds.value.join(';') }),
     salaryCompositionType: () => ({
+      ...keepOrganizationPayload(),
       salaryCompositionType: selectedSalaryCompositionTypeId.value,
     }),
     nature: () => ({
+      ...keepOrganizationPayload(),
       nature: selectedNature.value,
       taxType: isIncomeNature.value ? selectedTaxType.value : null,
       isTaxReduction: isDeductionNature.value ? isTaxReduction.value : null,
     }),
-    valueType: () => ({ valueType: selectedValueType.value }),
-    valueConfig: () => ({ valueFormula: getValueFormulaPayload() }),
+    valueType: () => ({
+      ...keepOrganizationPayload(),
+      valueType: selectedValueType.value,
+    }),
+    valueConfig: () => ({
+      ...keepOrganizationPayload(),
+      valueFormula: getValueFormulaPayload(),
+    }),
     normFormula: () => ({
+      ...keepOrganizationPayload(),
       normFormula: isNormVisible.value ? normFormula.value : '',
       allowOverNorm: isNormVisible.value ? isAllowOverNormValue.value : false,
     }),
-    valueFormula: () => ({ valueFormula: getValueFormulaPayload() }),
-    description: () => ({ description: description.value }),
-    payslipDisplayType: () => ({ payslipDisplayType: selectedDisplayOnPayslip.value }),
+    valueFormula: () => ({
+      ...keepOrganizationPayload(),
+      valueFormula: getValueFormulaPayload(),
+    }),
+    description: () => ({
+      ...keepOrganizationPayload(),
+      description: description.value,
+    }),
+    payslipDisplayType: () => ({
+      ...keepOrganizationPayload(),
+      payslipDisplayType: selectedDisplayOnPayslip.value,
+    }),
   }
 
   return payloadMap[field]?.() ?? {}
@@ -3837,3 +3867,4 @@ label {
   background-color: #6e737a;
 }
 </style>
+

@@ -2,7 +2,7 @@
   <div
     ref="selectRef"
     class="ms-select"
-    :class="[`ms-select--${variant}`, { 'is-error': isInvalid, 'is-full-width': fullWidth }]"
+    :class="[`ms-select--${variant}`, { 'is-error': isInvalid, 'is-full-width': fullWidth, 'is-auto-content-width': isAutoContentWidth }]"
     :style="selectStyle"
   >
     <button
@@ -209,6 +209,10 @@ const normalizeCssSize = (value) => (typeof value === 'number' ? `${value}px` : 
 const selectStyle = computed(() => ({
   width: normalizeCssSize(props.width),
 }))
+
+/// Cờ xác định select tự giãn theo nội dung đang hiển thị.
+/// CREATED BY: VVHung (13/06/2026)
+const isAutoContentWidth = computed(() => ['max-content', 'fit-content'].includes(String(props.width)))
 
 /// Style động áp dụng cho trigger style.
 /// CREATED BY: VVHung (09/06/2026)
@@ -453,6 +457,22 @@ defineExpose({
 .ms-select__value.is-placeholder {
   color: #98a2b3;
   font-weight: 400;
+}
+
+.ms-select.is-auto-content-width .ms-select__value {
+  flex: 0 0 auto;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.ms-select.is-auto-content-width .ms-select__menu {
+  min-width: 100%;
+  max-width: min(360px, calc(100vw - 32px));
+}
+
+.ms-select.is-auto-content-width .ms-select__item-label {
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .ms-select--form .ms-select__value {

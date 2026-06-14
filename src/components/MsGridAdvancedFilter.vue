@@ -160,30 +160,17 @@ const filterSearchInputRef = ref<InstanceType<typeof MsInput> | null>(null)
 /// CREATED BY: VVHung (12/06/2026)
 let searchDebounceTimer: number | null = null
 
-/// Enum operator filter phía FE khớp giá trị backend.
+/// Danh sách operator filter phía FE khớp giá trị enum backend.
 /// CREATED BY: VVHung (11/06/2026)
-const FILTER_OPERATOR = {
-  Contains: 1,
-  NotContains: 2,
-  Equals: 3,
-  NotEquals: 4,
-  StartsWith: 5,
-  EndsWith: 6,
-  Empty: 7,
-  NotEmpty: 8,
-}
-
-/// Map chuyển operator dạng chuỗi cũ sang enum mới.
-/// CREATED BY: VVHung (07/06/2026)
-const LEGACY_OPERATOR_MAP: Record<string, number> = {
-  contains: FILTER_OPERATOR.Contains,
-  notContains: FILTER_OPERATOR.NotContains,
-  equals: FILTER_OPERATOR.Equals,
-  notEquals: FILTER_OPERATOR.NotEquals,
-  startsWith: FILTER_OPERATOR.StartsWith,
-  endsWith: FILTER_OPERATOR.EndsWith,
-  empty: FILTER_OPERATOR.Empty,
-  notEmpty: FILTER_OPERATOR.NotEmpty,
+const FILTER_OPERATOR: Record<string, number> = {
+  contains: 1,
+  notContains: 2,
+  equals: 3,
+  notEquals: 4,
+  startsWith: 5,
+  endsWith: 6,
+  empty: 7,
+  notEmpty: 8,
 }
 
 /// Tập field dùng nhóm operator text đầy đủ.
@@ -197,27 +184,27 @@ const FULL_TEXT_OPERATOR_FIELDS = new Set([
 /// Danh sách operator dành cho field text.
 /// CREATED BY: VVHung (13/06/2026)
 const FULL_TEXT_OPERATORS = [
-  { value: FILTER_OPERATOR.Contains, label: 'Chứa' },
-  { value: FILTER_OPERATOR.NotContains, label: 'Không chứa' },
-  { value: FILTER_OPERATOR.Equals, label: 'Bằng' },
-  { value: FILTER_OPERATOR.StartsWith, label: 'Bắt đầu bằng' },
-  { value: FILTER_OPERATOR.EndsWith, label: 'Kết thúc bằng' },
-  { value: FILTER_OPERATOR.Empty, label: 'Trống' },
-  { value: FILTER_OPERATOR.NotEmpty, label: 'Không trống' },
+  { value: FILTER_OPERATOR.contains, label: 'Chứa' },
+  { value: FILTER_OPERATOR.notContains, label: 'Không chứa' },
+  { value: FILTER_OPERATOR.equals, label: 'Bằng' },
+  { value: FILTER_OPERATOR.startsWith, label: 'Bắt đầu bằng' },
+  { value: FILTER_OPERATOR.endsWith, label: 'Kết thúc bằng' },
+  { value: FILTER_OPERATOR.empty, label: 'Trống' },
+  { value: FILTER_OPERATOR.notEmpty, label: 'Không trống' },
 ]
 
 /// Danh sách operator rút gọn dành cho field select/boolean.
 /// CREATED BY: VVHung (06/06/2026)
 const SIMPLE_OPERATORS = [
-  { value: FILTER_OPERATOR.Equals, label: 'Bằng' },
-  { value: FILTER_OPERATOR.NotEquals, label: 'Khác' },
-  { value: FILTER_OPERATOR.Empty, label: 'Trống' },
-  { value: FILTER_OPERATOR.NotEmpty, label: 'Không trống' },
+  { value: FILTER_OPERATOR.equals, label: 'Bằng' },
+  { value: FILTER_OPERATOR.notEquals, label: 'Khác' },
+  { value: FILTER_OPERATOR.empty, label: 'Trống' },
+  { value: FILTER_OPERATOR.notEmpty, label: 'Không trống' },
 ]
 
 /// Tập operator không cần nhập giá trị lọc.
 /// CREATED BY: VVHung (13/06/2026)
-const EMPTY_OPERATORS = new Set([FILTER_OPERATOR.Empty, FILTER_OPERATOR.NotEmpty])
+const EMPTY_OPERATORS = new Set([FILTER_OPERATOR.empty, FILTER_OPERATOR.notEmpty])
 
 /// Danh sách field filter sau khi lọc theo ô tìm kiếm.
 /// CREATED BY: VVHung (11/06/2026)
@@ -305,8 +292,8 @@ function getOperatorOptions(field: FilterField) {
 /// CREATED BY: VVHung (11/6/2026)
 function getDefaultOperator(field: FilterField) {
   return FULL_TEXT_OPERATOR_FIELDS.has(field.fieldName)
-    ? FILTER_OPERATOR.Contains
-    : FILTER_OPERATOR.Equals
+    ? FILTER_OPERATOR.contains
+    : FILTER_OPERATOR.equals
 }
 
 /// Lấy điều kiện lọc nháp của một field.
@@ -314,7 +301,7 @@ function getDefaultOperator(field: FilterField) {
 /// <returns>Điều kiện lọc nháp của field.</returns>
 /// CREATED BY: VVHung (11/6/2026)
 function getDraft(fieldName: string) {
-  return draftFilters[fieldName] || { fieldName, operator: FILTER_OPERATOR.Contains, value: '' }
+  return draftFilters[fieldName] || { fieldName, operator: FILTER_OPERATOR.contains, value: '' }
 }
 
 /// Bật hoặc tắt một trường trong bộ lọc nâng cao.
@@ -368,7 +355,7 @@ function setDraftValue(fieldName: string, value: string | number | boolean | nul
 /// <returns>true nếu cần hiển thị input hoặc select giá trị.</returns>
 /// CREATED BY: VVHung (11/6/2026)
 function shouldShowValueControl(fieldName: string) {
-  return !EMPTY_OPERATORS.has(getDraft(fieldName).operator)
+  return !EMPTY_OPERATORS.has(normalizeOperator(getDraft(fieldName).operator))
 }
 
 /// Áp dụng danh sách bộ lọc nháp ra component cha.
@@ -412,7 +399,7 @@ function normalizeFilterValue(value: string | number | boolean | null) {
 /// CREATED BY: VVHung (12/6/2026)
 function normalizeOperator(operator: string | number) {
   if (typeof operator === 'number') return operator
-  return LEGACY_OPERATOR_MAP[operator] ?? FILTER_OPERATOR.Contains
+  return FILTER_OPERATOR[operator] ?? FILTER_OPERATOR.contains
 }
 
 /// Xác định hướng mở dropdown của select giá trị trong bộ lọc.

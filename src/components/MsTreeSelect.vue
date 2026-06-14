@@ -250,17 +250,17 @@ const props = defineProps({
   // Field id của node.
   idKey: {
     type: String,
-    default: 'OrganizationID',
+    default: 'organizationID',
   },
   // Field parent id để build cây.
   parentKey: {
     type: String,
-    default: 'ParentID',
+    default: 'parentID',
   },
   // Field label hiển thị.
   labelKey: {
     type: String,
-    default: 'OrganizationName',
+    default: 'organizationName',
   },
   // Text khi chưa chọn.
   placeholder: {

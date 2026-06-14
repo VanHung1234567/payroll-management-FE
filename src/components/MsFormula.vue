@@ -328,23 +328,15 @@ function insertText(text) {
 }
 
 function getParameterName(parameter) {
-  return (
-    parameter?.salaryCompositionName ??
-    parameter?.Name ??
-    ''
-  )
+  return parameter?.salaryCompositionName ?? ''
 }
 
 function getParameterCode(parameter) {
-  return (
-    parameter?.salaryCompositionCode ??
-    parameter?.Code ??
-    ''
-  )
+  return parameter?.salaryCompositionCode ?? ''
 }
 
 function getParameterDescription(parameter) {
-  return parameter?.description ?? parameter?.Description ?? ''
+  return parameter?.description ?? ''
 }
 
 function normalizeText(value) {

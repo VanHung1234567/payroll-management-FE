@@ -100,6 +100,8 @@ const headerActions = [
   width: 100%;
   min-width: 0;
   height: 48px;
+  position: relative;
+  z-index: 1000;
   gap: 0;
   display: flex;
   justify-content: space-between;
@@ -107,7 +109,7 @@ const headerActions = [
   padding: 0;
   background: #0e9a62;
   box-shadow: 0 1px 3px #0000001a;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .navbar__left {

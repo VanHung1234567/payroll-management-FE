@@ -720,7 +720,7 @@ const systemPickerFilters = computed(() => {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getStatusValue(row: any) {
-  return row?.status ?? row?.Status ?? row?.statusName ?? row?.StatusName
+  return row?.status ?? row?.statusName
 }
 
 /// Kiểm tra bản ghi đang ở trạng thái theo dõi hay không.
@@ -809,7 +809,7 @@ function getSalaryCompositionId(row: any) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionName(row: any) {
-  return row?.salaryCompositionName ?? row?.SalaryCompositionName ?? ''
+  return row?.salaryCompositionName ?? ''
 }
 
 /// Lấy Id thành phần lương hệ thống từ dòng dữ liệu.
@@ -817,7 +817,7 @@ function getSalaryCompositionName(row: any) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getSalaryCompositionSystemId(row: any) {
-  return row?.salaryCompositionSystemID ?? row?.SalaryCompositionSystemID
+  return row?.salaryCompositionSystemID
 }
 
 /// Lấy nguồn tạo của thành phần lương.
@@ -825,9 +825,7 @@ function getSalaryCompositionSystemId(row: any) {
 /// <returns>Dữ liệu sau khi xử lý.</returns>
 /// CREATED BY: VVHung (03/06/2026)
 function getCreatedSource(row: any) {
-  return (
-    row?.createdSource ?? row?.CreatedSource ?? row?.createdSourceName ?? row?.CreatedSourceName
-  )
+  return row?.createdSource ?? row?.createdSourceName
 }
 
 /// Kiểm tra thành phần lương có phải dữ liệu mặc định của hệ thống không.
