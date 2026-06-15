@@ -175,7 +175,7 @@
                 @blur="validateField('salaryCompositionType')"
               />
             </div>
-            <div class="ms-row">
+            <div class="ms-row form-row--stack-sm">
               <div class="w-200">
                 <label>
                   <p>Tính chất</p>
@@ -802,7 +802,7 @@
               </div>
             </div>
 
-            <div class="ms-row">
+            <div class="ms-row form-row--stack-sm">
               <div class="w-200">
                 <label>
                   <p>Tính chất</p>
@@ -3087,13 +3087,49 @@ onBeforeUnmount(() => {
   }
 }
 
-@media (max-width: 1366px) {
+@media (max-width: 1160px) {
   .salarycomposition-form {
     --salary-form-label-width: 200px;
   }
 
   .ms-row {
     margin-bottom: 12px;
+  }
+
+  .form-row--stack-sm {
+    flex-direction: column;
+    line-height: 20px;
+  }
+
+  .form-row--stack-sm > .w-200 {
+    width: 100%;
+    flex: 0 0 auto;
+    margin-bottom: 6px;
+  }
+
+  .form-row--stack-sm > .w-200 label {
+    min-height: 20px;
+    padding-right: 0;
+  }
+
+  .form-row--stack-sm > :not(.w-200) {
+    width: 100%;
+    max-width: 838px;
+  }
+
+  .form-row--stack-sm > .flex {
+    align-items: center;
+  }
+
+  .form-row--stack-sm .value-config,
+  .form-row--stack-sm .quick-value,
+  .form-row--stack-sm .quick-value__content,
+  .form-row--stack-sm .quick-value__formula-row,
+  .form-row--stack-sm .quick-field--large,
+  .form-row--stack-sm .prism-editor__container,
+  .form-row--stack-sm .formula-limit-row {
+    width: 100%;
+    max-width: 838px;
   }
 
   .ms-radio-wrapper + .ms-radio-wrapper {
