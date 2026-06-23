@@ -336,7 +336,6 @@ function setDraftOperator(field: FilterField, operator: string | number) {
     return
   }
 
-  if (field.type === 'enum') draft.value = ''
   focusFieldValueControl(field.fieldName)
 }
 

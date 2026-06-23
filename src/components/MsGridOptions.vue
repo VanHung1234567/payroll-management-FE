@@ -84,6 +84,8 @@ import MsGridColumnSettings from './MsGridColumnSettings.vue'
 import MsInput from './MsInput.vue'
 import MsTooltip from './MsTooltip.vue'
 
+const GRID_CONFIG_STALE_TIME = 5 * 60 * 1000
+
 /// Khai báo toàn bộ dữ liệu component nhận từ component cha.
 /// CREATED BY: VVHung (08/06/2026)
 const props = defineProps({
@@ -135,6 +137,7 @@ const gridConfigQueryKey = computed(() => ['grid-config', props.gridKey])
 const { data: gridConfigResponse } = useQuery({
   queryKey: gridConfigQueryKey,
   queryFn: () => GridConfigAPI.getGridKey(props.gridKey),
+  staleTime: GRID_CONFIG_STALE_TIME,
 })
 
 /// Danh sách cột đưa vào popup tùy chỉnh cột.
@@ -202,7 +205,6 @@ function handleDocumentMouseDown(event: MouseEvent) {
 /// CREATED BY: VVHung (11/6/2026)
 function saveColumnSettings(columns: any[]) {
   isColumnSettingsOpen.value = false
-  updateGridConfigCache(columns)
   saveColumnSettingsMutation.mutate(columns)
 }
 

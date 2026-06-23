@@ -360,6 +360,8 @@ import MsGridAdvancedFilter from '@/components/MsGridAdvancedFilter.vue'
 import MsGridTable from '@/components/MsGridTable.vue'
 import MsGridOptions from '@/components/MsGridOptions.vue'
 
+const REFERENCE_DATA_STALE_TIME = 5 * 60 * 1000
+
 const selectedStatus = ref<number | string | null>(null)
 const selectedOrganizationIds = ref<string[]>([])
 const searchKeyword = ref('')
@@ -404,6 +406,7 @@ let systemPickerSearchDebounceTimer: number | null = null
 const { data: organizationResponse } = useQuery({
   queryKey: ['organizations'],
   queryFn: () => OrganizationAPI.getAll(),
+  staleTime: REFERENCE_DATA_STALE_TIME,
 })
 
 /// Khởi tạo mutation xóa một thành phần lương và làm mới danh sách sau khi xóa.
@@ -1091,7 +1094,7 @@ function handleDocumentMouseDown(event: MouseEvent) {
   display: flex;
   gap: 20px;
   align-items: stretch;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .salary-grid-main {

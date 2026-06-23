@@ -383,6 +383,8 @@ import {
   SALARY_COMPOSITION_VALUE_TYPE_OPTIONS,
 } from '@/utils/constants'
 
+const GRID_CONFIG_STALE_TIME = 5 * 60 * 1000
+
 /// Khai báo toàn bộ dữ liệu component nhận từ component cha.
 /// CREATED BY: VVHung (08/06/2026)
 const props = defineProps({
@@ -477,7 +479,6 @@ const emit = defineEmits([
   'row-edit',
   'row-delete',
   'selection-change',
-  'update:selectedRows',
 ])
 
 /// Store quản lý state dùng chung của các grid.
@@ -692,6 +693,7 @@ const pagingQueryKey = computed(() => [
 const { data: gridConfigResponse, isFetching: isConfigFetching } = useQuery({
   queryKey: gridConfigQueryKey,
   queryFn: () => GridConfigAPI.getGridKey(resolvedConfigGridKey.value),
+  staleTime: GRID_CONFIG_STALE_TIME,
 })
 
 /// Response cấu hình cột nhận từ API GridConfig.
@@ -1331,7 +1333,6 @@ function getSelectedRows() {
 function emitSelectionChange() {
   const selectedRows = getSelectedRows()
   emit('selection-change', selectedRows)
-  emit('update:selectedRows', selectedRows)
 }
 
 /// Xử lý sự kiện chuẩn bị context menu của grid.
@@ -1568,19 +1569,12 @@ function togglePin(fieldName) {
   setPinnedFieldStack([...pinnedFieldStack.value.filter((item) => item !== fieldName), fieldName])
 
   const changedColumns = syncFixedColumns(orderedColumns)
-  const changedColumnIds = new Set(changedColumns.map((item) => item.gridConfigID))
   changedColumns.forEach((item) => {
     enqueuePersistColumn(item, {
       IsFixed: item.isFixed,
       FixedPosition: item.fixedPosition,
     })
   })
-  if (!changedColumnIds.has(column.gridConfigID)) {
-    enqueuePersistColumn(column, {
-      IsFixed: true,
-      FixedPosition: 'left',
-    })
-  }
   repaintGrid()
   headerMenu.isOpen = false
 }
@@ -1734,8 +1728,12 @@ function persistColumn(column, patch) {
     AllowSorting: column.allowSorting,
     SortOrder: column.sortOrder,
     ...patch,
-  }).catch((error) => {
-    console.error('Update grid config failed:', error)
+  }).catch(() => {
+    pinnedIconFields.value = new Set()
+    return queryClient.refetchQueries({
+      queryKey: gridConfigQueryKey.value,
+      exact: true,
+    })
   })
 }
 
@@ -2908,4 +2906,3 @@ onBeforeUnmount(() => {
   }
 }
 </style>
-

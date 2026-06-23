@@ -1583,6 +1583,9 @@ import {
 } from '@/utils/constants'
 import { salaryCompositionSchema } from '@/validations/salaryCompositionSchema'
 
+const REFERENCE_DATA_STALE_TIME = 5 * 60 * 1000
+const SALARY_COMPOSITION_REFERENCE_STALE_TIME = 60 * 1000
+
 const props = defineProps({
   mode: {
     type: String,
@@ -1736,6 +1739,7 @@ const statusOptions = [
 const { data: organizationResponse } = useQuery({
   queryKey: ['organizations'],
   queryFn: () => OrganizationAPI.getAll(),
+  staleTime: REFERENCE_DATA_STALE_TIME,
 })
 
 const { data: salaryCompositionParameterResponse } = useQuery({
@@ -1746,6 +1750,7 @@ const { data: salaryCompositionParameterResponse } = useQuery({
       pageSize: 1000,
       status: 1,
     }),
+  staleTime: SALARY_COMPOSITION_REFERENCE_STALE_TIME,
 })
 
 const { data: salaryCompositionValidationResponse } = useQuery({
@@ -1755,6 +1760,7 @@ const { data: salaryCompositionValidationResponse } = useQuery({
       pageIndex: 1,
       pageSize: 10000,
     }),
+  staleTime: SALARY_COMPOSITION_REFERENCE_STALE_TIME,
 })
 
 const { data: salaryCompositionDetailResponse } = useQuery({
@@ -1795,6 +1801,7 @@ const quickUpdateSalaryCompositionMutation = useMutation({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['grid-table-paging', 'salary_composition'] })
     queryClient.invalidateQueries({ queryKey: ['salaryCompositionParameters'] })
+    queryClient.invalidateQueries({ queryKey: ['salaryCompositionDetail'] })
     queryClient.invalidateQueries({ queryKey: ['salaryCompositionValidationList'] })
     quickEditingField.value = ''
     setInitialFormSnapshot()
@@ -2434,7 +2441,6 @@ function handleSalaryCompositionNameInput(event) {
 
   if (!isSalaryCompositionCodeManual.value) {
     salaryCompositionCode.value = generateSalaryCompositionCode(value)
-    validateField('salaryCompositionCode')
   }
 }
 
@@ -2551,48 +2557,36 @@ function cancelQuickEdit() {
 /// <returns>Payload gửi lên API.</returns>
 /// CREATED BY: VVHung (06/06/2026)
 function buildQuickPatchPayload(field) {
-  const keepOrganizationPayload = () => ({
-    organizationIDs: selectedOrganizationIds.value.join(';'),
-  })
   const payloadMap = {
     salaryCompositionName: () => ({
-      ...keepOrganizationPayload(),
       salaryCompositionName: salaryCompositionName.value,
     }),
     organizationIDs: () => ({ organizationIDs: selectedOrganizationIds.value.join(';') }),
     salaryCompositionType: () => ({
-      ...keepOrganizationPayload(),
       salaryCompositionType: selectedSalaryCompositionTypeId.value,
     }),
     nature: () => ({
-      ...keepOrganizationPayload(),
       nature: selectedNature.value,
       taxType: isIncomeNature.value ? selectedTaxType.value : null,
       isTaxReduction: isDeductionNature.value ? isTaxReduction.value : null,
     }),
     valueType: () => ({
-      ...keepOrganizationPayload(),
       valueType: selectedValueType.value,
     }),
     valueConfig: () => ({
-      ...keepOrganizationPayload(),
       valueFormula: getValueFormulaPayload(),
     }),
     normFormula: () => ({
-      ...keepOrganizationPayload(),
       normFormula: isNormVisible.value ? normFormula.value : '',
       allowOverNorm: isNormVisible.value ? isAllowOverNormValue.value : false,
     }),
     valueFormula: () => ({
-      ...keepOrganizationPayload(),
       valueFormula: getValueFormulaPayload(),
     }),
     description: () => ({
-      ...keepOrganizationPayload(),
       description: description.value,
     }),
     payslipDisplayType: () => ({
-      ...keepOrganizationPayload(),
       payslipDisplayType: selectedDisplayOnPayslip.value,
     }),
   }
@@ -3903,4 +3897,3 @@ label {
   background-color: #6e737a;
 }
 </style>
-
